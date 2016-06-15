@@ -157,7 +157,7 @@ bool BDiskLogin::event(QEvent *e)
             m_loginFailureOrAborted = true;
             emit loginAbort();
         }
-        if (state == InnerEvent::EVENT_LOGIN_ABORT) {
+        if (state == InnerEvent::EVENT_LOGIN_FAILURE) {
             m_loginFailureOrAborted = true;
             emit loginFailure(event->data());
         }
@@ -212,6 +212,7 @@ void BDiskLogin::run()
             [&]() {
         qDebug()<<Q_FUNC_INFO<<">>>>>> QTimer timeout";
         freeReply();
+        m_loginFailureOrAborted = true;
         if (timer.isActive())
             timer.stop();
         if (loop.isRunning())
@@ -290,9 +291,9 @@ void BDiskLogin::run()
                 CHECK_IF_REPLY_SUCCESS;
 
                 QByteArray qba = m_reply->readAll();
-                qDebug()<<Q_FUNC_INFO<<" URL_PASSPORT_API ok "<<qba;
+//                qDebug()<<Q_FUNC_INFO<<" URL_PASSPORT_API ok "<<qba;
                 QByteArray value = truncateCallback(QString(qba)).toLocal8Bit();
-                qDebug()<<Q_FUNC_INFO<<" json value "<<value;
+//                qDebug()<<Q_FUNC_INFO<<" json value "<<value;
 
                 QJsonParseError error;
                 QJsonDocument doc = QJsonDocument::fromJson (value, &error);
@@ -334,9 +335,9 @@ void BDiskLogin::run()
                 CHECK_IF_REPLY_SUCCESS;
 
                 QByteArray qba = m_reply->readAll();
-                qDebug()<<Q_FUNC_INFO<<" logincheck ok "<<qba;
+//                qDebug()<<Q_FUNC_INFO<<" logincheck ok "<<qba;
                 QByteArray value = truncateCallback(QString(qba)).toLocal8Bit();
-                qDebug()<<Q_FUNC_INFO<<" json value "<<value;
+//                qDebug()<<Q_FUNC_INFO<<" json value "<<value;
 
                 QJsonParseError error;
                 QJsonDocument doc = QJsonDocument::fromJson (value, &error);
@@ -383,9 +384,9 @@ void BDiskLogin::run()
                 CHECK_IF_REPLY_SUCCESS;
 
                 QByteArray qba = m_reply->readAll();
-                qDebug()<<Q_FUNC_INFO<<" getpublickey ok "<<qba;
+//                qDebug()<<Q_FUNC_INFO<<" getpublickey ok "<<qba;
                 QByteArray value = truncateCallback(QString(qba)).toLocal8Bit();
-                qDebug()<<Q_FUNC_INFO<<" json value "<<value;
+//                qDebug()<<Q_FUNC_INFO<<" json value "<<value;
 
                 QJsonParseError error;
                 QJsonDocument doc = QJsonDocument::fromJson (value, &error);
@@ -432,9 +433,9 @@ void BDiskLogin::run()
                 CHECK_IF_REPLY_ABORTED;
                 CHECK_IF_REPLY_SUCCESS;
                 QByteArray qba = m_reply->readAll();
-                qDebug()<<Q_FUNC_INFO<<" reggetcodestr ok "<<qba;
+//                qDebug()<<Q_FUNC_INFO<<" reggetcodestr ok "<<qba;
                 QByteArray value = truncateCallback(QString(qba)).toLocal8Bit();
-                qDebug()<<Q_FUNC_INFO<<" json value "<<value;
+//                qDebug()<<Q_FUNC_INFO<<" json value "<<value;
 
                 QJsonParseError error;
                 QJsonDocument doc = QJsonDocument::fromJson (value, &error);
@@ -556,7 +557,7 @@ void BDiskLogin::run()
 
         qDebug()<<Q_FUNC_INFO<<">>>>>  m_loginErrCode "<<m_loginErrCode;
 
-        if (m_loginErrCode > 0) {
+        if (m_loginErrCode != -1) {
             if (m_loginErrCode == 0 || m_loginErrCode == 18 || m_loginErrCode == 120016
                     || m_loginErrCode == 400032 || m_loginErrCode == 400034
                     || m_loginErrCode == 400037 || m_loginErrCode == 400401) {
@@ -586,6 +587,7 @@ void BDiskLogin::run()
                                 if (timer.isActive()) timer.stop();
                                 if (loop.isRunning()) loop.quit();
                                 breakFlag = true;
+                                return;
                             }
                             QNetworkReply::NetworkError error = m_reply->error ();
                             bool success = (error == QNetworkReply::NoError);

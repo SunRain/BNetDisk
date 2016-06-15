@@ -3,7 +3,7 @@
 #include <QDebug>
 #include <QNetworkCookie>
 
-#define DBG_OUT 1
+#define DBG_OUT 0
 
 BDiskCookieJar::BDiskCookieJar(QObject *parent)
     : QNetworkCookieJar(parent)

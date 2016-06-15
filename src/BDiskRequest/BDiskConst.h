@@ -10,8 +10,8 @@ static const char *BDISK_URL_GET_PUBLIC_KEY	  = "https://passport.baidu.com/v2/g
 static const char *BDISK_URL_PASSPORT_LOGOUT  = "https://passport.baidu.com/?logout&u=http://pan.baidu.com";
 //static const char *BDISK_URL_CAPTCHA_GET_CODE = "https://passport.baidu.com/cgi-bin/genimage";
 static const char *BDISK_URL_CAPTCHA		  = "https://passport.baidu.com/cgi-bin/genimage";
-static const char *BDISK_URL_PAN_API		  = "http://pan.baidu.com/api/";
+static const char *BDISK_URL_PAN_API		  = "http://pan.baidu.com/api";
 static const char *BDISK_URL_PCS_REST		  = "http://c.pcs.baidu.com/rest/2.0/pcs/file";
 
-static const int BDISK_REQUEST_TIMEOUT  = 4*1000;
+static const int BDISK_REQUEST_TIMEOUT  = 5*1000;
 #endif // BDISKCONST_H

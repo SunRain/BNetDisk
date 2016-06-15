@@ -7,7 +7,9 @@ SOURCES += \
     src/main.cpp \
     src/BDiskRequest/BDiskLogin.cpp \
     src/BDiskRequest/BDiskTokenProvider.cpp \
-    src/BDiskRequest/BDiskCookieJar.cpp
+    src/BDiskRequest/BDiskCookieJar.cpp \
+    src/BDiskRequest/BDiskOperationRequest.cpp \
+    src/BDiskRequest/BDiskHttpRequest.cpp
 
 RESOURCES += \
     qml/qml.qrc
@@ -24,4 +26,6 @@ HEADERS += \
     src/BDiskRequest/BDiskConst.h \
     src/BDiskRequest/BDiskLogin.h \
     src/BDiskRequest/BDiskTokenProvider.h \
-    src/BDiskRequest/BDiskCookieJar.h
+    src/BDiskRequest/BDiskCookieJar.h \
+    src/BDiskRequest/BDiskOperationRequest.h \
+    src/BDiskRequest/BDiskHttpRequest.h
