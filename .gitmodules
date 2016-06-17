@@ -1,0 +1,8 @@
+[submodule "thirdparty/qsyncable"]
+	path = thirdparty/qsyncable
+	url = https://github.com/SunRain/qsyncable.git
+	branch = master
+[submodule "thirdparty/qml-material"]
+	path = thirdparty/qml-material
+	url = https://github.com/SunRain/qml-material.git
+	branch = develop
