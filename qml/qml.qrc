@@ -1,6 +1,6 @@
 <RCC>
     <qresource prefix="/">
         <file>main.qml</file>
-        <file>login.qml</file>
+        <file>Login/main.qml</file>
     </qresource>
 </RCC>
