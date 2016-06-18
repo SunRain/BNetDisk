@@ -2,5 +2,6 @@
     <qresource prefix="/">
         <file>main.qml</file>
         <file>Login/main.qml</file>
+        <file>Login/ProgressView.qml</file>
     </qresource>
 </RCC>

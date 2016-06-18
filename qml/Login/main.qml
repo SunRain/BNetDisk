@@ -56,24 +56,18 @@ ApplicationWindow {
         states: [
             State {
                 name: "ShowLoginView"
-//                PropertyChanges { target: loginView; opacity: 1}
-//                PropertyChanges { target: progressView; opacity: 0}
-//                PropertyChanges { target: errorView; opacity: 0}
+                PropertyChanges { target: progressView; opacity: 0}
                 PropertyChanges { target: loader; sourceComponent: loginComponent}
 
             },
             State {
                 name: "ShowProgressView"
-//                PropertyChanges { target: loginView; opacity: 0}
-//                PropertyChanges { target: progressView; opacity: 1}
-//                PropertyChanges { target: errorView; opacity: 0}
-                PropertyChanges { target: loader; sourceComponent: progressComponent}
+                PropertyChanges { target: progressView; opacity: 1}
+                PropertyChanges { target: loader; sourceComponent: loader.Null}
             },
             State {
                 name: "ShowErrorView"
-//                PropertyChanges { target: loginView; opacity: 0}
-//                PropertyChanges { target: progressView; opacity: 0}
-//                PropertyChanges { target: errorView; opacity: 1}
+                PropertyChanges { target: progressView; opacity: 0}
                 PropertyChanges { target: loader; sourceComponent: errorComponent}
             }
         ]
@@ -88,6 +82,10 @@ ApplicationWindow {
             anchors.fill: parent
         }
 
+        ProgressView {
+            id: progressView
+        }
+
     }
 
     Component {
@@ -95,6 +93,7 @@ ApplicationWindow {
         Item {
             id: loginView
             anchors.fill: parent
+            enabled: opacity == 1
             Column {
                 id: loginColumn
                 width: parent.width - dp(32)
@@ -140,7 +139,6 @@ ApplicationWindow {
                         placeholderText: qsTr("password")
                         text: login.password
                         onTextChanged: {
-//                            LoginProvider.passWord = text;
                             login.password = text
                         }
                     }
@@ -164,6 +162,7 @@ ApplicationWindow {
                         TextField {
                             width: captha.width/2
                             anchors.verticalCenter: parent.verticalCenter
+                            text: qsTr("captcha")
                             onTextChanged: {
                                 LoginProvider.captchaText = text;
                             }
@@ -187,64 +186,9 @@ ApplicationWindow {
                     textColor: Theme.accentColor
                     anchors.horizontalCenter: parent.horizontalCenter
                     elevation: 1
-                    enabled: login.st == "ShowLoginView"
                     onClicked: {
                         LoginProvider.login();
                         login.st = "ShowProgressView";
-                    }
-                }
-            }
-        }
-    }
-    Component {
-        id: progressComponent
-        Item {
-            id: progressView
-            anchors.fill: parent
-            ProgressCircle {
-                id: cyclicColorProgress
-                anchors.centerIn: parent
-                width: height
-                height: parent.height * 0.4
-                dashThickness: dp(8)
-                SequentialAnimation {
-                    running: true
-                    loops: Animation.Infinite
-
-                    ColorAnimation {
-                        from: "red"
-                        to: "blue"
-                        target: cyclicColorProgress
-                        properties: "color"
-                        easing.type: Easing.InOutQuad
-                        duration: 2400
-                    }
-
-                    ColorAnimation {
-                        from: "blue"
-                        to: "green"
-                        target: cyclicColorProgress
-                        properties: "color"
-                        easing.type: Easing.InOutQuad
-                        duration: 1560
-                    }
-
-                    ColorAnimation {
-                        from: "green"
-                        to: "#FFCC00"
-                        target: cyclicColorProgress
-                        properties: "color"
-                        easing.type: Easing.InOutQuad
-                        duration:  840
-                    }
-
-                    ColorAnimation {
-                        from: "#FFCC00"
-                        to: "red"
-                        target: cyclicColorProgress
-                        properties: "color"
-                        easing.type: Easing.InOutQuad
-                        duration:  1200
                     }
                 }
             }
@@ -255,6 +199,7 @@ ApplicationWindow {
         Item {
             id: errorView
             anchors.fill: parent
+            enabled: opacity == 1
             Column {
                 width: parent.width - dp(32)
                 anchors{
@@ -284,7 +229,6 @@ ApplicationWindow {
                     horizontalCenter: parent.horizontalCenter
                 }
                 elevation: 1
-                enabled: login.st == "ShowErrorView"
                 onClicked: {
                     login.st = "ShowLoginView";
                 }
