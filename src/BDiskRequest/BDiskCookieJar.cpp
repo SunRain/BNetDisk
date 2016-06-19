@@ -61,7 +61,6 @@ QList<QNetworkCookie> BDiskCookieJar::cookieList() const
     return m_cookieList;
 }
 
-
 QList<QNetworkCookie> BDiskCookieJar::cookiesForUrl(const QUrl &url) const
 {
 #if DBG_OUT

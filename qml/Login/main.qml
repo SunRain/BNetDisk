@@ -11,19 +11,39 @@ ApplicationWindow {
     width: 600 * Units.dp
     height: 400 * Units.dp
 
-    property string st: "ShowLoginView"
+    property string st: "ShowProgressView" //"ShowLoginView"
     property bool captchVisible: captchaImg != undefined && captchaImg != ""
     property string captchaImg
     property string errorText
 
     property string userName
     property string password
-
     onUserNameChanged: {
         LoginProvider.userName = userName;
     }
     onPasswordChanged: {
         LoginProvider.passWord = password;
+    }
+
+    Component.onCompleted: {
+        LoginProvider.loginByCookie();
+    }
+
+    iconHelper {
+        useQtResource: false
+        /**************************
+        if set useQtResource to true, alternativePath should be the prefix value in qrc
+        if set useQtResource to false
+            if using material system-wide icons, alternativePath should be setted to empty, Eg. ""
+            if using application alternative icons, alternativePath should be setted to full path of icon path
+        ***************************/
+        alternativePath: ""
+    }
+
+    theme {
+        primaryColor: "blue"
+        accentColor: "red"
+        tabHighlightColor: "white"
     }
 
     Connections {
@@ -42,6 +62,15 @@ ApplicationWindow {
         }
         onLoginFailure: { //message
             console.log("====== onLoginFailure " + message);
+            login.errorText = message;
+            login.st = "ShowErrorView";
+        }
+        onLoginByCookieSuccess: {
+            console.log("====== onLoginByCookieSuccess ");
+            login.close();
+        }
+        onLoginByCookieFailure: { //message
+            console.log("====== onLoginByCookieFailure " + message);
             login.errorText = message;
             login.st = "ShowErrorView";
         }
@@ -84,6 +113,7 @@ ApplicationWindow {
 
         ProgressView {
             id: progressView
+            anchors.fill: parent
         }
 
     }
