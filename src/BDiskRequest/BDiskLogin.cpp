@@ -102,6 +102,7 @@ private:
 
 BDiskLogin::BDiskLogin(QObject *parent)
     : QThread(parent)
+    , m_networkMgr(new QNetworkAccessManager(this))
     , m_reply(nullptr)
     , m_tokenProvider(BDiskTokenProvider::instance())
     , m_handler(new InnerStateHandler(this))
@@ -131,6 +132,62 @@ void BDiskLogin::login()
         this->start();
     }
 
+}
+
+void BDiskLogin::loginByCookie()
+{
+    QUrl url = QUrl(BDISK_URL_DISK_HOME);
+    QNetworkRequest request(url);
+    fillRequest(&request);
+    m_reply = m_networkMgr->get(request);
+
+    if (m_reply) {
+        connect(m_reply, &QNetworkReply::finished,
+                [&](){
+//            if (m_requestAborted) {
+//                m_requestAborted = false;
+//                m_handler->dispatch(InnerEvent::EVENT_LOGIN_ABORT);
+//                m_breakThread = true;
+//                freeReply();
+//                return;
+//            }
+            QNetworkReply::NetworkError e = m_reply->error ();
+            bool success = (e == QNetworkReply::NoError);
+            if (!success) {
+                QString str = m_reply->errorString();
+                freeReply();
+                emit loginByCookieFailure(str);
+                return;
+            }
+            QByteArray qba = m_reply->readAll();
+            qDebug()<<Q_FUNC_INFO<<" reply data "<<qba;
+
+            //TODO get bdstoken from response by key yunData.MYBDSTOKEN or FileUtils.bdstoken
+            if (m_tokenProvider->bdstoken().isEmpty()) {
+                QString value = truncateYunData(QString(qba));
+                QJsonParseError error;
+                QJsonDocument doc = QJsonDocument::fromJson (value.toLocal8Bit(), &error);
+                if (error.error != QJsonParseError::NoError) {
+                    qDebug()<<Q_FUNC_INFO<<"Parse json error => "<<error.errorString ();
+                    freeReply();
+                    emit loginByCookieFailure(QString("Parse json error [%1]").arg(error.errorString()));
+                    return;
+                }
+                QJsonObject obj = doc.object();
+                QString bdstoken = obj.value("bdstoken").toString();
+                if (bdstoken.isEmpty()) {
+                    emit loginByCookieFailure("Can't get bdstoken");
+                    return;
+                }
+                m_tokenProvider->setBdstoken(bdstoken);
+                QString uname = obj.value("username").toString();
+                //FIXME emit failure if uname is empty;
+                m_tokenProvider->setUidStr(uname);
+            }
+            freeReply();
+            emit loginByCookieSuccess();
+        });
+    }
 }
 
 QString BDiskLogin::userName() const
@@ -192,8 +249,8 @@ bool BDiskLogin::event(QEvent *e)
 
 void BDiskLogin::run()
 {
-    QNetworkAccessManager *m_networkMgr = new QNetworkAccessManager();
-    m_networkMgr->setCookieJar(m_cookieJar);
+    QNetworkAccessManager *networkMgr = new QNetworkAccessManager();
+    networkMgr->setCookieJar(m_cookieJar);
 
     QEventLoop loop;
     QTimer timer;
@@ -258,7 +315,7 @@ void BDiskLogin::run()
         QUrl url(BDISK_URL_HOME);
         QNetworkRequest request(url);
         fillRequest(&request);
-        m_reply = m_networkMgr->get(request);
+        m_reply = networkMgr->get(request);
         if (m_reply) {
             connect(m_reply, &QNetworkReply::finished,
                     [&](){
@@ -283,7 +340,7 @@ void BDiskLogin::run()
         request = QNetworkRequest(url);
         fillRequest(&request);
 
-        m_reply = m_networkMgr->get(request);
+        m_reply = networkMgr->get(request);
         if (m_reply) {
             connect(m_reply, &QNetworkReply::finished,
                     [&](){
@@ -327,7 +384,7 @@ void BDiskLogin::run()
         request = QNetworkRequest(url);
         fillRequest(&request);
 
-        m_reply = m_networkMgr->get(request);
+        m_reply = networkMgr->get(request);
         if (m_reply) {
             connect(m_reply, &QNetworkReply::finished,
                     [&](){
@@ -376,7 +433,7 @@ void BDiskLogin::run()
 
         request = QNetworkRequest(url);
         fillRequest(&request);
-        m_reply = m_networkMgr->get(request);
+        m_reply = networkMgr->get(request);
         if (m_reply) {
             connect(m_reply, &QNetworkReply::finished,
                     [&](){
@@ -426,7 +483,7 @@ void BDiskLogin::run()
         request = QNetworkRequest(url);
         fillRequest(&request);
 
-        m_reply = m_networkMgr->get(request);
+        m_reply = networkMgr->get(request);
         if (m_reply) {
             connect(m_reply, &QNetworkReply::finished,
                     [&](){
@@ -511,7 +568,7 @@ void BDiskLogin::run()
 
         qDebug()<<Q_FUNC_INFO<<" post data ["<<postStr<<"] to ["<<url<<"]";
 
-        m_reply = m_networkMgr->post(request, postStr.toLocal8Bit());
+        m_reply = networkMgr->post(request, postStr.toLocal8Bit());
         if (m_reply) {
             connect(m_reply, &QNetworkReply::finished,
                     [&](){
@@ -521,7 +578,9 @@ void BDiskLogin::run()
                 qDebug()<<Q_FUNC_INFO<<" post login ok "<<qba;
                 int ret = getErrorFromPostData(qba);
 
-                /// see https://github.com/GangZhuo/BaiduPCS/issues/29
+                /*
+                 * see https://github.com/GangZhuo/BaiduPCS/issues/29
+                 */
                 if (ret == 3 || ret == 6 || ret == 257 || ret == 200010) {
                     QString codeStr = getCodeStringFromPostData(qba);
                     if (codeStr.isEmpty()) {
@@ -576,7 +635,7 @@ void BDiskLogin::run()
 
                     request = QNetworkRequest(url);
                     fillRequest(&request);
-                    m_reply = m_networkMgr->head(request);
+                    m_reply = networkMgr->head(request);
                     if (m_reply) {
                         connect(m_reply, &QNetworkReply::finished,
                                 [&](){
@@ -653,7 +712,7 @@ void BDiskLogin::run()
                 url = QUrl(BDISK_URL_DISK_HOME);
                 request = QNetworkRequest(url);
                 fillRequest(&request);
-                m_reply = m_networkMgr->get(request);
+                m_reply = networkMgr->get(request);
 
                 if (m_reply) {
                     connect(m_reply, &QNetworkReply::finished,
@@ -684,6 +743,7 @@ void BDiskLogin::run()
                                     m_tokenProvider->setBdstoken(bdstoken);
                                 }
                                 QString uname = obj.value("username").toString();
+                                //FIXME send failure if uname is empty
                                 m_tokenProvider->setUidStr(uname);
                             }
                         }
@@ -709,8 +769,8 @@ void BDiskLogin::run()
     freeReply();
     reset();
 
-    m_networkMgr->deleteLater();
-    m_networkMgr = nullptr;
+    networkMgr->deleteLater();
+    networkMgr = nullptr;
 
 }
 
@@ -772,6 +832,9 @@ QString BDiskLogin::truncateYunData(const QString &data)
     //TODO, check for key yunData.MYBDSTOKEN and FileUtils.bdstoken
 
     int start = str.indexOf("context=");
+    if (start <0)
+        return QString();
+
     int lNum = 0; //number of "{"
     int rNum = 0; //number of "}"
     int end = -1;

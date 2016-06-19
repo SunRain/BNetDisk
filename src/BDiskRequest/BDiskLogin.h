@@ -28,6 +28,7 @@ public:
     explicit BDiskLogin(QObject *parent = 0);
 
     Q_INVOKABLE void login();
+    Q_INVOKABLE void loginByCookie();
 
     QString userName() const;
     QString passWord() const;
@@ -45,6 +46,8 @@ signals:
     void loginAbort();
     void loginSuccess();
     void loginFailure(QString message);
+    void loginByCookieSuccess();
+    void loginByCookieFailure(QString message);
     void userNameChanged(QString userName);
     void passWordChanged(QString passWord);
     void captchaTextChanged(QString captchaText);
@@ -65,6 +68,7 @@ private:
     void freeAndStop();
     void fillRequest(QNetworkRequest *req);
 private:
+    QNetworkAccessManager *m_networkMgr;
     QNetworkReply *m_reply;
     BDiskTokenProvider *m_tokenProvider;
     InnerStateHandler *m_handler;
