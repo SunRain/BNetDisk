@@ -9,4 +9,3 @@
 [submodule "thirdparty/quickflux"]
 	path = thirdparty/quickflux
 	url = https://github.com/SunRain/quickflux.git
-	branch = master
