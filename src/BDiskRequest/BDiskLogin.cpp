@@ -600,8 +600,18 @@ void BDiskLogin::run()
                                 breakFlag = true;
                             } else {
                                 bool ok = false;
-                                int ret = m_reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt(&ok);
-                                qDebug()<<Q_FUNC_INFO<<"==== http status code "<<ret;
+//                                int ret = m_reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt(&ok);
+                                QVariant vrt = m_reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
+                                qDebug()<<Q_FUNC_INFO<<"==== http status code "<<vrt;
+                                if (vrt.isNull() || !vrt.isValid()) {
+                                    m_handler->dispatch(InnerEvent::EVENT_LOGIN_FAILURE,
+                                                        QString("Get http status code error!"));
+                                    m_breakThread = true;
+                                    if (timer.isActive()) timer.stop();
+                                    if (loop.isRunning()) loop.quit();
+                                    breakFlag = true;
+                                }
+                                int ret = vrt.toInt(&ok);
                                 if (!ok) {
                                     m_handler->dispatch(InnerEvent::EVENT_LOGIN_FAILURE,
                                                         QString("Can't get http status code!"));
