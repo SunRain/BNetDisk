@@ -31,6 +31,7 @@ protected:
     virtual BDiskBaseOperationRequest operation();
 
 signals:
+    void requestStarted();
     void requestSuccess(const QString &replyData);
     void requestFailure(const QString &replyData);
     void requestAbort();

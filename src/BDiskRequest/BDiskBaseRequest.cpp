@@ -6,6 +6,7 @@
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
 #include <QNetworkReply>
+#include <QNetworkCookie>
 
 #include "BDiskConst.h"
 #include "BDiskOperationRequest.h"
@@ -31,6 +32,7 @@ BDiskBaseRequest::BDiskBaseRequest(QObject *parent)
     });
 
     m_networkMgr = networkMgr();
+//    m_networkMgr->setCookieJar(BDiskCookieJar::instance());
 //    if (m_networkMgr) {
 //        m_networkMgr->setCookieJar(BDiskCookieJar::instance());
 //    }
@@ -69,6 +71,13 @@ void BDiskBaseRequest::request()
     QNetworkRequest request(url);
     request.setRawHeader("User-Agent", "Mozilla/5.0 (Windows;U;Windows NT 5.1;zh-CN;rv:1.9.2.9) Gecko/20100101 Firefox/43.0");
     request.setRawHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+    QList<QNetworkCookie> cookies = BDiskCookieJar::instance()->cookieList();
+    QStringList list;
+    foreach (QNetworkCookie c, cookies) {
+        list.append(QString("%1=%2").arg(QString(c.name())).arg(QString(c.value())));
+    }
+//    qDebug()<<Q_FUNC_INFO<<"append cookies "<<list;
+    request.setRawHeader("Cookie", list.join(";").toUtf8());
 
     if (m_reply) {
         m_requestAborted = true;
@@ -90,6 +99,10 @@ void BDiskBaseRequest::request()
                 emit requestResult(BDiskBaseRequest::RET_ABORT, QString());
                 return;
             }
+//            foreach (QNetworkReply::RawHeaderPair p, m_reply->rawHeaderPairs ()) {
+//                qDebug()<<Q_FUNC_INFO<<p.first<<"||"<<p.second;
+//            }
+
             QNetworkReply::NetworkError e = m_reply->error ();
             bool success = (e == QNetworkReply::NoError);
             if (!success) {
@@ -108,6 +121,7 @@ void BDiskBaseRequest::request()
             emit requestSuccess (QString(qba));
             emit requestResult (BDiskBaseRequest::RET_SUCCESS, QString(qba));
         });
+        emit requestStarted();
     }
 }
 
@@ -122,7 +136,7 @@ QNetworkAccessManager *BDiskBaseRequest::networkMgr() {
         s_lock.lock();
         if (Q_UNLIKELY(s_networkSP.isNull())) {
             s_networkSP.reset(new QNetworkAccessManager);
-            s_networkSP.data()->setCookieJar(BDiskCookieJar::instance());
+//            s_networkSP.data()->setCookieJar(BDiskCookieJar::instance());
         }
         s_lock.unlock();
     }
