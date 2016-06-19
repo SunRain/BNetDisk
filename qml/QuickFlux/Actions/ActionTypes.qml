@@ -10,6 +10,9 @@ KeyTable {
 //    property string selectMusicScannerDirs
     property string showProgress
     property string hideProgress
+    property string showDir
+    property string cdup
+    property string refreshCurrentDir
 //    property string localMusicScannerFinish
 
 //    property string showAlbumCategory

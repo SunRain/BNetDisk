@@ -63,4 +63,9 @@ ActionCreator {
 //    }
 
     signal showRootDir();
+    signal cdup();
+    signal refreshCurrentDir();
+    function showDir(dir) {
+        AppDispatcher.dispatch(ActionTypes.showDir, {"dir":dir});
+    }
 }

@@ -139,6 +139,10 @@ Page {
                                        Theme.light.iconColor, Theme.dark.iconColor)
                 action: Action {
                     iconName: "navigation/arrow_upward"
+                    onTriggered: {
+                        console.log("=== >>> cdup");
+                        AppActions.cdup();
+                    }
                 }
             }
             IconButton {
@@ -146,6 +150,9 @@ Page {
                                        Theme.light.iconColor, Theme.dark.iconColor)
                 action: Action {
                     iconName: "navigation/refresh"
+                    onTriggered: {
+                        AppActions.refreshCurrentDir();
+                    }
                 }
             }
         }
@@ -161,7 +168,7 @@ Page {
             TextField {
                 id: addrText
                 width: parent.width
-                text: "Here/bdisk/file/path"
+                text: DirListStore.currentPath//"Here/bdisk/file/path"
                 anchors.verticalCenter: parent.verticalCenter
                 onAccepted: {
                     console.log("=== addrText onAccepted "+text);
@@ -236,7 +243,6 @@ Page {
                     showDivider: true
                     iconName: isDir ? "file/folder" : Utility.categoryToIcon(category)
                     text: fileName
-
                     secondaryItem: Row {
                         height: childrenRect.height
                         anchors.verticalCenter: parent.verticalCenter
@@ -261,6 +267,11 @@ Page {
                             action: Action {
                                 iconName: "navigation/more_vert"
                             }
+                        }
+                    }
+                    onClicked: {
+                        if (isDir) {
+                            AppActions.showDir(object[FileObjectKey.keyPath]);
                         }
                     }
                 }

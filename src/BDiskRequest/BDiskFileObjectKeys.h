@@ -56,6 +56,26 @@ public:
         return new BDiskFileObjectKeyName();
     }
 
+    static QStringList keys() {
+        QStringList list;
+        list << BDISK_FILE_KEY_SIZE
+                << BDISK_FILE_KEY_CATEGORY
+                << BDISK_FILE_KEY_UNLIST
+                << BDISK_FILE_KEY_IS_DIR
+                << BDISK_FILE_KEY_DIR_EMPTY
+                << BDISK_FILE_KEY_EMPTY
+                << BDISK_FILE_KEY_FS_ID
+                << BDISK_FILE_KEY_SERVER_MTIME
+                << BDISK_FILE_KEY_OPER_ID
+                << BDISK_FILE_KEY_SERVER_CTIME
+                << BDISK_FILE_KEY_LOCAL_MTIME
+                << BDISK_FILE_KEY_MD5
+                << BDISK_FILE_KEY_PATH
+                << BDISK_FILE_KEY_LOCAL_CTIME
+                << BDISK_FILE_KEY_SERVER_FILENAME;
+        return list;
+    }
+
     QString keySize() const
     {
         return BDISK_FILE_KEY_SIZE;
