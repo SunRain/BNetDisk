@@ -4,7 +4,7 @@
 #include <QJsonParseError>
 #include <QJsonDocument>
 
-#include <qsdiffrunner.h>
+#include "qsdiffrunner.h"
 
 #include "BDiskRequest/BDiskBaseRequest.h"
 #include "BDiskRequest/BDiskFileObjectKeys.h"
@@ -13,8 +13,10 @@ BDiskDirListDelegate::BDiskDirListDelegate(QObject *parent)
     : QSListModel(parent)
 {
     m_action = new BDiskActionListDir(this);
+    connect(m_action, &BDiskBaseRequest::requestStarted, this, &BDiskDirListDelegate::startRequest);
     connect(m_action, &BDiskBaseRequest::requestResult,
             [&](BDiskBaseRequest::RequestRet ret, const QString &replyData){
+        qDebug()<<Q_FUNC_INFO<<" ret "<<ret;
         if (ret == BDiskBaseRequest::RET_SUCCESS) {
             qDebug()<<Q_FUNC_INFO<<">>>>>> ok";
             m_dataList.clear();
@@ -40,6 +42,7 @@ BDiskDirListDelegate::BDiskDirListDelegate(QObject *parent)
             }
             sync();
         }
+        emit finishRequest();
     });
 }
 
@@ -57,7 +60,6 @@ void BDiskDirListDelegate::showRoot()
 
 void BDiskDirListDelegate::show(const QString &dir)
 {
-
 }
 
 void BDiskDirListDelegate::sync()

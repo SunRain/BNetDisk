@@ -6,3 +6,7 @@
 	path = thirdparty/qml-material
 	url = https://github.com/SunRain/qml-material.git
 	branch = develop
+[submodule "thirdparty/quickflux"]
+	path = thirdparty/quickflux
+	url = https://github.com/SunRain/quickflux.git
+	branch = master

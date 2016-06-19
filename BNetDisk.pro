@@ -7,7 +7,8 @@ DEFINES += QPM_INIT
 OPTIONS += roboto
 
 include(thirdparty/qsyncable/qsyncable.pri)
-include(thirdparty/qml-material/material.pri)
+include(thirdparty/quickflux/quickflux.pri)
+#include(thirdparty/qml-material/material.pri)
 
 SOURCES += \
     src/main.cpp \
@@ -20,7 +21,8 @@ SOURCES += \
     src/BDiskRequest/BDiskFileDirOperation.cpp \
     src/BDiskRequest/BDiskBaseRequest.cpp \
     src/BDiskRequest/BDiskActions.cpp \
-    src/BDiskDirListDelegate.cpp
+    src/BDiskDirListDelegate.cpp \
+    src/ApplicationUtility.cpp
 
 RESOURCES += \
     qml/qml.qrc
@@ -45,4 +47,8 @@ HEADERS += \
     src/BDiskRequest/BDiskFileDirOperation.h \
     src/BDiskRequest/BDiskBaseRequest.h \
     src/BDiskRequest/BDiskActions.h \
-    src/BDiskDirListDelegate.h
+    src/BDiskDirListDelegate.h \
+    src/ApplicationUtility.h
+
+DISTFILES += \
+    qml/QuickFlux/Stores/qmldir

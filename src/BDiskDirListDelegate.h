@@ -9,12 +9,17 @@
 
 class BDiskDirListDelegate : public QSListModel
 {
+    Q_OBJECT
 public:
     explicit BDiskDirListDelegate(QObject *parent = 0);
     virtual ~BDiskDirListDelegate();
 
-    void showRoot();
-    void show(const QString &dir);
+    Q_INVOKABLE void showRoot();
+    Q_INVOKABLE void show(const QString &dir);
+
+signals:
+    void startRequest();
+    void finishRequest();
 
 private:
     void sync();

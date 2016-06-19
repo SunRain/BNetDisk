@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/">
+        <file>dummy.qml</file>
+        <file>QuickFluxTests/DummyAction.qml</file>
+        <file>QuickFluxTests/qmldir</file>
+        <file>QuickFluxTests/DispatcherTests.qml</file>
+    </qresource>
+</RCC>
