@@ -1,15 +1,37 @@
 #include "BDiskTokenProvider.h"
 
+#include <QCoreApplication>
+#include <QSettings>
+
+const static char *KEY_CODE_STRING = "BDISK_LIB/KEY_CODE_STRING";
+const static char *KEY_TOKEN = "BDISK_LIB/KEY_TOKEN";
+const static char *KEY_PUBKEY = "BDISK_LIB/KEY_PUBKEY";
+const static char *KEY_KEY = "BDISK_LIB/KEY_KEY";
+const static char *KEY_BDS_TOKEN = "BDISK_LIB/KEY_BDS_TOKEN";
+const static char *KEY_UID_STR = "BDISK_LIB/KEY_UID_STR";
+
 BDiskTokenProvider::BDiskTokenProvider(QObject *parent)
     : QObject(parent)
-    , m_codeString(QString())
-    , m_token(QString())
-    , m_pubkey(QString())
-    , m_key(QString())
-    , m_bdstoken(QString())
-    , m_uidStr(QString())
 {
+    m_settings = new QSettings(qApp->organizationName(), qApp->applicationName(), parent);
+    m_codeString = m_settings->value(KEY_CODE_STRING).toString();
+    m_token = m_settings->value(KEY_TOKEN).toString();
+    m_pubkey = m_settings->value(KEY_PUBKEY).toString();
+    m_bdstoken = m_settings->value(KEY_BDS_TOKEN).toString();
+    m_uidStr = m_settings->value(KEY_UID_STR).toString();
+}
 
+BDiskTokenProvider::~BDiskTokenProvider()
+{
+    if (m_settings) {
+        m_settings->setValue(KEY_CODE_STRING, m_codeString);
+        m_settings->setValue(KEY_TOKEN, m_token);
+        m_settings->setValue(KEY_PUBKEY, m_pubkey);
+        m_settings->setValue(KEY_BDS_TOKEN, m_bdstoken);
+        m_settings->setValue(KEY_UID_STR, m_uidStr);
+        m_settings->sync();
+        m_settings->deleteLater();
+    }
 }
 
 QString BDiskTokenProvider::codeString() const

@@ -4,13 +4,14 @@
 #include <QObject>
 #include "SingletonPointer.h"
 
+class QSettings;
 class BDiskTokenProvider : public QObject
 {
     Q_OBJECT
 
     DECLARE_SINGLETON_POINTER(BDiskTokenProvider)
 public:
-//    explicit BDiskTokenProvider(QObject *parent = 0);
+    virtual ~BDiskTokenProvider();
 
     QString codeString() const;
     void setCodeString(const QString &codeString);
@@ -30,11 +31,8 @@ public:
     QString uidStr() const;
     void setUidStr(const QString &uidStr);
 
-signals:
-
-public slots:
-
 private:
+    QSettings *m_settings;
     QString m_codeString;
     QString m_token;
     QString m_pubkey;
