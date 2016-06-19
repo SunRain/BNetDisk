@@ -115,6 +115,13 @@ BDiskBaseOperationRequest::OperationType BDiskBaseOperationRequest::op()
     return d.data()->op;
 }
 
+void BDiskBaseOperationRequest::setParameters(const QString &key, const QString &value)
+{
+    if (d.data()->parameters.contains(key)) {
+        d.data()->parameters.insert(key, value);
+    }
+}
+
 void BDiskBaseOperationRequest::initParameters()
 {
     qWarning()<<Q_FUNC_INFO<<"Empty parameters!";

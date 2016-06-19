@@ -28,6 +28,8 @@ public:
     QUrl initUrl() const;
     OperationType op();
 
+    void setParameters(const QString &key, const QString &value);
+
     bool operator == (const BDiskBaseOperationRequest &other);
     bool operator != (const BDiskBaseOperationRequest &other);
     BDiskBaseOperationRequest &operator = (const BDiskBaseOperationRequest &other);

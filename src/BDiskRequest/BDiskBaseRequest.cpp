@@ -64,6 +64,9 @@ void BDiskBaseRequest::request()
 {
     m_requestAborted = false;
     BDiskBaseOperationRequest op = operation();
+    foreach (QString key, m_parameters.keys()) {
+        op.setParameters(key, m_parameters.value(key));
+    }
     QUrl url = op.initUrl();
 
     qDebug()<<Q_FUNC_INFO<<" url is "<<url;
@@ -123,6 +126,11 @@ void BDiskBaseRequest::request()
         });
         emit requestStarted();
     }
+}
+
+void BDiskBaseRequest::setParameters(const QString &key, const QString &value)
+{
+    m_parameters.insert(key, value);
 }
 
 BDiskBaseOperationRequest BDiskBaseRequest::operation()
