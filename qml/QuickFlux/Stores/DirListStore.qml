@@ -11,7 +11,7 @@ import "../Actions"
 AppListener {
     id: dirListStore
 
-    property alias dirlistModel: listDelegate
+    property alias dirlistModel: listDelegate.dirList
     property alias currentPath: listDelegate.currentPath
 
     DirListDelegate {
@@ -20,7 +20,7 @@ AppListener {
             console.log("====== DirListDelegate onStarted")
             AppActions.showProgress();
         }
-        onFinishRequest: {
+        onFinishRequest: { //ret
             console.log("====== DirListDelegate onFinished")
             AppActions.hideProgress();
         }

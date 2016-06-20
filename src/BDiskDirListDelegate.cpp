@@ -10,7 +10,7 @@
 #include "BDiskRequest/BDiskFileObjectKeys.h"
 
 BDiskDirListDelegate::BDiskDirListDelegate(QObject *parent)
-    : QSListModel(parent)
+    : QObject(parent)
     , m_currentPath(QString("/"))
 {
     m_action = new BDiskActionListDir(this);
@@ -113,6 +113,11 @@ QString BDiskDirListDelegate::currentPath() const
     return m_currentPath;
 }
 
+QVariantList BDiskDirListDelegate::dirList() const
+{
+    return m_dataList;
+}
+
 void BDiskDirListDelegate::setCurrentPath(const QString &currentPath)
 {
     if (m_currentPath == currentPath)
@@ -124,22 +129,7 @@ void BDiskDirListDelegate::setCurrentPath(const QString &currentPath)
 
 void BDiskDirListDelegate::sync()
 {
-    QSDiffRunner runner;
-    runner.setKeyField(BDISK_FILE_KEY_FS_ID);
-
-    qDebug()<<">>> m_dataList size "<<m_dataList.size();
-
-    QList<QSPatch> patches = runner.compare(this->storage(), m_dataList);
-
-//    qDebug()<<Q_FUNC_INFO<<"patch size "<<patches.size();
-//    foreach (QSPatch p, patches) {
-//        qDebug()<<p;
-//    }
-    this->clear();
-
-    runner.patch(this, patches);
-
-    qDebug()<<Q_FUNC_INFO<<"Data size "<<this->storage().size();
+    emit dirListChanged(m_dataList);
 }
 
 

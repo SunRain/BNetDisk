@@ -236,8 +236,9 @@ Page {
             Repeater {
                 model: DirListStore.dirlistModel
                 delegate: ListItem.Standard {
-                    property var object: DirListStore.dirlistModel.get(index)
-                    property bool isDir: object[FileObjectKey.keyIsdir]
+                    id: dirItem
+                    property var object: DirListStore.dirlistModel[index] //.get(index)
+                    property bool isDir: object[FileObjectKey.keyIsdir] == 1
                     property string fileName: AppUtility.fileObjectPathToFileName(object[FileObjectKey.keyPath])
                     property int category: object[FileObjectKey.keyCategory]
                     showDivider: true
@@ -270,7 +271,7 @@ Page {
                         }
                     }
                     onClicked: {
-                        if (isDir) {
+                        if (dirItem.isDir) {
                             AppActions.showDir(object[FileObjectKey.keyPath]);
                         }
                     }

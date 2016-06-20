@@ -2,15 +2,17 @@
 #define BDISKDIRLISTDELEGATE_H
 
 #include <QObject>
+#include <QVariantList>
 
 #include "BDiskRequest/BDiskActions.h"
 
 #include "qslistmodel.h"
 
-class BDiskDirListDelegate : public QSListModel
+class BDiskDirListDelegate : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString currentPath READ currentPath NOTIFY currentPathChanged)
+    Q_PROPERTY(QVariantList dirList READ dirList NOTIFY dirListChanged)
 public:
     explicit BDiskDirListDelegate(QObject *parent = 0);
     virtual ~BDiskDirListDelegate();
@@ -22,11 +24,13 @@ public:
 
     QString currentPath() const;
 
+    QVariantList dirList() const;
+
 signals:
     void startRequest();
     void finishRequest();
-
     void currentPathChanged(QString currentPath);
+    void dirListChanged(const QVariantList &dirList);
 
 private:
     void setCurrentPath(const QString &currentPath);
