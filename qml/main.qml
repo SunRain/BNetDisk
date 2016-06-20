@@ -29,33 +29,29 @@ ApplicationWindow {
         alternativePath: ""
     }
 
-    Loader {
-        id: progressLoader
+    ProgressCircle {
+        id: progressCircle
         anchors.centerIn: parent
-        sourceComponent: progressComponent
+        z: 10
+        indeterminate: progressListener.showProgress
+        width: dp(64)
+        height: width
+        dashThickness: dp(8)
     }
-    Component {
-        id: progressComponent
-        ProgressCircle {
-            id: progressCircle
-            anchors.centerIn: parent
-            z: 10
-            indeterminate: true
-            width: dp(64)
-            height: width
-            dashThickness: dp(8)
+    AppListener {
+        id: progressListener
+        property bool showProgress: false
+        Filter {
+            type: ActionTypes.showProgress
+            onDispatched: {
+                progressListener.showProgress = true;
+            }
         }
-    }
-    AppScript {
-        runWhen: ActionTypes.showProgress
-        script: {
-            progressLoader.sourceComponent = progressComponent;
-        }
-    }
-    AppScript {
-        runWhen: ActionTypes.hideProgress
-        script: {
-            progressLoader.sourceComponent = progressLoader.Null;
+        Filter {
+            type: ActionTypes.hideProgress
+            onDispatched: {
+                progressListener.showProgress = false;
+            }
         }
     }
 
