@@ -35,6 +35,7 @@ BDiskDirListDelegate::BDiskDirListDelegate(QObject *parent)
                 return;
             }
             QJsonArray array = obj.value("list").toArray();
+            QMap<QString, QVariant> fileMap, dirMap;
             foreach (QJsonValue v, array) {
                 QJsonObject o = v.toObject();
                 QVariantMap map;
@@ -51,8 +52,16 @@ BDiskDirListDelegate::BDiskDirListDelegate(QObject *parent)
                     //TODO more type
                 }
 //                qDebug()<<Q_FUNC_INFO<<" >>>>>> QVariant is "<<map;
-                m_dataList.append(map);
+//                m_dataList.append(map);
+                // sort m_dataList to support item order
+                if (map.value(BDISK_FILE_KEY_IS_DIR).toString() == "1") {
+                    dirMap.insert(map.value(BDISK_FILE_KEY_PATH).toString(), map);
+                } else {
+                    fileMap.insert(map.value(BDISK_FILE_KEY_PATH).toString(), map);
+                }
             }
+            m_dataList.append(dirMap.values());
+            m_dataList.append(fileMap.values());
             sync();
         }
         emit finishRequest();
