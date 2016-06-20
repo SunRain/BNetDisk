@@ -205,7 +205,7 @@ Page {
         }
     }
 
-    Flickable {
+    ListView {
         id: content
         width: parent.width
         anchors {
@@ -216,8 +216,6 @@ Page {
             rightMargin: Const.tinySpace
             bottom: parent.bottom
         }
-//        contentWidth: parent.width
-        contentHeight: column.height
         clip: true
         interactive: contentHeight > height
         onContentXChanged: {
@@ -228,53 +226,46 @@ Page {
             if(contentY != 0 && contentHeight <= height)
                 contentY = 0
         }
-        Column {
-            id: column
-            width: parent.width
-            spacing: dp(8)
-
-            Repeater {
-                model: DirListStore.dirlistModel
-                delegate: ListItem.Standard {
-                    id: dirItem
-                    property var object: DirListStore.dirlistModel[index] //.get(index)
-                    property bool isDir: object[FileObjectKey.keyIsdir] == 1
-                    property string fileName: AppUtility.fileObjectPathToFileName(object[FileObjectKey.keyPath])
-                    property int category: object[FileObjectKey.keyCategory]
-                    showDivider: true
-                    iconName: isDir ? "file/folder" : Utility.categoryToIcon(category)
-                    text: fileName
-                    secondaryItem: Row {
-                        height: childrenRect.height
-                        anchors.verticalCenter: parent.verticalCenter
-                        spacing: Const.middleSpace
-                        IconButton {
+        spacing: dp(8)
+        model: DirListStore.dirlistModel
+        delegate: ListItem.Standard {
+            id: dirItem
+            property var object: DirListStore.dirlistModel[index] //.get(index)
+            property bool isDir: object[FileObjectKey.keyIsdir] == 1
+            property string fileName: AppUtility.fileObjectPathToFileName(object[FileObjectKey.keyPath])
+            property int category: object[FileObjectKey.keyCategory]
+            showDivider: true
+            iconName: isDir ? "file/folder" : Utility.categoryToIcon(category)
+            text: fileName
+            secondaryItem: Row {
+                height: childrenRect.height
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: Const.middleSpace
+                IconButton {
 //                            color: Theme.lightDark(theme.primaryColor,
 //                                                   Theme.dark.iconColor, Theme.dark.iconColor)
-                            action: Action {
-                                iconName: "file/file_download"
-                            }
-                        }
-                        IconButton {
-//                            color: Theme.lightDark(theme.primaryColor,
-//                                                   Theme.dark.iconColor, Theme.dark.iconColor)
-                            action: Action {
-                                iconName: "social/share"
-                            }
-                        }
-                        IconButton {
-//                            color: Theme.lightDark(theme.primaryColor,
-//                                                   Theme.dark.iconColor, Theme.dark.iconColor)
-                            action: Action {
-                                iconName: "navigation/more_vert"
-                            }
-                        }
+                    action: Action {
+                        iconName: "file/file_download"
                     }
-                    onClicked: {
-                        if (dirItem.isDir) {
-                            AppActions.showDir(object[FileObjectKey.keyPath]);
-                        }
+                }
+                IconButton {
+//                            color: Theme.lightDark(theme.primaryColor,
+//                                                   Theme.dark.iconColor, Theme.dark.iconColor)
+                    action: Action {
+                        iconName: "social/share"
                     }
+                }
+                IconButton {
+//                            color: Theme.lightDark(theme.primaryColor,
+//                                                   Theme.dark.iconColor, Theme.dark.iconColor)
+                    action: Action {
+                        iconName: "navigation/more_vert"
+                    }
+                }
+            }
+            onClicked: {
+                if (dirItem.isDir) {
+                    AppActions.showDir(object[FileObjectKey.keyPath]);
                 }
             }
         }
