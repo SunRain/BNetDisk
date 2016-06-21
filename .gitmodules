@@ -9,3 +9,6 @@
 [submodule "thirdparty/quickflux"]
 	path = thirdparty/quickflux
 	url = https://github.com/SunRain/quickflux.git
+[submodule "thirdparty/YADownloader"]
+	path = thirdparty/YADownloader
+	url = https://github.com/SunRain/YADownloader.git

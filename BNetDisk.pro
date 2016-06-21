@@ -9,6 +9,7 @@ OPTIONS += roboto
 include(thirdparty/qsyncable/qsyncable.pri)
 include(thirdparty/quickflux/quickflux.pri)
 #include(thirdparty/qml-material/material.pri)
+include(thirdparty/YADownloader/YADownloader.pri)
 
 SOURCES += \
     src/main.cpp \
