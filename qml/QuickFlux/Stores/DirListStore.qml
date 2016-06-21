@@ -24,6 +24,9 @@ AppListener {
             console.log("====== DirListDelegate onFinished")
             AppActions.hideProgress();
         }
+        onRequestFailure: {
+            AppActions.infomToNeedRelogin("get dirlist error");
+        }
     }
 
     Filter {

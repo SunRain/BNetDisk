@@ -13,6 +13,7 @@ KeyTable {
     property string showDir
     property string cdup
     property string refreshCurrentDir
+    property string infomToNeedRelogin
 //    property string localMusicScannerFinish
 
 //    property string showAlbumCategory

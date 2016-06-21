@@ -38,6 +38,9 @@ ApplicationWindow {
         height: width
         dashThickness: dp(8)
     }
+    Snackbar {
+        id: dialogSnackBar
+    }
     AppListener {
         id: progressListener
         property bool showProgress: false
@@ -51,6 +54,13 @@ ApplicationWindow {
             type: ActionTypes.hideProgress
             onDispatched: {
                 progressListener.showProgress = false;
+            }
+        }
+        Filter {
+            type: ActionTypes.infomToNeedRelogin
+            onDispatched: {
+                var text = message.text;
+                dialogSnackBar.open(text);
             }
         }
     }

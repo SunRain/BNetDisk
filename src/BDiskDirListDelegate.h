@@ -27,6 +27,7 @@ public:
     QVariantList dirList() const;
 
 signals:
+    void requestFailure();
     void startRequest();
     void finishRequest();
     void currentPathChanged(QString currentPath);

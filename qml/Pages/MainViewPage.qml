@@ -270,8 +270,8 @@ Page {
             }
         }
     }
+
     Scrollbar {
         flickableItem: content
     }
-
 }

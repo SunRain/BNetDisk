@@ -68,4 +68,9 @@ ActionCreator {
     function showDir(dir) {
         AppDispatcher.dispatch(ActionTypes.showDir, {"dir":dir});
     }
+
+    function infomToNeedRelogin(detail) {
+        var text = qsTr("Need to relogin! Maybe this is due to ")+detail;
+        AppDispatcher.dispatch(ActionTypes.infomToNeedRelogin, {"text":text});
+    }
 }

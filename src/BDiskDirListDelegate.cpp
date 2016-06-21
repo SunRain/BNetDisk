@@ -31,7 +31,9 @@ BDiskDirListDelegate::BDiskDirListDelegate(QObject *parent)
             QJsonObject obj = doc.object();
             int ret = obj.value("errno").toInt(-1);
             if (ret != 0) {
+                qDebug()<<Q_FUNC_INFO<<"Error number "<<ret;
                 sync();
+                emit requestFailure();
                 return;
             }
             QJsonArray array = obj.value("list").toArray();
