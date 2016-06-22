@@ -163,8 +163,14 @@ void BDiskLogin::loginByCookie()
             qDebug()<<Q_FUNC_INFO<<" reply data "<<qba;
 
             //TODO get bdstoken from response by key yunData.MYBDSTOKEN or FileUtils.bdstoken
-            if (m_tokenProvider->bdstoken().isEmpty()) {
+//            if (m_tokenProvider->bdstoken().isEmpty()) {
                 QString value = truncateYunData(QString(qba));
+                if (value.isEmpty()) {
+                    qDebug()<<Q_FUNC_INFO<<"Can't get yunData values";
+                    freeReply();
+                    emit loginByCookieFailure("Can't get yunData values");
+                    return;
+                }
                 QJsonParseError error;
                 QJsonDocument doc = QJsonDocument::fromJson (value.toLocal8Bit(), &error);
                 if (error.error != QJsonParseError::NoError) {
@@ -183,7 +189,7 @@ void BDiskLogin::loginByCookie()
                 QString uname = obj.value("username").toString();
                 //FIXME emit failure if uname is empty;
                 m_tokenProvider->setUidStr(uname);
-            }
+//            }
             freeReply();
             emit loginByCookieSuccess();
         });
