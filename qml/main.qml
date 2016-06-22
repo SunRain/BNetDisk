@@ -26,7 +26,7 @@ ApplicationWindow {
             if using material system-wide icons, alternativePath should be setted to empty, Eg. ""
             if using application alternative icons, alternativePath should be setted to full path of icon path
         ***************************/
-        alternativePath: ""
+        alternativePath: iconHelper.applicationPath +"/image/icons"
     }
 
     ProgressCircle {
