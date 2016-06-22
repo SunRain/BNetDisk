@@ -161,6 +161,11 @@ void BDiskLogin::loginByCookie()
             }
             QByteArray qba = m_reply->readAll();
             qDebug()<<Q_FUNC_INFO<<" reply data "<<qba;
+            if (qba.trimmed().isEmpty()) {
+                freeReply();
+                emit loginByCookieSuccess();
+                return;
+            }
 
             //TODO get bdstoken from response by key yunData.MYBDSTOKEN or FileUtils.bdstoken
 //            if (m_tokenProvider->bdstoken().isEmpty()) {
