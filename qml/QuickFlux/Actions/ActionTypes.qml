@@ -14,6 +14,9 @@ KeyTable {
     property string cdup
     property string refreshCurrentDir
     property string infomToNeedRelogin
+
+    property string downloadFile
+
 //    property string localMusicScannerFinish
 
 //    property string showAlbumCategory

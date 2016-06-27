@@ -228,6 +228,12 @@ Page {
         }
         spacing: dp(8)
         model: DirListStore.dirlistModel
+        //TODO hack
+        //call dummy property to initialize DownloadStore, should remove later
+        Component.onCompleted: {
+            DownloadStore.bibibi
+        }
+
         delegate: ListItem.Standard {
             id: dirItem
             property var object: DirListStore.dirlistModel[index] //.get(index)
@@ -266,6 +272,10 @@ Page {
             onClicked: {
                 if (dirItem.isDir) {
                     AppActions.showDir(object[FileObjectKey.keyPath]);
+                } else {
+                    console.log("=== download file");
+                    //TODO unuse param atm
+                    AppActions.downloadFile("a", "b", "c");
                 }
             }
         }

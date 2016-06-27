@@ -2,7 +2,7 @@ pragma Singleton
 import QtQuick 2.0
 import QuickFlux 1.0
 
-import "./"
+import "."
 
 ActionCreator {
     signal showProgress();
@@ -72,5 +72,15 @@ ActionCreator {
     function infomToNeedRelogin(detail) {
         var text = qsTr("Need to relogin! Maybe this is due to ")+detail;
         AppDispatcher.dispatch(ActionTypes.infomToNeedRelogin, {"text":text});
+    }
+
+    function downloadFile(file, savePath, saveName) {
+        console.log("===== dispatch downloadFile")
+        AppDispatcher.dispatch(ActionTypes.downloadFile,
+                               {
+                                   "file":file,
+                                   "savePath":savePath,
+                                   "saveName":saveName
+                               });
     }
 }

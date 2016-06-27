@@ -11,7 +11,11 @@
 #include "BDiskRequest/BDiskFileObjectKeys.h"
 
 #include "BDiskDirListDelegate.h"
+#include "BDiskDownloadDelegate.h"
 #include "ApplicationUtility.h"
+
+
+#include "DLRequest.h"
 
 int main(int argc, char *argv[])
 {
@@ -25,6 +29,9 @@ int main(int argc, char *argv[])
 
     qmlRegisterType<BDiskDirListDelegate>("com.sunrain.bnetdisk.qmlplugin",
                                           1, 0, "DirListDelegate");
+    qmlRegisterType<BDiskDownloadDelegate>("com.sunrain.bnetdisk.qmlplugin",
+                                           1, 0, "BDiskDownloadDelegate");
+
     qmlRegisterSingletonType<BDiskFileObjectKeyName>("com.sunrain.bnetdisk.qmlplugin",
                                                      1, 0, "FileObjectKey", BDiskFileObjectKeyName::qmlSingleton);
 
@@ -32,25 +39,29 @@ int main(int argc, char *argv[])
     QQmlApplicationEngine engine;
     engine.addImportPath("qrc:///");
 
-    QObject::connect(login.data(), &BDiskLogin::loginSuccess,
-                     [&](){
-        qDebug()<<Q_FUNC_INFO<<">>>>>>>> loginSuccess";
-
-//        BDiskOpListDir op;
-//        BDiskHttpRequest *req = new BDiskHttpRequest(&app);
-////        BDiskBaseOperationRequest &b = dynamic_cast<BDiskBaseOperationRequest&>(op);
-//        req->request(dynamic_cast<BDiskBaseOperationRequest&>(op));
-//        req->request(b);
-//        BDiskDirListDelegate *a = new BDiskDirListDelegate(&app);
-//        a->showRoot();
-
-//        engine.load(QUrl(QStringLiteral("qrc:/main.qml")));
+    QObject::connect(login.data(), &BDiskLogin::loginSuccess, [&](){
         engine.load(QUrl(QStringLiteral("main.qml")));
     });
-    QObject::connect(login.data(), &BDiskLogin::loginByCookieSuccess,
-                     [&](){
+    QObject::connect(login.data(), &BDiskLogin::loginByCookieSuccess, [&](){
         engine.load(QUrl(QStringLiteral("main.qml")));
     });
+
+//    YADownloader::DLRequest req;
+//    req.setRequestUrl(QUrl("http://people.canonical.com/~alextu/tangxi/recovery/recovery.img"));
+//    req.setSavePath(qApp->applicationDirPath());
+//    req.setSaveName("bbbb.img");
+//    req.setPreferThreadCount(1);
+//    YADownloader::DownloadMgr *mgr = new YADownloader::DownloadMgr(app.data());
+//    YADownloader::DLTask *task = mgr->get(req);
+//    task->start();
+
+//    QTimer timer;
+//    QObject::connect(&timer, &QTimer::timeout, [&](){
+//        task->abort();
+////        task->deleteLater();
+//    });
+//    timer.setSingleShot(true);
+//    timer.start(1000*10);
 
     QQmlContext *ctx = engine.rootContext ();
     ctx->setContextProperty ("LoginProvider", login.data());

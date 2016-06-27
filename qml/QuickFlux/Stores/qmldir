@@ -1,1 +1,2 @@
 singleton DirListStore 1.0 DirListStore.qml
+singleton DownloadStore 1.0 DownloadStore.qml

@@ -11,5 +11,7 @@
         <file>QuickFlux/Actions/AppActions.qml</file>
         <file>QuickFlux/Actions/qmldir</file>
         <file>Script/Utility.js</file>
+        <file>QuickFlux/Stores/DownloadStore.qml</file>
+        <file>QuickFlux/Stores/qmldir</file>
     </qresource>
 </RCC>

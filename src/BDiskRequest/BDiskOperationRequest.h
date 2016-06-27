@@ -78,4 +78,30 @@ protected:
     }
 };
 
+class BDisOpDownload : public BDiskBaseOperationRequest
+{
+public:
+    BDisOpDownload()
+        : BDiskBaseOperationRequest() {
+        setBaseUrl(BDISK_URL_PCS_REST);
+//        setUrlPath();
+        initiate();
+
+    }
+
+    // BDiskBaseOperationRequest interface
+protected:
+    OperationType getOp() {
+        return OPERATION_GET;
+    }
+
+    void initParameters() {
+        (*this)
+        ("method", "download")
+        ("app_id", "250528")
+        ("path", "")
+        ;
+    }
+};
+
 #endif // BDISKOPERATIONREQUEST_H

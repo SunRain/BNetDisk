@@ -23,7 +23,8 @@ SOURCES += \
     src/BDiskRequest/BDiskBaseRequest.cpp \
     src/BDiskRequest/BDiskActions.cpp \
     src/BDiskDirListDelegate.cpp \
-    src/ApplicationUtility.cpp
+    src/ApplicationUtility.cpp \
+    src/BDiskDownloadDelegate.cpp
 
 RESOURCES += \
     qml/qml.qrc
@@ -49,7 +50,8 @@ HEADERS += \
     src/BDiskRequest/BDiskBaseRequest.h \
     src/BDiskRequest/BDiskActions.h \
     src/BDiskDirListDelegate.h \
-    src/ApplicationUtility.h
+    src/ApplicationUtility.h \
+    src/BDiskDownloadDelegate.h
 
 DISTFILES += \
     qml/QuickFlux/Stores/qmldir
