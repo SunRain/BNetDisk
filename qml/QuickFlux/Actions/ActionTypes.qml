@@ -15,7 +15,11 @@ KeyTable {
     property string refreshCurrentDir
     property string infomToNeedRelogin
 
+    property string askToSelectDownloadPath
     property string downloadFile
+
+//    property string openFileDialog
+
 
 //    property string localMusicScannerFinish
 

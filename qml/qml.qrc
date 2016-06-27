@@ -13,5 +13,6 @@
         <file>Script/Utility.js</file>
         <file>QuickFlux/Stores/DownloadStore.qml</file>
         <file>QuickFlux/Stores/qmldir</file>
+        <file>QuickFlux/Scripts/FileSavePathDialog.qml</file>
     </qresource>
 </RCC>

@@ -83,4 +83,12 @@ ActionCreator {
                                    "saveName":saveName
                                });
     }
+
+    function askToSelectDownloadPath(file, saveName) {
+        AppDispatcher.dispatch(ActionTypes.askToSelectDownloadPath,
+                               {
+                                   "file":file,
+                                   "saveName":saveName
+                               });
+    }
 }

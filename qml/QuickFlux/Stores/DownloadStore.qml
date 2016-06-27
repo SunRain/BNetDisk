@@ -18,9 +18,13 @@ AppListener {
     Filter {
         type: ActionTypes.downloadFile
         onDispatched: {
-            console.log("==== onDispatched downloadFile")
             //TODO unuse param atm
-            dlDelegate.download();
+//            dlDelegate.download();
+            var file = message.file;
+            var saveName = message.saveName;
+            var savePath = message.savePath;
+            console.log("==== onDispatched downloadFile "+file+ " save to "+savePath+ " "+saveName);
+            dlDelegate.download(file, savePath, saveName);
         }
     }
 }

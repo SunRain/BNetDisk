@@ -6,8 +6,10 @@
 #include <QNetworkCookie>
 
 #include "DLRequest.h"
+#include "DLTask.h"
 
 #include "BDiskRequest/BDiskCookieJar.h"
+
 
 using namespace YADownloader;
 
@@ -25,22 +27,59 @@ BDiskDownloadDelegate::~BDiskDownloadDelegate()
         m_downloadMgr->deleteLater();
     m_downloadMgr = nullptr;
 
-    if (m_downloadTask) {
-        m_downloadTask->abort();
-        m_downloadTask->deleteLater();
+    foreach (DLTask *task, m_taskHash.values()) {
+        task->abort();
     }
-    m_downloadTask = nullptr;
+    qDeleteAll(m_taskHash);
+    m_taskHash.clear();
+//    if (m_downloadTask) {
+//        m_downloadTask->abort();
+//        m_downloadTask->deleteLater();
+//    }
+//    m_downloadTask = nullptr;
 
 }
 
-void BDiskDownloadDelegate::download()
+//void BDiskDownloadDelegate::download(const QString &from, const QString &savePath, const QString &saveName)
+//{
+//    if (from.isEmpty() || savePath.isEmpty() || saveName.isEmpty())
+//        return;
+//    QString sp(savePath);
+//    if (sp.startsWith("file://")) { //remove file:// scheme
+//        sp = sp.remove(0, 7);
+//    }
+//    if (sp.endsWith("/")) { //remove last /
+//        sp = sp.left(sp.length() -1);
+//    }
+//    QString sn(saveName);
+//    if (sn.startsWith("/")) { //remove first /
+//        sn = sn.remove(0, 1);
+//    }
+//    QString sv = QString("%1/%2").arg(sp).arg(sn);
+//    download(from, sv);
+//}
+
+void BDiskDownloadDelegate::download(const QString &from, const QString &savePath, const QString &saveName)
 {
-    qDebug()<<Q_FUNC_INFO<<"========= ";
-    m_downloadOp.setParameters("path", "/bcompare-3.3.7.15876.tar.gz");
+    if (from.isEmpty() || savePath.isEmpty() || saveName.isEmpty())
+        return;
+    QString sp(savePath);
+    if (sp.startsWith("file://")) { //remove file:// scheme
+        sp = sp.remove(0, 7);
+    }
+    if (sp.endsWith("/")) { //remove last /
+        sp = sp.left(sp.length() -1);
+    }
+    QString sn(saveName);
+    if (sn.startsWith("/")) { //remove first /
+        sn = sn.remove(0, 1);
+    }
+
+    m_downloadOp.setParameters("path", from);
     QUrl url = m_downloadOp.initUrl();
     qDebug()<<Q_FUNC_INFO<<"download url is "<<url;
-    QString path = qApp->applicationDirPath();
-    DLRequest req(url, path, "bibibi.7z");
+//    QString path = qApp->applicationDirPath();
+    DLRequest req(url, sp, sn);
     req.setRawHeader("User-Agent", "Mozilla/5.0 (Windows;U;Windows NT 5.1;zh-CN;rv:1.9.2.9) Gecko/20100101 Firefox/43.0");
     req.setRawHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
 //    req.setRawHeader("Accept", "*/*");
@@ -53,6 +92,7 @@ void BDiskDownloadDelegate::download()
     }
     req.setRawHeader("Cookie", list.join(";").toUtf8());
 
-    m_downloadTask = m_downloadMgr->get(req);
-    m_downloadTask->start();
+    DLTask *task = m_downloadMgr->get(req);
+    m_taskHash.insert(task->uid(), task);
+    task->start();
 }

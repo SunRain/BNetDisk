@@ -7,6 +7,7 @@ import com.sunrain.bnetdisk.qmlplugin 1.0
 import ".."
 import "../QuickFlux/Stores"
 import "../QuickFlux/Actions"
+import "../QuickFlux/Scripts"
 
 import "../Script/Utility.js" as Utility
 
@@ -177,6 +178,8 @@ Page {
         }
     }
 
+    FileSavePathDialog {}
+
     Sidebar {
         id: sidebar
         property var nameList: [qsTr("All"), qsTr("Image"), qsTr("Document"), qsTr("Video"),
@@ -238,7 +241,8 @@ Page {
             id: dirItem
             property var object: DirListStore.dirlistModel[index] //.get(index)
             property bool isDir: object[FileObjectKey.keyIsdir] == 1
-            property string fileName: AppUtility.fileObjectPathToFileName(object[FileObjectKey.keyPath])
+            property string path: object[FileObjectKey.keyPath]
+            property string fileName: AppUtility.fileObjectPathToFileName(path)
             property int category: object[FileObjectKey.keyCategory]
             showDivider: true
             iconName: isDir ? "file/folder" : Utility.categoryToIcon(category)
@@ -252,6 +256,14 @@ Page {
 //                                                   Theme.dark.iconColor, Theme.dark.iconColor)
                     action: Action {
                         iconName: "file/file_download"
+                    }
+                    onClicked: {
+                        console.log("=== download file");
+                        //TODO unuse param atm
+    //                    AppActions.downloadFile("a", "b", "c");
+                        if (!dirItem.isDir) {
+                            AppActions.askToSelectDownloadPath(path, fileName);
+                        }
                     }
                 }
                 IconButton {
@@ -272,10 +284,6 @@ Page {
             onClicked: {
                 if (dirItem.isDir) {
                     AppActions.showDir(object[FileObjectKey.keyPath]);
-                } else {
-                    console.log("=== download file");
-                    //TODO unuse param atm
-                    AppActions.downloadFile("a", "b", "c");
                 }
             }
         }
