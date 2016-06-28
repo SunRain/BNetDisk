@@ -23,20 +23,15 @@ BDiskDownloadDelegate::BDiskDownloadDelegate(QObject *parent)
 BDiskDownloadDelegate::~BDiskDownloadDelegate()
 {
     qDebug()<<Q_FUNC_INFO<<"==============";
-    if (m_downloadMgr)
-        m_downloadMgr->deleteLater();
-    m_downloadMgr = nullptr;
-
     foreach (DLTask *task, m_taskHash.values()) {
         task->abort();
     }
     qDeleteAll(m_taskHash);
     m_taskHash.clear();
-//    if (m_downloadTask) {
-//        m_downloadTask->abort();
-//        m_downloadTask->deleteLater();
-//    }
-//    m_downloadTask = nullptr;
+
+    if (m_downloadMgr)
+        m_downloadMgr->deleteLater();
+    m_downloadMgr = nullptr;
 
 }
 
@@ -61,25 +56,11 @@ BDiskDownloadDelegate::~BDiskDownloadDelegate()
 
 void BDiskDownloadDelegate::download(const QString &from, const QString &savePath, const QString &saveName)
 {
-    if (from.isEmpty() || savePath.isEmpty() || saveName.isEmpty())
-        return;
-    QString sp(savePath);
-    if (sp.startsWith("file://")) { //remove file:// scheme
-        sp = sp.remove(0, 7);
-    }
-    if (sp.endsWith("/")) { //remove last /
-        sp = sp.left(sp.length() -1);
-    }
-    QString sn(saveName);
-    if (sn.startsWith("/")) { //remove first /
-        sn = sn.remove(0, 1);
-    }
-
     m_downloadOp.setParameters("path", from);
     QUrl url = m_downloadOp.initUrl();
     qDebug()<<Q_FUNC_INFO<<"download url is "<<url;
 //    QString path = qApp->applicationDirPath();
-    DLRequest req(url, sp, sn);
+    DLRequest req(url, savePath, saveName);
     req.setRawHeader("User-Agent", "Mozilla/5.0 (Windows;U;Windows NT 5.1;zh-CN;rv:1.9.2.9) Gecko/20100101 Firefox/43.0");
     req.setRawHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
 //    req.setRawHeader("Accept", "*/*");
