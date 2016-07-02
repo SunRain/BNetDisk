@@ -16,6 +16,7 @@
 
 
 #include "DLRequest.h"
+#include "DLTransmissionDatabaseKeys.h"
 
 int main(int argc, char *argv[])
 {
@@ -34,6 +35,11 @@ int main(int argc, char *argv[])
 
     qmlRegisterSingletonType<BDiskFileObjectKeyName>("com.sunrain.bnetdisk.qmlplugin",
                                                      1, 0, "FileObjectKey", BDiskFileObjectKeyName::qmlSingleton);
+    qmlRegisterSingletonType<YADownloader::DLTransmissionDatabaseKeysName>
+            ("com.sunrain.bnetdisk.qmlplugin",
+             1, 0,
+             "DownloaderObjectKey",
+             YADownloader::DLTransmissionDatabaseKeysName::qmlSingleton);
 
 
     QQmlApplicationEngine engine;

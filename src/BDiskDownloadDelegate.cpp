@@ -2,6 +2,7 @@
 
 #include <QCoreApplication>
 #include <QDebug>
+#include <QVariantList>
 
 #include <QNetworkCookie>
 
@@ -18,6 +19,19 @@ BDiskDownloadDelegate::BDiskDownloadDelegate(QObject *parent)
     , m_downloadMgr(new DLTaskAccessMgr(this))
 {
 
+    connect(m_downloadMgr, &DLTaskAccessMgr::resumablesChanged, [&](const DLTaskInfoList &list) {
+        QVariantList ll;
+        foreach (DLTaskInfo info, list) {
+            ll.append(info.toMap());
+            setResumables(ll);
+        }
+    });
+
+    QVariantList ll;
+    foreach (DLTaskInfo info, m_downloadMgr->resumables()) {
+        ll.append(info.toMap());
+        setResumables(ll);
+    }
 }
 
 BDiskDownloadDelegate::~BDiskDownloadDelegate()
@@ -74,6 +88,30 @@ void BDiskDownloadDelegate::download(const QString &from, const QString &savePat
     req.setRawHeader("Cookie", list.join(";").toUtf8());
 
     DLTask *task = m_downloadMgr->get(req);
+
+    connect(task, &DLTask::statusChanged, [&](DLTask::TaskStatus status) {
+        if (status == DLTask::TaskStatus::DL_FINISH) {
+            m_taskHash.remove(task->uuid());
+            task->deleteLater();
+            task = nullptr;
+        }
+    });
+
+
     m_taskHash.insert(task->uuid(), task);
     task->start();
+}
+
+QVariantList BDiskDownloadDelegate::resumables() const
+{
+    return m_resumables;
+}
+
+void BDiskDownloadDelegate::setResumables(const QVariantList &resumables)
+{
+    if (m_resumables == resumables)
+        return;
+
+    m_resumables = resumables;
+    emit resumablesChanged(resumables);
 }

@@ -11,6 +11,8 @@ AppListener {
 
     property string  bibibi
 
+    property alias downloadingModel: dlDelegate.resumables
+
     BDiskDownloadDelegate {
         id: dlDelegate
     }
