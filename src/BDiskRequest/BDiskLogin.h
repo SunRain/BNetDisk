@@ -29,6 +29,7 @@ public:
 
     Q_INVOKABLE void login();
     Q_INVOKABLE void loginByCookie();
+    Q_INVOKABLE void logout();
 
     QString userName() const;
     QString passWord() const;
@@ -43,6 +44,7 @@ protected:
     void run();
 
 signals:
+    void logouted();
     void loginAbort();
     void loginSuccess();
     void loginFailure(QString message);

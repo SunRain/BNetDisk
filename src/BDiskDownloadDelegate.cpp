@@ -15,7 +15,7 @@ using namespace YADownloader;
 
 BDiskDownloadDelegate::BDiskDownloadDelegate(QObject *parent)
     : QObject(parent)
-    , m_downloadMgr(new DownloadMgr(this))
+    , m_downloadMgr(new DLTaskAccessMgr(this))
 {
 
 }
@@ -74,6 +74,6 @@ void BDiskDownloadDelegate::download(const QString &from, const QString &savePat
     req.setRawHeader("Cookie", list.join(";").toUtf8());
 
     DLTask *task = m_downloadMgr->get(req);
-    m_taskHash.insert(task->uid(), task);
+    m_taskHash.insert(task->uuid(), task);
     task->start();
 }

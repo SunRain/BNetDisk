@@ -164,6 +164,7 @@ void BDiskLogin::loginByCookie()
             if (qba.trimmed().isEmpty()) {
                 freeReply();
                 emit loginByCookieSuccess();
+//                emit loginFailure(" reply data "+qba);
                 return;
             }
 
@@ -199,6 +200,13 @@ void BDiskLogin::loginByCookie()
             emit loginByCookieSuccess();
         });
     }
+}
+
+void BDiskLogin::logout()
+{
+    m_cookieJar->clear();
+    m_tokenProvider->clear();
+    emit logouted();
 }
 
 QString BDiskLogin::userName() const

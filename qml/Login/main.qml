@@ -26,7 +26,9 @@ ApplicationWindow {
     }
 
     Component.onCompleted: {
-        LoginProvider.loginByCookie();
+        console.log("====== onCompleted st "+st);
+        if (st == "ShowProgressView")
+            LoginProvider.loginByCookie();
     }
 
     iconHelper {

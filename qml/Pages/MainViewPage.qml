@@ -24,6 +24,20 @@ Page {
             }
         },
         Action {
+            iconName: "action/account_box"
+            name: qsTr("Logout")
+            onTriggered: {
+                LoginProvider.logout();
+            }
+        },
+        Action {
+            iconName: "file/cloud_download"
+            name: qsTr("Transmission")
+            onTriggered: {
+                pageStack.push(Qt.resolvedUrl("DownloadViewPage.qml"))
+            }
+        },
+        Action {
             iconName: "action/settings"
             name: qsTr("Settings")
         }

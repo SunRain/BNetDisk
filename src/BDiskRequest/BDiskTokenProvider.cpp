@@ -32,6 +32,7 @@ BDiskTokenProvider::~BDiskTokenProvider()
         m_settings->sync();
         m_settings->deleteLater();
     }
+    m_settings = nullptr;
 }
 
 QString BDiskTokenProvider::codeString() const
@@ -92,4 +93,19 @@ QString BDiskTokenProvider::uidStr() const
 void BDiskTokenProvider::setUidStr(const QString &uidStr)
 {
     m_uidStr = uidStr;
+}
+
+void BDiskTokenProvider::clear()
+{
+    m_codeString = QString();
+    m_token = QString();
+    m_pubkey = QString();
+    m_bdstoken = QString();
+    m_uidStr = QString();
+    m_settings->setValue(KEY_CODE_STRING, QString());
+    m_settings->setValue(KEY_TOKEN, QString());
+    m_settings->setValue(KEY_PUBKEY, QString());
+    m_settings->setValue(KEY_BDS_TOKEN, QString());
+    m_settings->setValue(KEY_UID_STR, QString());
+    m_settings->sync();
 }

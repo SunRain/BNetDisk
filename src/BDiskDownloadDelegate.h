@@ -4,7 +4,7 @@
 #include <QObject>
 #include <QHash>
 
-#include "DownloadMgr.h"
+#include "DLTaskAccessMgr.h"
 //#include "DLTask.h"
 
 #include "BDiskRequest/BDiskOperationRequest.h"
@@ -28,7 +28,7 @@ public slots:
 
 private:
     BDisOpDownload m_downloadOp;
-    YADownloader::DownloadMgr *m_downloadMgr;
+    YADownloader::DLTaskAccessMgr *m_downloadMgr;
 //    YADownloader::DLTask *m_downloadTask;
     QHash<QString, YADownloader::DLTask*> m_taskHash;
 };

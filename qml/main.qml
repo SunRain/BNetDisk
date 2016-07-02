@@ -29,6 +29,13 @@ ApplicationWindow {
         alternativePath: iconHelper.applicationPath +"/image/icons"
     }
 
+    Connections {
+        target: LoginProvider
+        onLogouted: {
+            bdiskWindow.close();
+        }
+    }
+
     ProgressCircle {
         id: progressCircle
         anchors.centerIn: parent

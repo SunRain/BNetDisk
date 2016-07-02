@@ -31,6 +31,8 @@ public:
     QString uidStr() const;
     void setUidStr(const QString &uidStr);
 
+    void clear();
+
 private:
     QSettings *m_settings;
     QString m_codeString;

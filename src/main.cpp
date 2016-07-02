@@ -39,11 +39,21 @@ int main(int argc, char *argv[])
     QQmlApplicationEngine engine;
     engine.addImportPath("qrc:///");
 
+    QQmlContext *ctx = engine.rootContext ();
+    ctx->setContextProperty ("LoginProvider", login.data());
+    ctx->setContextProperty ("AppUtility", appUtility.data ());
+
     QObject::connect(login.data(), &BDiskLogin::loginSuccess, [&](){
         engine.load(QUrl(QStringLiteral("main.qml")));
     });
     QObject::connect(login.data(), &BDiskLogin::loginByCookieSuccess, [&](){
         engine.load(QUrl(QStringLiteral("main.qml")));
+    });
+    QObject::connect(login.data(), &BDiskLogin::logouted, [&]() {
+        QQmlComponent cmp(&engine, QStringLiteral("Login/main.qml"));
+        QObject *obj = cmp.beginCreate(ctx);
+        obj->setProperty("st", "ShowLoginView");
+        cmp.completeCreate();
     });
 
 //    YADownloader::DLRequest req;
@@ -63,9 +73,6 @@ int main(int argc, char *argv[])
 //    timer.setSingleShot(true);
 //    timer.start(1000*10);
 
-    QQmlContext *ctx = engine.rootContext ();
-    ctx->setContextProperty ("LoginProvider", login.data());
-    ctx->setContextProperty ("AppUtility", appUtility.data ());
 
 //    engine.load(QUrl(QStringLiteral("qrc:/Login/main.qml")));
     engine.load(QUrl(QStringLiteral("Login/main.qml")));

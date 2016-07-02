@@ -18,6 +18,12 @@ public:
     virtual ~BDiskCookieJar();
     QList<QNetworkCookie> cookieList() const;
 
+    ///
+    /// \brief clear
+    /// Clear all stored cookies data
+    ///
+    void clear();
+
     // QNetworkCookieJar interface
     QList<QNetworkCookie> cookiesForUrl(const QUrl &url) const;
 //    bool setCookiesFromUrl(const QList<QNetworkCookie> &cookieList, const QUrl &url);

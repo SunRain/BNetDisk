@@ -14,5 +14,6 @@
         <file>QuickFlux/Stores/DownloadStore.qml</file>
         <file>QuickFlux/Stores/qmldir</file>
         <file>QuickFlux/Scripts/FileSavePathDialog.qml</file>
+        <file>Pages/DownloadViewPage.qml</file>
     </qresource>
 </RCC>

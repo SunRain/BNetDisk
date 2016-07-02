@@ -61,6 +61,18 @@ QList<QNetworkCookie> BDiskCookieJar::cookieList() const
     return m_cookieList;
 }
 
+void BDiskCookieJar::clear()
+{
+    m_locker.lock();
+    m_cookieList.clear();
+    QFile file(m_cookieFile);
+    if (file.exists()) {
+        if (!file.remove())
+            qDebug()<<Q_FUNC_INFO<<"Not remove file!!";
+    }
+    m_locker.unlock();
+}
+
 QList<QNetworkCookie> BDiskCookieJar::cookiesForUrl(const QUrl &url) const
 {
 #if DBG_OUT
