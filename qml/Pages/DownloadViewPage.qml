@@ -32,6 +32,7 @@ Page {
         id: viewLoader
         anchors {
             top: parent.top
+            topMargin: Const.tinySpace
             left: sidebar.right
             leftMargin: Const.tinySpace
             right: parent.right
@@ -53,17 +54,73 @@ Page {
         ListView {
             anchors.fill: parent
             clip: true
-            spacing: dp(8)
+//            spacing: dp(8)
             model: DownloadStore.downloadingModel
-            delegate: ListItem.Standard {
+            delegate: ListItem.BaseListItem {
                 id: dlItem
                 property var object: DownloadStore.downloadingModel[index]
                 property string path: object[DownloaderObjectKey.keyFilePath]
                 property string fileName: AppUtility.fileObjectPathToFileName(path)
-                showDivider: true
                 property int totalSize: object[DownloaderObjectKey.keyTotalSize];
                 property int readySize: object[DownloaderObjectKey.keyReadySize];
-                text: fileName + " "+totalSize +" "+readySize
+                width: parent.width
+                height: dlItemColumn.height + Const.middleSpace
+                showDivider: true
+                IconButton {
+                    id: dlItemIcon
+                    size: parent.height * 0.5
+                    anchors {
+                        left: parent.left
+                        verticalCenter: parent.verticalCenter
+                    }
+                    action: Action {
+                        iconName: "av/play_circle_filled"
+                    }
+                }
+                Column {
+                    id: dlItemColumn
+                    anchors {
+                        left: dlItemIcon.right
+                        leftMargin: Const.middleSpace
+                        right: parent.right
+                        rightMargin: Const.middleSpace
+                        verticalCenter: parent.verticalCenter
+                    }
+                    spacing: Const.tinySpace
+                    Label {
+                        width: parent.width
+                        elide: Text.ElideRight
+                        style: "subheading"
+                        text: fileName
+                    }
+                    ProgressBar {
+                        width: parent.width
+                        color: theme.accentColor
+                        maximumValue: 100
+                        minimumValue: 0
+                        value: 50
+                        NumberAnimation on value {
+                            to: value
+                            duration: 100
+                        }
+                    }
+                    Label {
+                        width: parent.width
+                        color: Theme.light.subTextColor
+                        elide: Text.ElideRight
+                        wrapMode: Text.WordWrap
+                        style: "body1"
+                        text: "downloading info"
+                    }
+                    Label {
+                        width: parent.width
+                        color: Theme.light.subTextColor
+                        elide: Text.ElideRight
+                        wrapMode: Text.WordWrap
+                        style: "body1"
+                        text: "downloading info2"
+                    }
+                }
             }
         }
     }
