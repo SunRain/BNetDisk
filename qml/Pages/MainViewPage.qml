@@ -162,6 +162,8 @@ Page {
             delegate: ListItem.BaseListItem {
                 id: pathItem
                 height: parent.height
+                /// NOTE anchors.left && anchors.right should set before width property,
+                /// This fix qml-material View component bug
                 anchors.left: undefined
                 anchors.right: undefined
                 width: itemRow.width
