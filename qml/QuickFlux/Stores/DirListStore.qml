@@ -13,6 +13,7 @@ AppListener {
 
     property alias dirlistModel: listDelegate.dirList
     property alias currentPath: listDelegate.currentPath
+    property alias currentPathList: listDelegate.currentPathList
 
     DirListDelegate {
         id: listDelegate

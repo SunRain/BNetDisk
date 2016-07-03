@@ -14,6 +14,8 @@ BDiskDirListDelegate::BDiskDirListDelegate(QObject *parent)
     , m_currentPath(QString("/"))
 {
     m_action = new BDiskActionListDir(this);
+    setCurrentPathList((QStringList()<<"/"));
+
     connect(m_action, &BDiskBaseRequest::requestStarted, this, &BDiskDirListDelegate::startRequest);
     connect(m_action, &BDiskBaseRequest::requestResult,
             [&](BDiskBaseRequest::RequestRet ret, const QString &replyData){
@@ -129,6 +131,20 @@ QVariantList BDiskDirListDelegate::dirList() const
     return m_dataList;
 }
 
+QStringList BDiskDirListDelegate::currentPathList() const
+{
+    return m_currentPathList;
+}
+
+void BDiskDirListDelegate::setCurrentPathList(const QStringList &currentPathList)
+{
+    if (m_currentPathList == currentPathList)
+        return;
+
+    m_currentPathList = currentPathList;
+    emit currentPathListChanged(currentPathList);
+}
+
 void BDiskDirListDelegate::setCurrentPath(const QString &currentPath)
 {
     if (m_currentPath == currentPath)
@@ -136,6 +152,19 @@ void BDiskDirListDelegate::setCurrentPath(const QString &currentPath)
 
     m_currentPath = currentPath;
     emit currentPathChanged(currentPath);
+
+    QStringList list;
+    if (m_currentPath == "/") {
+        list.append("/");
+        setCurrentPathList(list);
+        return;
+    }
+    QString str = m_currentPath;
+    /// remove first /
+    str = str.right(str.length() -1);
+    list = str.split("/");
+    list.prepend("/");
+    setCurrentPathList(list);
 }
 
 void BDiskDirListDelegate::sync()

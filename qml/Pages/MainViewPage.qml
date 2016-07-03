@@ -126,69 +126,83 @@ Page {
 
     actionBar.customContent: Item {
         anchors.fill: parent
-        Row {
-            id: navRow
-            spacing: Const.largeSpace
-            height: childrenRect.height
+        IconButton {
+            id: refreshBtn
             anchors {
                 left: parent.left
-                leftMargin: 16 * Units.dp //from ActionBar->leftItem
                 verticalCenter: parent.verticalCenter
             }
-//            IconButton {
-//                color: Theme.lightDark(theme.primaryColor,
-//                                       Theme.light.iconColor, Theme.dark.iconColor)
-//                action: Action {
-//                    iconName: "navigation/arrow_back"
-//                }
-//            }
-//            IconButton {
-//                color: Theme.lightDark(theme.primaryColor,
-//                                       Theme.light.iconColor, Theme.dark.iconColor)
-//                action: Action {
-//                    iconName: "navigation/arrow_forward"
-//                }
-//            }
-            IconButton {
-                color: Theme.lightDark(theme.primaryColor,
-                                       Theme.light.iconColor, Theme.dark.iconColor)
-                action: Action {
-                    iconName: "navigation/arrow_upward"
-                    onTriggered: {
-                        console.log("=== >>> cdup");
-                        AppActions.cdup();
-                    }
+            color: Theme.lightDark(theme.primaryColor, Theme.light.iconColor, Theme.dark.iconColor)
+            action: Action {
+                iconName: "navigation/refresh"
+                onTriggered: {
+                    AppActions.refreshCurrentDir();
                 }
             }
-            IconButton {
-                color: Theme.lightDark(theme.primaryColor,
-                                       Theme.light.iconColor, Theme.dark.iconColor)
-                action: Action {
-                    iconName: "navigation/refresh"
-                    onTriggered: {
-                        AppActions.refreshCurrentDir();
+        }
+        ListView {
+            id: pathView
+            anchors {
+                left: refreshBtn.right
+                leftMargin: Const.middleSpace
+                right: parent.right
+                rightMargin: Const.middleSpace
+            }
+            height: parent.height > dp(48) ? dp(48) : parent.height
+            clip: true
+            orientation: Qt.Horizontal
+            spacing: Const.tinySpace
+            onCountChanged: {
+                pathView.positionViewAtEnd();
+            }
+            onWidthChanged: {
+                pathView.positionViewAtEnd();
+            }
+            model: DirListStore.currentPathList
+            delegate: ListItem.BaseListItem {
+                id: pathItem
+                height: parent.height
+                anchors.left: undefined
+                anchors.right: undefined
+                width: itemRow.width
+                onClicked: {
+                    if (index == 0) {
+                        AppActions.showDir("/");
+                    } else {
+                        var dir = "";
+                        for(var i=1; i<=index; ++i) {
+                            dir += "/";
+                            dir += DirListStore.currentPathList[i];
+                        }
+                        AppActions.showDir(dir);
+                    }
+                }
+                Row {
+                    id: itemRow
+                    height: parent.height
+                    spacing: Const.tinySpace
+                    Label {
+                        anchors.verticalCenter: parent.verticalCenter
+                        style: "subheading"
+                        color:  Theme.isDarkColor(actionBar.backgroundColor)
+                                ? Theme.dark.textColor
+                                : Theme.light.accentColor
+                        text: index == 0 ? qsTr("BNetDisk") : DirListStore.currentPathList[index]
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    Icon {
+                        anchors.verticalCenter: parent.verticalCenter
+                        color: Theme.isDarkColor(actionBar.backgroundColor)
+                               ? Theme.dark.iconColor
+                               : Theme.light.accentColor
+                        name: "navigation/chevron_right"
+                        visible: index != DirListStore.currentPathList.length -1
                     }
                 }
             }
         }
-        View {
-            radius: 2
-            anchors {
-                left: navRow.right
-                leftMargin: Const.largeSpace
-                right: parent.right
-                rightMargin: Const.largeSpace
-            }
-            height: parent.height
-            TextField {
-                id: addrText
-                width: parent.width
-                text: DirListStore.currentPath//"Here/bdisk/file/path"
-                anchors.verticalCenter: parent.verticalCenter
-                onAccepted: {
-                    console.log("=== addrText onAccepted "+text);
-                }
-            }
+        Scrollbar {
+            flickableItem: pathView
         }
     }
 
@@ -202,11 +216,16 @@ Page {
         "file/attachment", "image/music_note", "file/attachment"]
         Column {
             width: parent.width
+//            spacing: Const.tinySpace
+            ListItem.Subheader {
+                text: qsTr("Cloud Storage")
+            }
             Repeater {
                 model: sidebar.nameList.length
                 delegate: ListItem.Standard {
                     text: sidebar.nameList[index]
                     iconName: sidebar.iconList[index]
+//                    elevation: 1
                 }
             }
             ListItem.Divider{}
