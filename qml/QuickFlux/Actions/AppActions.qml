@@ -91,4 +91,8 @@ ActionCreator {
                                    "saveName":saveName
                                });
     }
+
+    function showDownloadPage(stack) {
+        stack.push(Qt.resolvedUrl("../../Pages/DownloadViewPage.qml"))
+    }
 }

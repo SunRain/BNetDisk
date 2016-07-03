@@ -9,7 +9,7 @@ import "../Actions"
 AppListener {
     id: downloadStore
 
-    property string  bibibi
+//    property string  bibibi
 
     property alias downloadingModel: dlDelegate.resumables
 

@@ -34,7 +34,8 @@ Page {
             iconName: "file/cloud_download"
             name: qsTr("Transmission")
             onTriggered: {
-                pageStack.push(Qt.resolvedUrl("DownloadViewPage.qml"))
+//                pageStack.push(Qt.resolvedUrl("DownloadViewPage.qml"))
+                AppActions.showDownloadPage(pageStack);
             }
         },
         Action {
@@ -212,13 +213,13 @@ Page {
 
     Sidebar {
         id: sidebar
+        anchors.bottom: infoBanner.top
         property var nameList: [qsTr("All"), qsTr("Image"), qsTr("Document"), qsTr("Video"),
             qsTr("BT"), qsTr("Audio"), qsTr("Other")]
         property var iconList: ["file/attachment", "image/image", "image/texture", "av/movie",
         "file/attachment", "image/music_note", "file/attachment"]
         Column {
             width: parent.width
-//            spacing: Const.tinySpace
             ListItem.Subheader {
                 text: qsTr("Cloud Storage")
             }
@@ -227,18 +228,72 @@ Page {
                 delegate: ListItem.Standard {
                     text: sidebar.nameList[index]
                     iconName: sidebar.iconList[index]
-//                    elevation: 1
                 }
             }
             ListItem.Divider{}
             ListItem.Standard {
-                text: qsTr("My Share")
-                iconName: "social/share"
+                action: IconButton {
+                    anchors {
+                        left: parent.left
+                        verticalCenter: parent.verticalCenter
+                    }
+                    action: Action {
+                        iconName: "social/share"
+                        onTriggered: {
+                            console.log("===== share icon click")
+                        }
+                    }
+                }
+                content: IconButton {
+                    anchors {
+                        left: parent.left
+                        verticalCenter: parent.verticalCenter
+                    }
+                    action: Action {
+                        iconName: "action/delete"
+                        onTriggered: {
+                            console.log("===== trash icon click")
+                        }
+                    }
+                }
             }
-            ListItem.Divider{}
+        }
+    }
+    View {
+        id: infoBanner
+        width: sidebar.width
+        height: infoColumn.height
+        anchors {
+            left: parent.left
+            bottom: parent.bottom
+        }
+        backgroundColor: style === "default" ? "white" : "#333"
+        Rectangle {
+            width: 1
+            height: parent.height
+            anchors.right: parent.right
+            color: style === "dark" ? Qt.rgba(0.5,0.5,0.5,0.5) : Theme.light.dividerColor
+        }
+        Column {
+            id: infoColumn
+            width: parent.width
+            Rectangle {
+                width: parent.width
+                height: 1
+                color: style === "dark" ? Qt.rgba(0.5,0.5,0.5,0.5) : Theme.light.dividerColor
+            }
             ListItem.Standard {
-                text: "Trash"
-                iconName: "action/delete"
+                width: parent.width
+                text: DownloadStore.downloadingModel.length + " " + qsTr("running task");
+                secondaryItem: IconButton {
+                    anchors.verticalCenter: parent.verticalCenter
+                    action: Action {
+                        iconName: "action/settings"
+                        onTriggered: {
+                            AppActions.showDownloadPage(pageStack);
+                        }
+                    }
+                }
             }
         }
     }
@@ -266,12 +321,6 @@ Page {
         }
         spacing: dp(8)
         model: DirListStore.dirlistModel
-        //TODO hack
-        //call dummy property to initialize DownloadStore, should remove later
-        Component.onCompleted: {
-            DownloadStore.bibibi
-        }
-
         delegate: ListItem.Standard {
             id: dirItem
             property var object: DirListStore.dirlistModel[index] //.get(index)
@@ -287,30 +336,22 @@ Page {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: Const.middleSpace
                 IconButton {
-//                            color: Theme.lightDark(theme.primaryColor,
-//                                                   Theme.dark.iconColor, Theme.dark.iconColor)
                     action: Action {
                         iconName: "file/file_download"
                     }
                     onClicked: {
                         console.log("=== download file");
-                        //TODO unuse param atm
-    //                    AppActions.downloadFile("a", "b", "c");
                         if (!dirItem.isDir) {
                             AppActions.askToSelectDownloadPath(path, fileName);
                         }
                     }
                 }
                 IconButton {
-//                            color: Theme.lightDark(theme.primaryColor,
-//                                                   Theme.dark.iconColor, Theme.dark.iconColor)
                     action: Action {
                         iconName: "social/share"
                     }
                 }
                 IconButton {
-//                            color: Theme.lightDark(theme.primaryColor,
-//                                                   Theme.dark.iconColor, Theme.dark.iconColor)
                     action: Action {
                         iconName: "navigation/more_vert"
                     }
