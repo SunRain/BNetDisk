@@ -11,6 +11,10 @@ public:
 
     Q_INVOKABLE QString fileObjectPathToPath(const QString &path);
     Q_INVOKABLE QString fileObjectPathToFileName(const QString &path);
+
+    Q_INVOKABLE QString sizeToStr(int size);
+
+    Q_INVOKABLE QString formatDate(int date);
 };
 
 #endif // APPLICATIONUTILITY_H

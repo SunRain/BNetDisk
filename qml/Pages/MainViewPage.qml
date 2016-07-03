@@ -214,6 +214,7 @@ Page {
     Sidebar {
         id: sidebar
         anchors.bottom: infoBanner.top
+        width: dp(200)
         property var nameList: [qsTr("All"), qsTr("Image"), qsTr("Document"), qsTr("Video"),
             qsTr("BT"), qsTr("Audio"), qsTr("Other")]
         property var iconList: ["file/attachment", "image/image", "image/texture", "av/movie",
@@ -321,21 +322,31 @@ Page {
         }
         spacing: dp(8)
         model: DirListStore.dirlistModel
-        delegate: ListItem.Standard {
+        delegate: ListItem.Subtitled {
             id: dirItem
             property var object: DirListStore.dirlistModel[index] //.get(index)
             property bool isDir: object[FileObjectKey.keyIsdir] == 1
             property string path: object[FileObjectKey.keyPath]
             property string fileName: AppUtility.fileObjectPathToFileName(path)
+            property string mtime: object[FileObjectKey.keyServerMTime]
             property int category: object[FileObjectKey.keyCategory]
+            property int size: object[FileObjectKey.keySize]
             showDivider: true
             iconName: isDir ? "file/folder" : Utility.categoryToIcon(category)
             text: fileName
+            subText: {
+                var v = isDir ? qsTr("Dir") : AppUtility.sizeToStr(size)
+                v += " - ";
+                v += AppUtility.formatDate(mtime);
+                return v;
+            }
             secondaryItem: Row {
                 height: childrenRect.height
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: Const.middleSpace
                 IconButton {
+                    visible: !dirItem.isDir
+                    enabled: !dirItem.isDir
                     action: Action {
                         iconName: "file/file_download"
                     }
