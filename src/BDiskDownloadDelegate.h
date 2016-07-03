@@ -11,33 +11,50 @@
 
 namespace YADownloader {
 class DLTask;
+class DLTaskInfo;
 }
 class BDiskDownloadDelegate : public QObject
 {
     Q_OBJECT
 
-    Q_PROPERTY(QVariantList resumables READ resumables WRITE setResumables NOTIFY resumablesChanged)
+    Q_PROPERTY(QVariantList tasks READ tasks WRITE setTasks NOTIFY tasksChanged)
+    Q_PROPERTY(QString KeyTaskHash READ KeyTaskHash CONSTANT)
+    Q_PROPERTY(QString KeyTaskObject READ KeyTaskObject CONSTANT)
 public:
     explicit BDiskDownloadDelegate(QObject *parent = 0);
     virtual ~BDiskDownloadDelegate();
 
     Q_INVOKABLE void download(const QString &from, const QString &savePath, const QString &saveName);
-//    Q_INVOKABLE void download(const QString &from, const QString &save);
 
-    QVariantList resumables() const;
+    QVariantList tasks() const;
+
+    QString KeyTaskHash() const;
+    QString KeyTaskObject() const;
 
 signals:
-    void resumablesChanged(const QVariantList &resumables);
+    void tasksChanged(const QVariantList &tasks);
 
 public slots:
-    void setResumables(const QVariantList &resumables);
+    void setTasks(const QVariantList &tasks);
+
+private:
+    ///
+    /// \brief parseDLTaskInfoList
+    /// insert empty KEY_TASK_HASH
+    /// insert KEY_TASK_OBJECT as object in list
+    /// \param list
+    /// \return
+    QVariantList parseDLTaskInfoList(const YADownloader::DLTaskInfoList &list) const;
 
 private:
     BDisOpDownload m_downloadOp;
     YADownloader::DLTaskAccessMgr *m_downloadMgr;
 //    YADownloader::DLTask *m_downloadTask;
     QHash<QString, YADownloader::DLTask*> m_taskHash;
-    QVariantList m_resumables;
+    QHash<QString, YADownloader::DLTaskInfo> m_taskInfoHash;
+    QVariantList m_tasks;
+    //    QVariantList m_runnings;
+
 };
 
 #endif // BDISKDOWNLOADDELEGATE_H
