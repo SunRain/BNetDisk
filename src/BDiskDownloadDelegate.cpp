@@ -11,9 +11,6 @@
 
 #include "BDiskRequest/BDiskCookieJar.h"
 
-const static QString KEY_TASK_HASH("TASK_HASH");
-const static QString KEY_TASK_OBJECT("TASK_OBJECT");
-
 using namespace YADownloader;
 
 BDiskDownloadDelegate::BDiskDownloadDelegate(QObject *parent)
@@ -68,67 +65,69 @@ void BDiskDownloadDelegate::download(const QString &from, const QString &savePat
         if (status == DLTask::TaskStatus::DL_FINISH) {
             m_taskHash.value(uuid)->deleteLater();
             m_taskHash.remove(uuid);
-            m_taskInfoHash.remove(uuid);
-            QVariantList list;
-            foreach (DLTask *t, m_taskHash.values()) {
-                list.append(t->taskInfo().toMap());
+            QStringList idList = m_taskInfoHash.keys();
+            if (idList.contains(uuid)) {
+                m_taskInfoHash.remove(uuid);
+                setTasks(parseDLTaskInfoList(m_taskInfoHash.values()));
             }
-//            setRunnings(list);
+        } else  if (status == DLTask::TaskStatus::DL_STOP) {
+            m_taskHash.value(uuid)->deleteLater();
+            m_taskHash.remove(uuid);
+            QStringList idList = m_taskInfoHash.keys();
+            if (idList.contains(uuid)) {
+                m_taskInfoHash.remove(uuid);
+                setTasks(parseDLTaskInfoList(m_taskInfoHash.values()));
+            }
+        } else  if (status == DLTask::TaskStatus::DL_START) {
+            QStringList idList = m_taskInfoHash.keys();
+            if (idList.contains(uuid)) {
+                DLTaskInfo info = m_taskInfoHash.value(uuid);
+                info.setStatus(DLTaskInfo::TaskStatus::STATUS_RUNNING);
+                m_taskInfoHash.insert(uuid, info);
+            } else {
+                /// tmp QHash to ensure order not changed
+                QHash<QString, YADownloader::DLTaskInfo> hashs;
+                foreach (QString key, m_taskInfoHash.keys()) {
+                    DLTaskInfo info = m_taskInfoHash.value(key);
+                    if (info.hasSameIdentifier(m_taskHash.value(uuid)->taskInfo())) {
+                        hashs.insert(uuid, info);
+                    } else {
+                        hashs.insert(key, info);
+                    }
+                }
+                m_taskInfoHash = hashs;
+            }
+            setTasks(parseDLTaskInfoList(m_taskInfoHash.values()));
         }
     });
     connect(task, &DLTask::taskInfoChanged, [&](const QString &uuid, const DLTaskInfo &info) {
-//        m_taskInfoHash.insert(uuid, info);
-        for(int i=0; i<m_tasks.length(); ++i) {
-            QVariantMap map = m_tasks.at(i).toMap();
-            if (map.value(KEY_TASK_HASH).toString() == uuid) {
-                QVariantMap mm;
-                mm.insert(KEY_TASK_OBJECT, info.toMap());
-                mm.insert(KEY_TASK_HASH, uuid);
-                m_tasks.replace(i, mm);
-                break;
-            } else {
-                DLTaskInfo info = DLTaskInfo::fromMap(map);
-                if (info.isEmpty())
-                    continue;
-
-
+        QStringList idList = m_taskInfoHash.keys();
+        if (idList.contains(uuid)) {
+            m_taskInfoHash.insert(uuid, info);
+        } else {
+            /// tmp QHash to ensure order not changed
+            QHash<QString, YADownloader::DLTaskInfo> hashs;
+            foreach (QString key, m_taskInfoHash.keys()) {
+                DLTaskInfo ii = m_taskInfoHash.value(key);
+                if (ii.hasSameIdentifier(info)) {
+                    hashs.insert(uuid, info);
+                } else {
+                    hashs.insert(key, info);
+                }
             }
+            m_taskInfoHash = hashs;
         }
+        setTasks(parseDLTaskInfoList(m_taskInfoHash.values()));
     });
 
-
     m_taskHash.insert(task->uuid(), task);
-    m_taskInfoHash.insert(task->uuid(), task->taskInfo());
+//    m_taskInfoHash.insert(task->uuid(), task->taskInfo());
     task->start();
 }
-
-//QVariantList BDiskDownloadDelegate::runnings() const
-//{
-//    return m_runnings;
-//}
-
-//void BDiskDownloadDelegate::setRunnings(const QVariantList &runnings)
-//{
-//    if (m_runnings == runnings)
-//        return;
-
-//    m_runnings = runnings;
-//    emit runningsChanged(runnings);
-//}
 
 QVariantList BDiskDownloadDelegate::tasks() const
 {
     return m_tasks;
-}
-
-QString BDiskDownloadDelegate::KeyTaskHash() const
-{
-    return KEY_TASK_HASH;
-}
-
-QString BDiskDownloadDelegate::KeyTaskObject() const
-{
-    return KEY_TASK_OBJECT;
 }
 
 void BDiskDownloadDelegate::setTasks(const QVariantList &tasks)
@@ -140,15 +139,20 @@ void BDiskDownloadDelegate::setTasks(const QVariantList &tasks)
     emit tasksChanged(tasks);
 }
 
-QVariantList BDiskDownloadDelegate::parseDLTaskInfoList(const DLTaskInfoList &list) const
+///TODO refactor for const function
+QVariantList BDiskDownloadDelegate::parseDLTaskInfoList(const DLTaskInfoList &list)
 {
     QVariantList ll;
     foreach (DLTaskInfo info, list) {
-        QVariantMap map;
-        map.insert(KEY_TASK_OBJECT, info.toMap());
-        QString key = info.requestUrl() + info.filePath() + QString::number(info.totalSize());
-        map.insert(KEY_TASK_HASH, key);
-        ll.append(map);
+        if (info.identifier().isEmpty()) {
+            info.setIdentifier(info.requestUrl()
+                               + info.filePath()
+                               + QString::number(info.totalSize()));
+        }
+        m_taskInfoHash.insert(info.identifier(), info);
+    }
+    foreach (DLTaskInfo info, m_taskInfoHash.values()) {
+        ll.append(info.toMap());
     }
     return ll;
 }

@@ -59,6 +59,7 @@ Page {
             delegate: ListItem.BaseListItem {
                 id: dlItem
                 property var object: DownloadStore.downloadingModel[index]
+                property var hash: object[DownloaderObjectKey.KeyIdentifier]
                 property string path: object[DownloaderObjectKey.keyFilePath]
                 property string fileName: AppUtility.fileObjectPathToFileName(path)
                 property int totalSize: object[DownloaderObjectKey.keyTotalSize];
@@ -66,6 +67,13 @@ Page {
                 width: parent.width
                 height: dlItemColumn.height + Const.middleSpace
                 showDivider: true
+                Component.onCompleted: {
+                    for (var prop in object) {
+                        console.log("Object item:", prop, "=", topobject[prop])
+                    }
+                    console.log("==== hash ["+hash+"] object ["+object+"]");
+                }
+
                 IconButton {
                     id: dlItemIcon
                     size: parent.height * 0.5

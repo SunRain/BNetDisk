@@ -18,8 +18,6 @@ class BDiskDownloadDelegate : public QObject
     Q_OBJECT
 
     Q_PROPERTY(QVariantList tasks READ tasks WRITE setTasks NOTIFY tasksChanged)
-    Q_PROPERTY(QString KeyTaskHash READ KeyTaskHash CONSTANT)
-    Q_PROPERTY(QString KeyTaskObject READ KeyTaskObject CONSTANT)
 public:
     explicit BDiskDownloadDelegate(QObject *parent = 0);
     virtual ~BDiskDownloadDelegate();
@@ -27,9 +25,6 @@ public:
     Q_INVOKABLE void download(const QString &from, const QString &savePath, const QString &saveName);
 
     QVariantList tasks() const;
-
-    QString KeyTaskHash() const;
-    QString KeyTaskObject() const;
 
 signals:
     void tasksChanged(const QVariantList &tasks);
@@ -44,7 +39,7 @@ private:
     /// insert KEY_TASK_OBJECT as object in list
     /// \param list
     /// \return
-    QVariantList parseDLTaskInfoList(const YADownloader::DLTaskInfoList &list) const;
+    QVariantList parseDLTaskInfoList(const YADownloader::DLTaskInfoList &list);
 
 private:
     BDisOpDownload m_downloadOp;

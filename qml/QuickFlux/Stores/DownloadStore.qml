@@ -9,9 +9,7 @@ import "../Actions"
 AppListener {
     id: downloadStore
 
-//    property string  bibibi
-
-    property alias downloadingModel: dlDelegate.resumables
+    property alias downloadingModel: dlDelegate.tasks
 
     BDiskDownloadDelegate {
         id: dlDelegate
