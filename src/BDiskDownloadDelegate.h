@@ -9,6 +9,7 @@
 
 #include "BDiskRequest/BDiskOperationRequest.h"
 
+class QTimer;
 namespace YADownloader {
 class DLTask;
 class DLTaskInfo;
@@ -44,10 +45,14 @@ private:
 private:
     BDisOpDownload m_downloadOp;
     YADownloader::DLTaskAccessMgr *m_downloadMgr;
+    QTimer *m_timer;
 //    YADownloader::DLTask *m_downloadTask;
     QHash<QString, YADownloader::DLTask*> m_taskHash;
     QHash<QString, YADownloader::DLTaskInfo> m_taskInfoHash;
+    QHash<QString, int> m_taskStartTimeCntHash;
+
     QVariantList m_tasks;
+    qint64 m_timerCount;
     //    QVariantList m_runnings;
 
 };

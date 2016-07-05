@@ -3,6 +3,7 @@
 #include <QCoreApplication>
 #include <QDebug>
 #include <QVariantList>
+#include <QTimer>
 
 #include <QNetworkCookie>
 
@@ -11,12 +12,39 @@
 
 #include "BDiskRequest/BDiskCookieJar.h"
 
+#include "BDiskEvent.h"
+
 using namespace YADownloader;
 
 BDiskDownloadDelegate::BDiskDownloadDelegate(QObject *parent)
     : QObject(parent)
     , m_downloadMgr(new DLTaskAccessMgr(this))
+    , m_timer(new QTimer(this))
+    , m_timerCount(0)
 {
+    m_timer->setInterval(1000);
+    m_timer->setSingleShot(false);
+    connect(m_timer, &QTimer::timeout, [&]{
+        m_timerCount++;
+        QStringList cntHashKeys = m_taskStartTimeCntHash.keys();
+        foreach (DLTask *task, m_taskHash) {
+            QString key = task->uuid();
+            if (!cntHashKeys.contains(key))
+                continue;
+            int startOffset = m_taskStartTimeCntHash.value(key);
+            int elapse = m_timerCount - startOffset;
+            int fSize = task->bytesFileSize();
+            int bd = task->bytesDownloaded();
+//            int boffset = task->bytesStartOffest();
+            int br = task->bytesReceived();
+
+            int dlSpeed = br/elapse;
+            float dlPercent = (float)bd/(float)fSize;
+            BDiskEvent::instance()->dispatchDownloadProgress(key,
+                                                             QString::number(dlSpeed),
+                                                             QString::number(dlPercent));
+        }
+    });
 
     connect(m_downloadMgr, &DLTaskAccessMgr::resumablesChanged, [&](const DLTaskInfoList &list) {
 //        setTasks(parseDLTaskInfoList(list));
@@ -27,11 +55,18 @@ BDiskDownloadDelegate::BDiskDownloadDelegate(QObject *parent)
 //    setTasks(parseDLTaskInfoList(m_downloadMgr->resumables()));
     parseDLTaskInfoList(m_downloadMgr->resumables());
     setTasks(convertTaskInfoHash());
+    m_timer->start();
 }
 
 BDiskDownloadDelegate::~BDiskDownloadDelegate()
 {
     qDebug()<<Q_FUNC_INFO<<"==============";
+
+    if (m_timer->isActive())
+        m_timer->stop();
+    m_timer->deleteLater();
+    m_timer = nullptr;
+
     foreach (DLTask *task, m_taskHash.values()) {
         task->abort();
     }
@@ -72,6 +107,7 @@ void BDiskDownloadDelegate::download(const QString &from, const QString &savePat
             QStringList idList = m_taskInfoHash.keys();
             if (idList.contains(uuid)) {
                 m_taskInfoHash.remove(uuid);
+                m_taskStartTimeCntHash.remove(uuid);
 //                setTasks(parseDLTaskInfoList(m_taskInfoHash.values()));
                 setTasks(convertTaskInfoHash());
             }
@@ -81,6 +117,7 @@ void BDiskDownloadDelegate::download(const QString &from, const QString &savePat
             QStringList idList = m_taskInfoHash.keys();
             if (idList.contains(uuid)) {
                 m_taskInfoHash.remove(uuid);
+                m_taskStartTimeCntHash.remove(uuid);
 //                setTasks(parseDLTaskInfoList(m_taskInfoHash.values()));
                 setTasks(convertTaskInfoHash());
             }
@@ -103,6 +140,7 @@ void BDiskDownloadDelegate::download(const QString &from, const QString &savePat
                 }
                 m_taskInfoHash = hashs;
             }
+            m_taskStartTimeCntHash.insert(uuid, m_timerCount);
 //            setTasks(parseDLTaskInfoList(m_taskInfoHash.values()));
             setTasks(convertTaskInfoHash());
         }
