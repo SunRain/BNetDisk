@@ -50,13 +50,13 @@ int main(int argc, char *argv[])
     ctx->setContextProperty ("AppUtility", appUtility.data ());
 
     QObject::connect(login.data(), &BDiskLogin::loginSuccess, [&](){
-        engine.load(QUrl(QStringLiteral("main.qml")));
+        engine.load(QUrl(QStringLiteral("qrc:/main.qml")));
     });
     QObject::connect(login.data(), &BDiskLogin::loginByCookieSuccess, [&](){
-        engine.load(QUrl(QStringLiteral("main.qml")));
+        engine.load(QUrl(QStringLiteral("qrc:/main.qml")));
     });
     QObject::connect(login.data(), &BDiskLogin::logouted, [&]() {
-        QQmlComponent cmp(&engine, QStringLiteral("Login/main.qml"));
+        QQmlComponent cmp(&engine, QUrl(QStringLiteral("qrc:/Login/main.qml")));
         QObject *obj = cmp.beginCreate(ctx);
         obj->setProperty("st", "ShowLoginView");
         cmp.completeCreate();
@@ -80,8 +80,8 @@ int main(int argc, char *argv[])
 //    timer.start(1000*10);
 
 
-//    engine.load(QUrl(QStringLiteral("qrc:/Login/main.qml")));
-    engine.load(QUrl(QStringLiteral("Login/main.qml")));
+    engine.load(QUrl(QStringLiteral("qrc:/Login/main.qml")));
+//    engine.load(QUrl(QStringLiteral("Login/main.qml")));
 
     return app.data()->exec();
 }
