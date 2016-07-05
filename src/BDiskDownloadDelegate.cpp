@@ -19,10 +19,14 @@ BDiskDownloadDelegate::BDiskDownloadDelegate(QObject *parent)
 {
 
     connect(m_downloadMgr, &DLTaskAccessMgr::resumablesChanged, [&](const DLTaskInfoList &list) {
-        setTasks(parseDLTaskInfoList(list));
+//        setTasks(parseDLTaskInfoList(list));
+        parseDLTaskInfoList(list);
+        setTasks(convertTaskInfoHash());
     });
 
-    setTasks(parseDLTaskInfoList(m_downloadMgr->resumables()));
+//    setTasks(parseDLTaskInfoList(m_downloadMgr->resumables()));
+    parseDLTaskInfoList(list);
+    setTasks(convertTaskInfoHash());
 }
 
 BDiskDownloadDelegate::~BDiskDownloadDelegate()
@@ -68,7 +72,8 @@ void BDiskDownloadDelegate::download(const QString &from, const QString &savePat
             QStringList idList = m_taskInfoHash.keys();
             if (idList.contains(uuid)) {
                 m_taskInfoHash.remove(uuid);
-                setTasks(parseDLTaskInfoList(m_taskInfoHash.values()));
+//                setTasks(parseDLTaskInfoList(m_taskInfoHash.values()));
+                setTasks(convertTaskInfoHash());
             }
         } else  if (status == DLTask::TaskStatus::DL_STOP) {
             m_taskHash.value(uuid)->deleteLater();
@@ -76,7 +81,8 @@ void BDiskDownloadDelegate::download(const QString &from, const QString &savePat
             QStringList idList = m_taskInfoHash.keys();
             if (idList.contains(uuid)) {
                 m_taskInfoHash.remove(uuid);
-                setTasks(parseDLTaskInfoList(m_taskInfoHash.values()));
+//                setTasks(parseDLTaskInfoList(m_taskInfoHash.values()));
+                setTasks(convertTaskInfoHash());
             }
         } else  if (status == DLTask::TaskStatus::DL_START) {
             QStringList idList = m_taskInfoHash.keys();
@@ -97,7 +103,8 @@ void BDiskDownloadDelegate::download(const QString &from, const QString &savePat
                 }
                 m_taskInfoHash = hashs;
             }
-            setTasks(parseDLTaskInfoList(m_taskInfoHash.values()));
+//            setTasks(parseDLTaskInfoList(m_taskInfoHash.values()));
+            setTasks(convertTaskInfoHash());
         }
     });
     connect(task, &DLTask::taskInfoChanged, [&](const QString &uuid, const DLTaskInfo &info) {
@@ -117,7 +124,8 @@ void BDiskDownloadDelegate::download(const QString &from, const QString &savePat
             }
             m_taskInfoHash = hashs;
         }
-        setTasks(parseDLTaskInfoList(m_taskInfoHash.values()));
+//        setTasks(parseDLTaskInfoList(m_taskInfoHash.values()));
+        setTasks(convertTaskInfoHash());
     });
 
     m_taskHash.insert(task->uuid(), task);
@@ -139,10 +147,8 @@ void BDiskDownloadDelegate::setTasks(const QVariantList &tasks)
     emit tasksChanged(tasks);
 }
 
-///TODO refactor for const function
-QVariantList BDiskDownloadDelegate::parseDLTaskInfoList(const DLTaskInfoList &list)
+void BDiskDownloadDelegate::parseDLTaskInfoList(const DLTaskInfoList &list)
 {
-    QVariantList ll;
     foreach (DLTaskInfo info, list) {
         if (info.identifier().isEmpty()) {
             info.setIdentifier(info.requestUrl()
@@ -151,6 +157,11 @@ QVariantList BDiskDownloadDelegate::parseDLTaskInfoList(const DLTaskInfoList &li
         }
         m_taskInfoHash.insert(info.identifier(), info);
     }
+}
+
+QVariantList BDiskDownloadDelegate::convertTaskInfoHash()
+{
+    QVariantList ll;
     foreach (DLTaskInfo info, m_taskInfoHash.values()) {
         ll.append(info.toMap());
     }

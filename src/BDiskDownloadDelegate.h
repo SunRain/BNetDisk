@@ -35,11 +35,11 @@ public slots:
 private:
     ///
     /// \brief parseDLTaskInfoList
-    /// insert empty KEY_TASK_HASH
-    /// insert KEY_TASK_OBJECT as object in list
+    /// Parse DLTaskInfoList and insert to m_taskInfoHash
     /// \param list
-    /// \return
-    QVariantList parseDLTaskInfoList(const YADownloader::DLTaskInfoList &list);
+    ///
+    void parseDLTaskInfoList(const YADownloader::DLTaskInfoList &list);
+    QVariantList convertTaskInfoHash();
 
 private:
     BDisOpDownload m_downloadOp;
