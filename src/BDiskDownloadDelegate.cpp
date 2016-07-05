@@ -25,7 +25,7 @@ BDiskDownloadDelegate::BDiskDownloadDelegate(QObject *parent)
     });
 
 //    setTasks(parseDLTaskInfoList(m_downloadMgr->resumables()));
-    parseDLTaskInfoList(list);
+    parseDLTaskInfoList(m_downloadMgr->resumables());
     setTasks(convertTaskInfoHash());
 }
 
