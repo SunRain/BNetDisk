@@ -125,7 +125,7 @@ void BDiskDownloadDelegate::download(const QString &from, const QString &savePat
             m_taskInfoHash = hashs;
         }
 //        setTasks(parseDLTaskInfoList(m_taskInfoHash.values()));
-        setTasks(convertTaskInfoHash());
+//        setTasks(convertTaskInfoHash());
     });
 
     m_taskHash.insert(task->uuid(), task);
@@ -143,6 +143,7 @@ void BDiskDownloadDelegate::setTasks(const QVariantList &tasks)
     if (m_tasks == tasks)
         return;
 
+    qDebug()<<Q_FUNC_INFO<<" tasks changed ";
     m_tasks = tasks;
     emit tasksChanged(tasks);
 }
