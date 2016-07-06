@@ -3,17 +3,51 @@
 
 #include <QObject>
 #include <QHash>
+#include <QSharedDataPointer>
+#include <QMutex>
 
 #include "DLTaskAccessMgr.h"
-//#include "DLTask.h"
 
 #include "BDiskRequest/BDiskOperationRequest.h"
 
-class QTimer;
 namespace YADownloader {
 class DLTask;
 class DLTaskInfo;
 }
+
+class BDiskDownloadDelegateNodePriv;
+class BDiskDownloadDelegateNode
+{
+public:
+    BDiskDownloadDelegateNode();
+    BDiskDownloadDelegateNode(const BDiskDownloadDelegateNode &other);
+    virtual ~BDiskDownloadDelegateNode();
+
+    bool operator ==(const BDiskDownloadDelegateNode &other) const;
+    bool operator !=(const BDiskDownloadDelegateNode &other) const;
+    BDiskDownloadDelegateNode &operator =(const BDiskDownloadDelegateNode &other);
+
+    YADownloader::DLTask *task() const;
+    YADownloader::DLTaskInfo placeholderTaskInfo() const;
+
+    QString identifier() const;
+
+    qint64 elapsedTimeOffset() const;
+
+    void setTask(YADownloader::DLTask *task);
+
+    void setPlaceholderTaskInfo(const YADownloader::DLTaskInfo &info);
+
+    void setIdentifier(const QString &hash);
+
+    void setElapsedTimeOffset(qint64 offset);
+
+private:
+    YADownloader::DLTask *m_task;
+    QSharedDataPointer<BDiskDownloadDelegateNodePriv> d;
+};
+
+class QTimer;
 class BDiskDownloadDelegate : public QObject
 {
     Q_OBJECT
@@ -46,10 +80,12 @@ private:
     BDisOpDownload m_downloadOp;
     YADownloader::DLTaskAccessMgr *m_downloadMgr;
     QTimer *m_timer;
+    QMutex m_locker;
 //    YADownloader::DLTask *m_downloadTask;
-    QHash<QString, YADownloader::DLTask*> m_taskHash;
-    QHash<QString, YADownloader::DLTaskInfo> m_taskInfoHash;
-    QHash<QString, int> m_taskStartTimeCntHash;
+//    QHash<QString, YADownloader::DLTask*> m_taskHash;
+//    QHash<QString, YADownloader::DLTaskInfo> m_taskInfoHash;
+//    QHash<QString, int> m_taskStartTimeCntHash;
+    QHash<QString, BDiskDownloadDelegateNode> m_nodeHash;
 
     QVariantList m_tasks;
     qint64 m_timerCount;
