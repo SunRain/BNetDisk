@@ -13,7 +13,7 @@
 #include "BDiskDirListDelegate.h"
 #include "BDiskDownloadDelegate.h"
 #include "ApplicationUtility.h"
-
+#include "BDiskEvent.h"
 
 #include "DLRequest.h"
 #include "DLTransmissionDatabaseKeys.h"
@@ -48,6 +48,7 @@ int main(int argc, char *argv[])
     QQmlContext *ctx = engine.rootContext ();
     ctx->setContextProperty ("LoginProvider", login.data());
     ctx->setContextProperty ("AppUtility", appUtility.data ());
+    ctx->setContextProperty ("BDiskEvent", BDiskEvent::instance());
 
     QObject::connect(login.data(), &BDiskLogin::loginSuccess, [&](){
         engine.load(QUrl(QStringLiteral("qrc:/main.qml")));

@@ -59,19 +59,31 @@ Page {
             delegate: ListItem.BaseListItem {
                 id: dlItem
                 property var object: DownloadStore.downloadingModel[index]
-                property var hash: object[DownloaderObjectKey.KeyIdentifier]
+                property var uuid: object[DownloaderObjectKey.KeyIdentifier]
                 property string path: object[DownloaderObjectKey.keyFilePath]
                 property string fileName: AppUtility.fileObjectPathToFileName(path)
                 property int totalSize: object[DownloaderObjectKey.keyTotalSize];
                 property int readySize: object[DownloaderObjectKey.keyReadySize];
+                property string speed: ""
+                property string percent: ""
                 width: parent.width
                 height: dlItemColumn.height + Const.middleSpace
                 showDivider: true
                 Component.onCompleted: {
                     for (var prop in object) {
-                        console.log("Object item:", prop, "=", topobject[prop])
+                        console.log("Object item:", prop, "=", object[prop])
                     }
-                    console.log("==== hash ["+hash+"] object ["+object+"]");
+                    console.log("==== uuid ["+uuid+"] object ["+object+"]");
+                }
+                Connections {
+                    target: BDiskEvent
+                    onDownloadProgress: { //const QString &hash, const QString &speed, const QString &percent
+                        if (hash == uuid) {
+                            console.log("======= speed "+speed +" percent " +percent);
+                            dlItem.speed = speed;
+                            dlItem.percent = percent;
+                        }
+                    }
                 }
 
                 IconButton {
@@ -126,7 +138,7 @@ Page {
                         elide: Text.ElideRight
                         wrapMode: Text.WordWrap
                         style: "body1"
-                        text: "downloading info2"
+                        text: dlItem.speed + " " + dlItem.percent//"downloading info2"
                     }
                 }
             }
