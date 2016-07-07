@@ -78,7 +78,7 @@ void BDiskEvent::dispatchDownloadProgress(const QString &hash, const QString &sp
 bool BDiskEvent::event(QEvent *event)
 {
     if (event->type() == EVENT_DL_TASKINFO) {
-        qDebug()<<Q_FUNC_INFO<<"========== EVENT_DL_TASKINFO";
+//        qDebug()<<Q_FUNC_INFO<<"========== EVENT_DL_TASKINFO";
         DownloadProgressEvent *e = (DownloadProgressEvent *)event;
         QString hash = e->uuid();
         QString speed = e->speed();

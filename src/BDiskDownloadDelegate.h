@@ -86,6 +86,7 @@ private:
 //    QHash<QString, YADownloader::DLTaskInfo> m_taskInfoHash;
 //    QHash<QString, int> m_taskStartTimeCntHash;
     QHash<QString, BDiskDownloadDelegateNode> m_nodeHash;
+    QHash<QString, BDiskDownloadDelegateNode> m_tmpNode;
 
     QVariantList m_tasks;
     qint64 m_timerCount;
