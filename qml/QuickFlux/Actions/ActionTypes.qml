@@ -18,6 +18,8 @@ KeyTable {
     property string askToSelectDownloadPath
     property string downloadFile
 
+    property string stopTask
+    property string startTask
 //    property string openFileDialog
 
 

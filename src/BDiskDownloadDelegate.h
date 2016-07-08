@@ -48,6 +48,7 @@ private:
 };
 
 class QTimer;
+class BDiskEvent;
 class BDiskDownloadDelegate : public QObject
 {
     Q_OBJECT
@@ -58,6 +59,7 @@ public:
     virtual ~BDiskDownloadDelegate();
 
     Q_INVOKABLE void download(const QString &from, const QString &savePath, const QString &saveName);
+    Q_INVOKABLE bool taskRunning(const QString &hash);
 
     QVariantList tasks() const;
 
@@ -65,6 +67,10 @@ signals:
     void tasksChanged(const QVariantList &tasks);
 
 public slots:
+    void stop(const QString &hash);
+    void resume(const QString &hash);
+
+private slots:
     void setTasks(const QVariantList &tasks);
 
 private:
@@ -80,18 +86,13 @@ private:
     BDisOpDownload m_downloadOp;
     YADownloader::DLTaskAccessMgr *m_downloadMgr;
     QTimer *m_timer;
+    BDiskEvent *m_diskEvent;
     QMutex m_locker;
-//    YADownloader::DLTask *m_downloadTask;
-//    QHash<QString, YADownloader::DLTask*> m_taskHash;
-//    QHash<QString, YADownloader::DLTaskInfo> m_taskInfoHash;
-//    QHash<QString, int> m_taskStartTimeCntHash;
     QHash<QString, BDiskDownloadDelegateNode> m_nodeHash;
     QHash<QString, BDiskDownloadDelegateNode> m_tmpNode;
 
     QVariantList m_tasks;
     qint64 m_timerCount;
-    //    QVariantList m_runnings;
-
 };
 
 #endif // BDISKDOWNLOADDELEGATE_H

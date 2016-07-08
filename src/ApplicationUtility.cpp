@@ -58,3 +58,26 @@ QString ApplicationUtility::formatDate(int date)
         return QString::number(date);
     return dt.toString("yyyy/MM/dd HH:mm");
 }
+
+QString ApplicationUtility::bytesPerSecond(int value)
+{
+    if (value <= 0) {
+        return QString("0 KB/s");
+    }
+    if (value < 1024)
+        return QString("%1 B/s").arg(value);
+    if (value >= 1024 && value < 1024*1024)
+        return QString("%1 KB/s").arg(((double)value)/1024, 0, 'f', 2);
+    if (value >= 1024*1024 && value < 1024*1024*1024)
+        return QString("%1 MB/s").arg(((double)value)/1024/1024, 0, 'f', 2);
+    return QString("%1 GB/s").arg(((double)value)/1024/1024/1024, 0, 'f', 2);
+}
+
+QString ApplicationUtility::downloadPercent(int ready, int total)
+{
+    if (ready <= 0 || total <= 0)
+        return QString("0%");
+    if (ready >= total)
+        return QString("100%");
+    return QString("%1%").arg(((double)ready)/((double)total)*100, 0, 'f', 2);
+}

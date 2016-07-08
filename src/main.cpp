@@ -42,13 +42,16 @@ int main(int argc, char *argv[])
              YADownloader::DLTransmissionDatabaseKeysName::qmlSingleton);
 
 
+    qmlRegisterSingletonType<BDiskEvent>("com.sunrain.bnetdisk.qmlplugin",
+                                         1, 0, "BDiskEvent", BDiskEvent::qmlSingleton);
+
     QQmlApplicationEngine engine;
     engine.addImportPath("qrc:///");
 
     QQmlContext *ctx = engine.rootContext ();
     ctx->setContextProperty ("LoginProvider", login.data());
     ctx->setContextProperty ("AppUtility", appUtility.data ());
-    ctx->setContextProperty ("BDiskEvent", BDiskEvent::instance());
+//    ctx->setContextProperty ("BDiskEvent", BDiskEvent::instance());
 
     QObject::connect(login.data(), &BDiskLogin::loginSuccess, [&](){
         engine.load(QUrl(QStringLiteral("main.qml")));

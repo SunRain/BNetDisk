@@ -95,4 +95,11 @@ ActionCreator {
     function showDownloadPage(stack) {
         stack.push(Qt.resolvedUrl("../../Pages/DownloadViewPage.qml"))
     }
+
+    function stopTask(hash) {
+        AppDispatcher.dispatch(ActionTypes.stopTask, {"hash":hash});
+    }
+    function startTask(hash) {
+        AppDispatcher.dispatch(ActionTypes.startTask, {"hash":hash});
+    }
 }

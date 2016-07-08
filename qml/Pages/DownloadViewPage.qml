@@ -64,8 +64,9 @@ Page {
                 property string fileName: AppUtility.fileObjectPathToFileName(path)
                 property int totalSize: object[DownloaderObjectKey.keyTotalSize];
                 property int readySize: object[DownloaderObjectKey.keyReadySize];
-                property string speed: ""
-                property string percent: ""
+                property string speed: AppUtility.bytesPerSecond(0);
+                property string percent: AppUtility.downloadPercent(readySize, totalSize);
+                property bool taskRunning: DownloadStore.taskRunning(uuid)
                 width: parent.width
                 height: dlItemColumn.height + Const.middleSpace
                 showDivider: true
@@ -77,11 +78,22 @@ Page {
                 }
                 Connections {
                     target: BDiskEvent
-                    onDownloadProgress: { //const QString &hash, const QString &speed, const QString &percent
+                    onDownloadProgress: { //hash, int bytesPerSecond, int bytesDownloaded
                         if (hash == uuid) {
-                            console.log("======= speed "+speed +" percent " +percent);
-                            dlItem.speed = speed;
-                            dlItem.percent = percent;
+                            dlItem.percent = AppUtility.downloadPercent(bytesDownloaded, totalSize);
+                            dlItem.readySize = bytesDownloaded;
+                            dlItem.speed = AppUtility.bytesPerSecond(bytesPerSecond);
+
+                        }
+                    }
+                    onTaskStatusChanged: { //const QString &hash, BDiskEvent::TaskStatus status)
+                        if (hash == uuid) {
+                            console.log('======== onTaskStatusChanged '+status);
+                            if (status == BDiskEvent.STATUS_RUNNING) {
+                                dlItem.taskRunning = true;
+                            } else {
+                                dlItem.taskRunning = false;
+                            }
                         }
                     }
                 }
@@ -94,7 +106,14 @@ Page {
                         verticalCenter: parent.verticalCenter
                     }
                     action: Action {
-                        iconName: "av/play_circle_filled"
+                        iconName: dlItem.taskRunning ? "av/pause_circle_filled" : "av/play_circle_filled"
+                    }
+                    onClicked: {
+                        if (dlItem.taskRunning) {
+                            AppActions.stopTask(dlItem.uuid);
+                        } else {
+                            AppActions.startTask(dlItem.uuid);
+                        }
                     }
                 }
                 Column {
@@ -114,13 +133,14 @@ Page {
                         text: fileName
                     }
                     ProgressBar {
+                        id: dlProgressBar
                         width: parent.width
                         color: theme.accentColor
                         maximumValue: 100
                         minimumValue: 0
-                        value: 50
+                        value: dlItem.readySize/dlItem.totalSize *100
                         NumberAnimation on value {
-                            to: value
+                            to: dlProgressBar.value
                             duration: 100
                         }
                     }
@@ -130,7 +150,9 @@ Page {
                         elide: Text.ElideRight
                         wrapMode: Text.WordWrap
                         style: "body1"
-                        text: "downloading info"
+                        text: dlItem.taskRunning
+                              ? qsTr("Downloading")+" - "+dlItem.percent+" - "+"runing time str"
+                              : qsTr("Paused")+" · "+dlItem.percent
                     }
                     Label {
                         width: parent.width
@@ -138,7 +160,11 @@ Page {
                         elide: Text.ElideRight
                         wrapMode: Text.WordWrap
                         style: "body1"
-                        text: dlItem.speed + " " + dlItem.percent//"downloading info2"
+                        text: AppUtility.sizeToStr(dlItem.readySize)
+                              +"/"
+                              +AppUtility.sizeToStr(dlItem.totalSize)
+                              +" - "
+                              +dlItem.speed+" ↓"
                     }
                 }
             }
