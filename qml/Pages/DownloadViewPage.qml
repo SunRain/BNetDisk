@@ -71,13 +71,16 @@ Page {
                 height: dlItemColumn.height + Const.middleSpace
                 showDivider: true
                 Component.onCompleted: {
+                    console.log('.......................................')
                     for (var prop in object) {
                         console.log("Object item:", prop, "=", object[prop])
                     }
                     console.log("==== uuid ["+uuid+"] object ["+object+"]");
+                    console.log("========== BDiskEvent.STATUS_RUNNING "+BDiskEvent.STATUS_RUNNING
+                                + "   BDiskEvent.STATUS_STOP "+BDiskEvent.STATUS_STOP)
                 }
                 Connections {
-                    target: BDiskEvent
+                    target: DiskEvent
                     onDownloadProgress: { //hash, int bytesPerSecond, int bytesDownloaded
                         if (hash == uuid) {
                             dlItem.percent = AppUtility.downloadPercent(bytesDownloaded, totalSize);

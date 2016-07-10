@@ -86,7 +86,7 @@ private:
     BDisOpDownload m_downloadOp;
     YADownloader::DLTaskAccessMgr *m_downloadMgr;
     QTimer *m_timer;
-    BDiskEvent *m_diskEvent;
+//    BDiskEvent *m_diskEvent;
     QMutex m_locker;
     QHash<QString, BDiskDownloadDelegateNode> m_nodeHash;
     QHash<QString, BDiskDownloadDelegateNode> m_tmpNode;

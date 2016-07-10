@@ -71,6 +71,9 @@ public:
         , m_locker(QMutex::Recursive)
     {
     }
+    virtual ~EventDispatch() {
+    }
+
     void dispatchDownloadProgress(const QString &hash, int bytesPerSecond, int bytesDownloaded)
     {
         m_locker.lock();
@@ -92,7 +95,6 @@ BDiskEvent::BDiskEvent(QObject *parent)
     : QObject(parent)
     , m_dispatch(new EventDispatch(this))
 {
-
 }
 
 BDiskEvent::~BDiskEvent()

@@ -42,8 +42,13 @@ int main(int argc, char *argv[])
              YADownloader::DLTransmissionDatabaseKeysName::qmlSingleton);
 
 
-    qmlRegisterSingletonType<BDiskEvent>("com.sunrain.bnetdisk.qmlplugin",
-                                         1, 0, "BDiskEvent", BDiskEvent::qmlSingleton);
+    BDiskEvent *be = BDiskEvent::instance();
+    /// QObject singleton type instances are constructed and owned by the QQmlEngine,
+    /// and will be destroyed when the engine is destroyed.
+//    qmlRegisterSingletonType<BDiskEvent>("com.sunrain.bnetdisk.qmlplugin",
+//                                         1, 0, "BDiskEvent", BDiskEvent::qmlSingleton);
+    qmlRegisterUncreatableType<BDiskEvent>("com.sunrain.bnetdisk.qmlplugin",
+                                           1, 0, "BDiskEvent", "UncreatableType BDiskEvent");
 
     QQmlApplicationEngine engine;
     engine.addImportPath("qrc:///");
@@ -51,7 +56,7 @@ int main(int argc, char *argv[])
     QQmlContext *ctx = engine.rootContext ();
     ctx->setContextProperty ("LoginProvider", login.data());
     ctx->setContextProperty ("AppUtility", appUtility.data ());
-//    ctx->setContextProperty ("BDiskEvent", BDiskEvent::instance());
+    ctx->setContextProperty ("DiskEvent", be);
 
     QObject::connect(login.data(), &BDiskLogin::loginSuccess, [&](){
         engine.load(QUrl(QStringLiteral("main.qml")));
