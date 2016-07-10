@@ -32,6 +32,8 @@ public:
     /// \return
     ///
     Q_INVOKABLE QString downloadPercent(int ready, int total);
+
+    Q_INVOKABLE QString milliSecsToStr(qint64 millseconds);
 };
 
 #endif // APPLICATIONUTILITY_H

@@ -93,6 +93,7 @@ private:
 
     QVariantList m_tasks;
     qint64 m_timerCount;
+    qint64 m_timerStartedMSecsSinceEpoch;
 };
 
 #endif // BDISKDOWNLOADDELEGATE_H

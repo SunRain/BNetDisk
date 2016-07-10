@@ -6,6 +6,7 @@
 #include <QTimer>
 #include <QSharedData>
 #include <QFileInfo>
+#include <QDateTime>
 
 #include <QNetworkCookie>
 
@@ -135,6 +136,10 @@ BDiskDownloadDelegate::BDiskDownloadDelegate(QObject *parent)
             }
             int elapsedOffset = node.elapsedTimeOffset();
             int elapse = m_timerCount - elapsedOffset;
+            qint64 runOffset = m_timerStartedMSecsSinceEpoch + elapsedOffset*1000;
+            qint64 runElapse = QDateTime::currentMSecsSinceEpoch() - runOffset;
+//            qDebug()<<Q_FUNC_INFO<<"=========== runElapse "<<runElapse;
+
 //            int fSize = node.task()->bytesFileSize();
             int bd = node.task()->bytesDownloaded();
 //          int boffset = task->bytesStartOffest();
@@ -144,7 +149,7 @@ BDiskDownloadDelegate::BDiskDownloadDelegate(QObject *parent)
 //            m_diskEvent->dispatchDownloadProgress(key,
 //                                                  QString::number(dlSpeed),
 //                                                  QString::number(dlPercent));
-            BDiskEvent::instance()->dispatchDownloadProgress(key, dlSpeed, bd);
+            BDiskEvent::instance()->dispatchDownloadProgress(key, dlSpeed, bd, runElapse);
         }
         m_locker.unlock();
     });
@@ -162,6 +167,7 @@ BDiskDownloadDelegate::BDiskDownloadDelegate(QObject *parent)
     setTasks(convertTaskInfoHash());
 
     m_timer->start();
+    m_timerStartedMSecsSinceEpoch = QDateTime::currentMSecsSinceEpoch();
 }
 
 BDiskDownloadDelegate::~BDiskDownloadDelegate()

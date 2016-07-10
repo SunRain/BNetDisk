@@ -66,6 +66,7 @@ Page {
                 property int readySize: object[DownloaderObjectKey.keyReadySize];
                 property string speed: AppUtility.bytesPerSecond(0);
                 property string percent: AppUtility.downloadPercent(readySize, totalSize);
+                property string elapsedTime: AppUtility.milliSecsToStr(0)
                 property bool taskRunning: DownloadStore.taskRunning(uuid)
                 width: parent.width
                 height: dlItemColumn.height + Const.middleSpace
@@ -81,12 +82,12 @@ Page {
                 }
                 Connections {
                     target: DiskEvent
-                    onDownloadProgress: { //hash, int bytesPerSecond, int bytesDownloaded
+                    onDownloadProgress: { //hash, int bytesPerSecond, int bytesDownloaded, qint64 runElapsedMSecs
                         if (hash == uuid) {
                             dlItem.percent = AppUtility.downloadPercent(bytesDownloaded, totalSize);
                             dlItem.readySize = bytesDownloaded;
                             dlItem.speed = AppUtility.bytesPerSecond(bytesPerSecond);
-
+                            dlItem.elapsedTime = AppUtility.milliSecsToStr(runElapsedMSecs);
                         }
                     }
                     onTaskStatusChanged: { //const QString &hash, BDiskEvent::TaskStatus status)
@@ -154,7 +155,7 @@ Page {
                         wrapMode: Text.WordWrap
                         style: "body1"
                         text: dlItem.taskRunning
-                              ? qsTr("Downloading")+" - "+dlItem.percent+" - "+"runing time str"
+                              ? qsTr("Downloading")+" - "+dlItem.percent+" - "+dlItem.elapsedTime
                               : qsTr("Paused")+" · "+dlItem.percent
                     }
                     Label {

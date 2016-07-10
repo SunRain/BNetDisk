@@ -10,11 +10,15 @@ const static int EVENT_TASK_STATUS = QEvent::Type(QEvent::User+1);
 class DownloadProgressEvent : public QEvent
 {
 public:
-    explicit DownloadProgressEvent(const QString &hash, int bytesPerSecond, int bytesDownloaded)
+    explicit DownloadProgressEvent(const QString &hash,
+                                   int bytesPerSecond,
+                                   int bytesDownloaded,
+                                   qint64 runElapsedMSecs)
         : QEvent((QEvent::Type)EVENT_DL_TASKINFO)
         , m_uuid(hash)
         , m_speed(bytesPerSecond)
         , m_percent(bytesDownloaded)
+        , m_runElapsedMSecs(runElapsedMSecs)
     {
 
     }
@@ -31,10 +35,15 @@ public:
     {
         return m_percent;
     }
+    qint64 runElapsedMSecs() const
+    {
+        return m_runElapsedMSecs;
+    }
 private:
     QString m_uuid;
     int m_speed;
     int m_percent;
+    qint64 m_runElapsedMSecs;
 };
 
 class TaskStatusEvent : public QEvent
@@ -74,10 +83,13 @@ public:
     virtual ~EventDispatch() {
     }
 
-    void dispatchDownloadProgress(const QString &hash, int bytesPerSecond, int bytesDownloaded)
+    void dispatchDownloadProgress(const QString &hash,
+                                  int bytesPerSecond,
+                                  int bytesDownloaded,
+                                  qint64 runElapsedMSecs)
     {
         m_locker.lock();
-        qApp->postEvent(parent(), new DownloadProgressEvent(hash, bytesPerSecond, bytesDownloaded));
+        qApp->postEvent(parent(), new DownloadProgressEvent(hash, bytesPerSecond, bytesDownloaded, runElapsedMSecs));
         m_locker.unlock();
     }
     void dispatchTaskStatus(const QString &hash, BDiskEvent::TaskStatus status) {
@@ -104,9 +116,12 @@ BDiskEvent::~BDiskEvent()
     m_dispatch = nullptr;
 }
 
-void BDiskEvent::dispatchDownloadProgress(const QString &hash, int bytesPerSecond, int bytesDownloaded)
+void BDiskEvent::dispatchDownloadProgress(const QString &hash,
+                                          int bytesPerSecond,
+                                          int bytesDownloaded,
+                                          qint64 runElapsedMSecs)
 {
-    m_dispatch->dispatchDownloadProgress(hash, bytesPerSecond, bytesDownloaded);
+    m_dispatch->dispatchDownloadProgress(hash, bytesPerSecond, bytesDownloaded, runElapsedMSecs);
 }
 
 void BDiskEvent::dispatchTaskStatus(const QString &hash, BDiskEvent::TaskStatus status)
@@ -122,7 +137,8 @@ bool BDiskEvent::event(QEvent *event)
         QString hash = e->uuid();
         int speed = e->bytesPerSecond();
         int percent = e->bytesDownloaded();
-        emit downloadProgress(hash, speed, percent);
+        qint64 run = e->runElapsedMSecs();
+        emit downloadProgress(hash, speed, percent, run);
         return true;
     }
     if (event->type() == EVENT_TASK_STATUS) {

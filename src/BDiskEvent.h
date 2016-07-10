@@ -30,7 +30,11 @@ public:
 
     virtual ~BDiskEvent();
 
-    void dispatchDownloadProgress(const QString &hash, int bytesPerSecond, int bytesDownloaded);
+    void dispatchDownloadProgress(const QString &hash,
+                                  int bytesPerSecond,
+                                  int bytesDownloaded,
+                                  qint64 runElapsedMSecs);
+
     void dispatchTaskStatus(const QString &hash, BDiskEvent::TaskStatus status);
 
     // QObject interface
@@ -38,7 +42,10 @@ public:
     bool event(QEvent *event);
 
 signals:
-    void downloadProgress(const QString &hash, int bytesPerSecond, double bytesDownloaded);
+    void downloadProgress(const QString &hash,
+                          int bytesPerSecond,
+                          double bytesDownloaded,
+                          qint64 runElapsedMSecs);
     void taskStatusChanged(const QString &hash, BDiskEvent::TaskStatus status);
 
 private:
