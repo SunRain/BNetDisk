@@ -5,11 +5,15 @@ import QuickFlux 1.0
 import com.sunrain.bnetdisk.qmlplugin 1.0
 
 import "../Actions"
+import "../../Pages"
 
 AppListener {
     id: downloadStore
 
     property alias downloadingModel: dlDelegate.tasks
+    property alias completedModel: dlDelegate.completedTasks
+
+    property string downloadPageviewComponentUri: Qt.resolvedUrl("../../UI/DownloadingTaskView.qml")
 
     BDiskDownloadDelegate {
         id: dlDelegate
@@ -47,6 +51,20 @@ AppListener {
             var hash = message.hash;
             console.log("===== try to start "+hash);
             dlDelegate.resume(hash);
+        }
+    }
+
+    Filter {
+        type: ActionTypes.showDownloadingComponent
+        onDispatched: {
+            downloadPageviewComponentUri = Qt.resolvedUrl("../../UI/DownloadingTaskView.qml");
+        }
+    }
+
+    Filter {
+        type: ActionTypes.showCompletedComponent
+        onDispatched: {
+            downloadPageviewComponentUri = Qt.resolvedUrl("../../UI/CompletedDLTaskView.qml");
         }
     }
 }

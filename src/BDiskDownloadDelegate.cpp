@@ -7,9 +7,11 @@
 #include <QSharedData>
 #include <QFileInfo>
 #include <QDateTime>
+#include <QStandardPaths>
 
 #include <QNetworkCookie>
 
+#include "DLTransmissionDatabase.h"
 #include "DLRequest.h"
 #include "DLTask.h"
 
@@ -18,6 +20,31 @@
 #include "BDiskEvent.h"
 
 using namespace YADownloader;
+
+class BDiskDownloadCompleteTaskDB : public YADownloader::DLTransmissionDatabase
+{
+    Q_OBJECT
+public:
+    explicit BDiskDownloadCompleteTaskDB(QObject *parent = 0)
+        : DLTransmissionDatabase(parent)
+    {
+        initiate();
+    }
+    virtual ~BDiskDownloadCompleteTaskDB() {}
+
+    // DLTransmissionDatabase interface
+protected:
+    QString cfgFile() {
+        QString dataPath = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+        return QString("%1/complete_task.json").arg(dataPath);
+    }
+    void onAppendTaskInfo(const DLTaskInfo &info) {
+        dataHash()->insert(info.identifier(), info);
+    }
+    int onRemoveTaskInfo(const DLTaskInfo &info) {
+        return dataHash()->remove(info.identifier());
+    }
+};
 
 class BDiskDownloadDelegateNodePriv : public QSharedData
 {
@@ -118,6 +145,7 @@ BDiskDownloadDelegate::BDiskDownloadDelegate(QObject *parent)
     : QObject(parent)
     , m_downloadMgr(new DLTaskAccessMgr(this))
     , m_timer(new QTimer(this))
+    , m_completeDB(new BDiskDownloadCompleteTaskDB(this))
 //    , m_diskEvent(BDiskEvent::instance())
     , m_timerCount(0)
 {
@@ -154,9 +182,20 @@ BDiskDownloadDelegate::BDiskDownloadDelegate(QObject *parent)
         m_locker.unlock();
     });
 
+    connect(m_completeDB, &DLTransmissionDatabase::listChanged, [&]() {
+        DLTaskInfoList list = m_completeDB->list();
+        qStableSort(list.begin(), list.end(), [](const DLTaskInfo &l, const DLTaskInfo &r) -> bool {
+            return l.identifier() < r.identifier();
+        });
+        QVariantList ll;
+        foreach (DLTaskInfo info, list) {
+            ll.append(info.toMap());
+        }
+        setCompletedTasks(ll);
+    });
+
     connect(m_downloadMgr, &DLTaskAccessMgr::resumablesChanged, [&](const DLTaskInfoList &list) {
         m_locker.lock();
-        qDebug()<<Q_FUNC_INFO<<"================== resumablesChanged ";
         parseDLTaskInfoList(list);
         QVariantList va(convertTaskInfoHash());
         m_locker.unlock();
@@ -222,10 +261,15 @@ void BDiskDownloadDelegate::download(const QString &from, const QString &savePat
         if (status == DLTask::TaskStatus::DL_FINISH) {
             BDiskDownloadDelegateNode node = m_nodeHash.value(uuid);
             if (node.task() && node.identifier() == uuid) {
+                DLTaskInfo info = node.task()->taskInfo();
                 node.task()->deleteLater();
                 node.setTask(nullptr);
                 m_nodeHash.insert(uuid, node);
                 m_nodeHash.remove(uuid);
+
+                info.setIdentifier(QString::number(QDateTime::currentMSecsSinceEpoch()));
+                m_completeDB->appendTaskInfo(info);
+
                 QVariantList list = convertTaskInfoHash();
                 locker.unlock();
                 setTasks(list);
@@ -385,6 +429,11 @@ QVariantList BDiskDownloadDelegate::tasks() const
     return m_tasks;
 }
 
+QVariantList BDiskDownloadDelegate::completedTasks() const
+{
+    return m_completedTasks;
+}
+
 void BDiskDownloadDelegate::stop(const QString &hash)
 {
     if (hash.isEmpty())
@@ -434,12 +483,21 @@ void BDiskDownloadDelegate::resume(const QString &hash)
     }
 }
 
+void BDiskDownloadDelegate::setCompletedTasks(const QVariantList &completedTasks)
+{
+    if (m_completedTasks == completedTasks)
+        return;
+
+    m_completedTasks = completedTasks;
+    emit completedTasksChanged(completedTasks);
+}
+
 void BDiskDownloadDelegate::setTasks(const QVariantList &tasks)
 {
     if (m_tasks == tasks)
         return;
 
-//    qDebug()<<Q_FUNC_INFO<<"================== setTasks ";
+    //    qDebug()<<Q_FUNC_INFO<<"================== setTasks ";
 
     m_tasks = tasks;
     emit tasksChanged(tasks);
@@ -450,6 +508,8 @@ void BDiskDownloadDelegate::parseDLTaskInfoList(const DLTaskInfoList &list)
     QStringList keys = m_nodeHash.keys();
     QHash<QString, BDiskDownloadDelegateNode> hash;
 
+    /// change list in m_nodeHash
+    ///
     foreach (DLTaskInfo info, list) {
         bool skip = false;
         foreach (QString key, keys) {
@@ -478,6 +538,19 @@ void BDiskDownloadDelegate::parseDLTaskInfoList(const DLTaskInfoList &list)
         node.setTask(nullptr);
         hash.insert(node.identifier(), node);
     }
+    /// append exist to hash
+    ///
+    QStringList tmpKeys;
+    foreach (const QString key, keys) {
+        if (hash.keys().contains(key))
+            continue;
+        tmpKeys.append(key);
+    }
+    foreach (QString key, tmpKeys) {
+        BDiskDownloadDelegateNode node = m_nodeHash.value(key);
+//        qDebug()<<Q_FUNC_INFO<<" insert exist, task pointer "<<(node.task());
+        hash.insert(key, node);
+    }
     m_nodeHash = hash;
 }
 
@@ -498,4 +571,7 @@ QVariantList BDiskDownloadDelegate::convertTaskInfoHash()
     }
     return ll;
 }
+
+
+#include "BDiskDownloadDelegate.moc"
 

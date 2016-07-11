@@ -20,6 +20,10 @@ KeyTable {
 
     property string stopTask
     property string startTask
+
+    property string showDownloadingComponent
+    property string showCompletedComponent
+
 //    property string openFileDialog
 
 

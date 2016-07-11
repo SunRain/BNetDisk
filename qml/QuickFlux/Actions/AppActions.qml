@@ -65,6 +65,9 @@ ActionCreator {
     signal showRootDir();
     signal cdup();
     signal refreshCurrentDir();
+    signal showDownloadingComponent();
+    signal showCompletedComponent();
+
     function showDir(dir) {
         AppDispatcher.dispatch(ActionTypes.showDir, {"dir":dir});
     }
