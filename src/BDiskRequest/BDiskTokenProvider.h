@@ -32,6 +32,7 @@ public:
     void setUidStr(const QString &uidStr);
 
     void clear();
+    void flush();
 
 private:
     QSettings *m_settings;

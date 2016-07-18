@@ -102,10 +102,15 @@ void BDiskTokenProvider::clear()
     m_pubkey = QString();
     m_bdstoken = QString();
     m_uidStr = QString();
-    m_settings->setValue(KEY_CODE_STRING, QString());
-    m_settings->setValue(KEY_TOKEN, QString());
-    m_settings->setValue(KEY_PUBKEY, QString());
-    m_settings->setValue(KEY_BDS_TOKEN, QString());
-    m_settings->setValue(KEY_UID_STR, QString());
+    flush();
+}
+
+void BDiskTokenProvider::flush()
+{
+    m_settings->setValue(KEY_CODE_STRING, m_codeString);
+    m_settings->setValue(KEY_TOKEN, m_token);
+    m_settings->setValue(KEY_PUBKEY, m_pubkey);
+    m_settings->setValue(KEY_BDS_TOKEN, m_bdstoken);
+    m_settings->setValue(KEY_UID_STR, m_uidStr);
     m_settings->sync();
 }
