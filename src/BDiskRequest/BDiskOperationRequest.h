@@ -29,6 +29,9 @@ public:
     OperationType op();
 
     void setParameters(const QString &key, const QString &value);
+    void appendPostDataParameters(const QString &key, const QString &value);
+    QHash<QString, QString> postDataParameters() const;
+    QString postDataParameter(const QString &key, const QString &defaultValue = QString()) const;
 
     bool operator == (const BDiskBaseOperationRequest &other);
     bool operator != (const BDiskBaseOperationRequest &other);
@@ -100,6 +103,37 @@ protected:
         ("method", "download")
         ("app_id", "250528")
         ("path", "")
+        ;
+    }
+};
+
+class BDiskOpPubShare : public BDiskBaseOperationRequest
+{
+public:
+    BDiskOpPubShare()
+        : BDiskBaseOperationRequest() {
+        setBaseUrl("http://pan.baidu.com/share/set");
+        initiate();
+        appendPostDataParameters("fid_list", ""); // file or dir object fs_id
+        appendPostDataParameters("schannel", "0");
+        appendPostDataParameters("channel_list", "[]");
+    }
+    virtual ~BDiskOpPubShare() {}
+
+    // BDiskBaseOperationRequest interface
+protected:
+    OperationType getOp() {
+        return OPERATION_POST;
+    }
+
+    void initParameters() {
+        (*this)
+        ("channel", "chunlei")
+        ("clienttype", "0")
+        ("web", "1")
+        ("app_id", "250528")  //去掉appid也可以实现分享，暂时不知道appid从何而来， 当前本机测试为250528
+        ("bdstoken", "")
+        ("logid", "")
         ;
     }
 };

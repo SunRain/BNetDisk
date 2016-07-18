@@ -22,6 +22,7 @@ public:
     BDiskBaseOperationRequest::OperationType op;
     bool isInitiated;
     QHash<QString, QString> parameters;
+    QHash<QString, QString> postDataParameters;
 };
 
 
@@ -120,6 +121,23 @@ void BDiskBaseOperationRequest::setParameters(const QString &key, const QString 
     if (d.data()->parameters.contains(key)) {
         d.data()->parameters.insert(key, value);
     }
+}
+
+void BDiskBaseOperationRequest::appendPostDataParameters(const QString &key, const QString &value)
+{
+    if (key.isEmpty())
+        return;
+    d.data()->postDataParameters.insert(key.simplified(), value.simplified());
+}
+
+QHash<QString, QString> BDiskBaseOperationRequest::postDataParameters() const {
+    return d.data()->postDataParameters;
+}
+
+QString BDiskBaseOperationRequest::postDataParameter(const QString &key, const QString &defaultValue) const {
+    if (!d.data()->postDataParameters.isEmpty() && d.data()->postDataParameters.contains(key))
+        return d.data()->postDataParameters.value(key, defaultValue);
+    return QString();
 }
 
 void BDiskBaseOperationRequest::initParameters()

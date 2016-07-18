@@ -1,0 +1,45 @@
+ ------------------------------------------
+ public
+
+ post
+   
+ http://pan.baidu.com/share/set?
+ channel=chunlei&
+ clienttype=0&
+ web=1&
+ channel=chunlei&
+ web=1&
+ app_id=....&  //去掉appid也可以实现分享，暂时不知道appid从何而来， 当前本机测试为250528
+ bdstoken=.........&
+ logid=.......&
+ clienttype=0
+ 
+ form
+ fid_list:"[624429279387228]"   // file or dir object fs_id
+ schannel:"0"
+ channel_list:"[]"
+ 
+ ---------------------------------
+ 
+private
+
+post
+
+http://pan.baidu.com/share/set?
+channel=chunlei&
+clienttype=0&
+web=1&
+channel=chunlei&
+web=1&
+app_id=......&
+bdstoken=.........&
+logid=..........&
+clienttype=0
+
+form
+fid_list:"[66762153861554]"
+schannel:"4"
+channel_list:"[]"
+pwd:"4n3g" //pwd在请求的表单里面，从哪里得到的？？？
+
+
