@@ -87,7 +87,8 @@ void BDiskDirListDelegate::showRoot()
 
 void BDiskDirListDelegate::show(const QString &dir)
 {
-    m_action->setParameters("dir", dir);
+//    m_action->setParameters("dir", dir);
+    m_action->operationPtr()->setParameters("dir", dir);
     m_action->request();
     setCurrentPath(dir);
 }
@@ -111,7 +112,8 @@ void BDiskDirListDelegate::cdup()
     qDebug()<<Q_FUNC_INFO<<"    str "<<str;
     if (!str.startsWith("/"))
         str = QString("/%1").arg(str);
-    m_action->setParameters("dir", str);
+//    m_action->setParameters("dir", str);
+    m_action->operationPtr()->setParameters("dir", str);
     m_action->request();
     setCurrentPath(str);
 }

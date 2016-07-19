@@ -12,6 +12,8 @@
 
 #include "BDiskDirListDelegate.h"
 #include "BDiskDownloadDelegate.h"
+#include "BDiskShareDelegate.h"
+
 #include "ApplicationUtility.h"
 #include "BDiskEvent.h"
 
@@ -32,6 +34,8 @@ int main(int argc, char *argv[])
                                           1, 0, "DirListDelegate");
     qmlRegisterType<BDiskDownloadDelegate>("com.sunrain.bnetdisk.qmlplugin",
                                            1, 0, "BDiskDownloadDelegate");
+    qmlRegisterType<BDiskShareDelegate>("com.sunrain.bnetdisk.qmlplugin",
+                                           1, 0, "BDiskShareDelegate");
 
     qmlRegisterSingletonType<BDiskFileObjectKeyName>("com.sunrain.bnetdisk.qmlplugin",
                                                      1, 0, "FileObjectKey", BDiskFileObjectKeyName::qmlSingleton);

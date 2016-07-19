@@ -26,7 +26,13 @@ public:
     virtual ~BDiskBaseRequest();
 
     Q_INVOKABLE void request();
-    Q_INVOKABLE void setParameters(const QString &key, const QString &value);
+//    Q_INVOKABLE void setParameters(const QString &key, const QString &value);
+
+    BDiskBaseOperationRequest *operationPtr();
+
+    bool isFinished();
+
+    void abort();
 
 protected:
     virtual BDiskBaseOperationRequest operation();
@@ -57,10 +63,11 @@ private:
     QTimer *m_timeout;
     QNetworkReply *m_reply;
     QNetworkAccessManager *m_networkMgr;
-    QHash<QString, QString> m_parameters;
+    BDiskBaseOperationRequest m_operation;
+//    QHash<QString, QString> m_parameters;
 
     bool m_requestAborted;
-
+    bool m_operationInitiated;
 };
 
 #endif // BDISKBASEREQUEST_H

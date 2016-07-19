@@ -8,6 +8,7 @@ import ".."
 import "../QuickFlux/Stores"
 import "../QuickFlux/Actions"
 import "../QuickFlux/Scripts"
+import "../UI"
 
 import "../Script/Utility.js" as Utility
 
@@ -329,6 +330,7 @@ Page {
             property string path: object[FileObjectKey.keyPath]
             property string fileName: AppUtility.fileObjectPathToFileName(path)
             property string mtime: object[FileObjectKey.keyServerMTime]
+            property string fsID: object[FileObjectKey.keyFsId]
             property int category: object[FileObjectKey.keyCategory]
             property int size: object[FileObjectKey.keySize]
             showDivider: true
@@ -361,6 +363,12 @@ Page {
                     action: Action {
                         iconName: "social/share"
                     }
+                    onClicked: {
+                        console.log('=========== fsid '+dirItem.fsID);
+                        shareMenu.shareId = dirItem.fsID;
+                        shareMenu.parent = dirItem;
+                        shareMenu.open(dirItem, 0, 0);
+                    }
                 }
                 IconButton {
                     action: Action {
@@ -378,5 +386,11 @@ Page {
 
     Scrollbar {
         flickableItem: content
+    }
+
+    ShareMenu {
+        id: shareMenu
+        anchor: Item.TopRight
+        width: mainViewPage.width /4
     }
 }

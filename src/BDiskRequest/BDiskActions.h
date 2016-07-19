@@ -24,4 +24,30 @@ protected:
 };
 
 
+class BDiskActionPubShare : public BDiskBaseRequest
+{
+    Q_OBJECT
+public:
+    explicit BDiskActionPubShare(QObject *parent = 0): BDiskBaseRequest(parent) {}
+
+    // BDiskBaseRequest interface
+protected:
+    BDiskBaseOperationRequest operation() {
+        CREATE_OPR(BDiskOpPubShare);
+    }
+};
+
+class BDiskActionPrivShare : public BDiskBaseRequest
+{
+    Q_OBJECT
+public:
+    explicit BDiskActionPrivShare(QObject *parent = 0): BDiskBaseRequest(parent) {}
+
+    // BDiskBaseRequest interface
+protected:
+    BDiskBaseOperationRequest operation() {
+        CREATE_OPR(BDiskOpPrivShare);
+    }
+};
+
 #endif // BDISKACTIONS_H
