@@ -262,9 +262,75 @@ Page {
         flickableItem: content
     }
 
-    ShareMenu {
+    Dropdown {
         id: shareMenu
         anchor: Item.TopRight
         width: mainViewPage.width /4
+        height: options.height
+        property string shareId: ""
+
+        Rectangle {
+            anchors.fill: parent
+            radius: 2 * Units.dp
+        }
+        Column {
+            id: options
+            width: parent.width
+            ListItem.Standard {
+                text: qsTr("share public")
+                onClicked: {
+                    shareLinkView.open(mainViewPage);
+                    AppActions.pubShare(shareMenu.shareId);
+                    shareMenu.close();
+                }
+            }
+            ListItem.Standard {
+                text: qsTr("share private")
+                onClicked: {
+                    shareLinkView.open(mainViewPage);
+                    AppActions.privShare(shareMenu.shareId);
+                    shareMenu.close();
+                }
+            }
+        }
+    }
+
+    OverlayView {
+        id: shareLinkView
+        width: Const.screenWidth * 0.6
+        height: shareLinkContent.height + Const.middleSpace * 2
+        anchors.centerIn: parent
+        Column {
+            id: shareLinkContent
+            width: parent.width - Const.middleSpace * 2
+            anchors.centerIn: parent
+            spacing: Const.middleSpace * 2
+            Label {
+                width: parent.width
+                anchors.horizontalCenter: parent.horizontalCenter
+                style: "title"
+                text: qsTr("share link")
+            }
+            Label {
+                width: parent.width
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: qsTr("Share error");
+                visible: ShareStore.showErrorLabel
+            }
+            TextField {
+                width: parent.width
+                text: ShareStore.sharelink
+                placeholderText: qsTr("share link")
+                floatingLabel: true
+                visible: ShareStore.sharelink != ""
+            }
+            TextField {
+                width: parent.width
+                text: ShareStore.password
+                placeholderText: qsTr("password")
+                floatingLabel: true
+                visible: ShareStore.password
+            }
+        }
     }
 }

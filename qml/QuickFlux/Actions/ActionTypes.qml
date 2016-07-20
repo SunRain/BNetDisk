@@ -24,6 +24,9 @@ KeyTable {
     property string showDownloadingComponent
     property string showCompletedComponent
 
+    property string privShare
+    property string pubShare
+
 //    property string openFileDialog
 
 
