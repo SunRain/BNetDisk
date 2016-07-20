@@ -19,5 +19,7 @@
         <file>UI/DownloadingTaskView.qml</file>
         <file>QuickFlux/Stores/ShareStore.qml</file>
         <file>UI/ShareMenu.qml</file>
+        <file>UI/AddrBar.qml</file>
+        <file>UI/MainViewSidebar.qml</file>
     </qresource>
 </RCC>

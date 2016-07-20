@@ -126,141 +126,15 @@ Page {
 //        }
 //    }
 
-    actionBar.customContent: Item {
-        anchors.fill: parent
-        IconButton {
-            id: refreshBtn
-            anchors {
-                left: parent.left
-                verticalCenter: parent.verticalCenter
-            }
-            color: Theme.lightDark(theme.primaryColor, Theme.light.iconColor, Theme.dark.iconColor)
-            action: Action {
-                iconName: "navigation/refresh"
-                onTriggered: {
-                    AppActions.refreshCurrentDir();
-                }
-            }
-        }
-        ListView {
-            id: pathView
-            anchors {
-                left: refreshBtn.right
-                leftMargin: Const.middleSpace
-                right: parent.right
-                rightMargin: Const.middleSpace
-            }
-            height: parent.height > dp(48) ? dp(48) : parent.height
-            clip: true
-            orientation: Qt.Horizontal
-            spacing: Const.tinySpace
-            onCountChanged: {
-                pathView.positionViewAtEnd();
-            }
-            onWidthChanged: {
-                pathView.positionViewAtEnd();
-            }
-            model: DirListStore.currentPathList
-            delegate: ListItem.BaseListItem {
-                id: pathItem
-                height: parent.height
-                /// NOTE anchors.left && anchors.right should set before width property,
-                /// This fix qml-material View component bug
-                anchors.left: undefined
-                anchors.right: undefined
-                width: itemRow.width
-                onClicked: {
-                    if (index == 0) {
-                        AppActions.showDir("/");
-                    } else {
-                        var dir = "";
-                        for(var i=1; i<=index; ++i) {
-                            dir += "/";
-                            dir += DirListStore.currentPathList[i];
-                        }
-                        AppActions.showDir(dir);
-                    }
-                }
-                Row {
-                    id: itemRow
-                    height: parent.height
-                    spacing: Const.tinySpace
-                    Label {
-                        anchors.verticalCenter: parent.verticalCenter
-                        style: "subheading"
-                        color:  Theme.isDarkColor(actionBar.backgroundColor)
-                                ? Theme.dark.textColor
-                                : Theme.light.accentColor
-                        text: index == 0 ? qsTr("BNetDisk") : DirListStore.currentPathList[index]
-                        verticalAlignment: Text.AlignVCenter
-                    }
-                    Icon {
-                        anchors.verticalCenter: parent.verticalCenter
-                        color: Theme.isDarkColor(actionBar.backgroundColor)
-                               ? Theme.dark.iconColor
-                               : Theme.light.accentColor
-                        name: "navigation/chevron_right"
-                        visible: index != DirListStore.currentPathList.length -1
-                    }
-                }
-            }
-        }
-        Scrollbar {
-            flickableItem: pathView
-        }
-    }
+    actionBar.customContent: AddrBar {}
 
     FileSavePathDialog {}
 
-    Sidebar {
+    MainViewSidebar {
         id: sidebar
         anchors.bottom: infoBanner.top
-        width: dp(200)
-        property var nameList: [qsTr("All"), qsTr("Image"), qsTr("Document"), qsTr("Video"),
-            qsTr("BT"), qsTr("Audio"), qsTr("Other")]
-        property var iconList: ["file/attachment", "image/image", "image/texture", "av/movie",
-        "file/attachment", "image/music_note", "file/attachment"]
-        Column {
-            width: parent.width
-            ListItem.Subheader {
-                text: qsTr("Cloud Storage")
-            }
-            Repeater {
-                model: sidebar.nameList.length
-                delegate: ListItem.Standard {
-                    text: sidebar.nameList[index]
-                    iconName: sidebar.iconList[index]
-                }
-            }
-            ListItem.Divider{}
-            ListItem.Standard {
-                action: IconButton {
-                    anchors {
-                        left: parent.left
-                        verticalCenter: parent.verticalCenter
-                    }
-                    action: Action {
-                        iconName: "social/share"
-                        onTriggered: {
-                            console.log("===== share icon click")
-                        }
-                    }
-                }
-                content: IconButton {
-                    anchors {
-                        left: parent.left
-                        verticalCenter: parent.verticalCenter
-                    }
-                    action: Action {
-                        iconName: "action/delete"
-                        onTriggered: {
-                            console.log("===== trash icon click")
-                        }
-                    }
-                }
-            }
-        }
     }
+
     View {
         id: infoBanner
         width: sidebar.width
