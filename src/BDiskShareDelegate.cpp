@@ -92,9 +92,9 @@ void BDiskShareDelegate::parseReply(BDiskBaseRequest::RequestRet ret, const QStr
         return;
     }
     QJsonObject obj = doc.object();
-    int ret = obj.value("errno").toInt(-1);
-    if (ret != 0) {
-        qDebug()<<Q_FUNC_INFO<<"Error number "<<ret;
+    int err = obj.value("errno").toInt(-1);
+    if (err != 0) {
+        qDebug()<<Q_FUNC_INFO<<"Error number "<<err;
         emit requestFailure();
         return;
     }
