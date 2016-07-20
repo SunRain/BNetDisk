@@ -67,7 +67,7 @@ void BDiskShareDelegate::pubShare(const QString &fsID)
     m_pubShare = new BDiskActionPubShare();
     m_pubShare->operationPtr()->appendPostDataParameters("fid_list", QString("[%1]").arg(fsID));
 
-    connect(m_privShare, &BDiskActionPrivShare::requestStarted,
+    connect(m_pubShare, &BDiskActionPrivShare::requestStarted,
             this, &BDiskShareDelegate::startRequest);
 
     connect(m_pubShare, &BDiskActionPrivShare::requestResult,
