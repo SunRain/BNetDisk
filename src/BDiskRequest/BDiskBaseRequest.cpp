@@ -21,6 +21,7 @@ BDiskBaseRequest::BDiskBaseRequest(QObject *parent)
     , m_timeout(new QTimer(this))
     , m_reply(nullptr)
     , m_requestAborted(true)
+    , m_operationInitiated(false)
 {
     m_timeout->setInterval(BDISK_REQUEST_TIMEOUT);
     m_timeout->setSingleShot(true);
@@ -63,11 +64,17 @@ BDiskBaseRequest::~BDiskBaseRequest()
 void BDiskBaseRequest::request()
 {
     m_requestAborted = false;
-    BDiskBaseOperationRequest op = operation();
-    foreach (QString key, m_parameters.keys()) {
-        op.setParameters(key, m_parameters.value(key));
+//    BDiskBaseOperationRequest op = operation();
+//    foreach (QString key, m_parameters.keys()) {
+//        m_operation.setParameters(key, m_parameters.value(key));
+//    }
+    if (!m_operationInitiated) {
+        m_operation = operation();
+        m_operationInitiated = true;
     }
-    QUrl url = op.initUrl();
+    m_operation.setParameters("bdstoken", BDiskTokenProvider::instance()->bdstoken());
+//    m_operation.setParameters("logid", );
+    QUrl url = m_operation.initUrl();
 
     qDebug()<<Q_FUNC_INFO<<" url is "<<url;
 
@@ -86,8 +93,31 @@ void BDiskBaseRequest::request()
         m_requestAborted = true;
         m_reply->abort();
     }
-    //TODO post operation
-    m_reply = m_networkMgr->get(request);
+    if (m_operation.operationType() == BDiskBaseOperationRequest::OperationType::OPERATION_POST) {
+        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+        QByteArray data;
+        foreach (QString k, m_operation.postDataParameters().keys()) {
+            data.append(QString("%1=%2&").arg(k).arg(m_operation.postDataParameter(k)));
+        }
+        if (data.endsWith("&"))
+            data = data.left(data.length() - 1);
+        if (data.isEmpty())
+            data = url.query(QUrl::FullyEncoded).toUtf8();
+        request.setHeader(QNetworkRequest::ContentLengthHeader, QByteArray::number(data.length()));
+
+        qDebug()<<Q_FUNC_INFO<<" post data ["<<data<<"] to ["<<url<<"]";
+
+        m_reply = m_networkMgr->post(request, data);
+    } else if (m_operation.operationType() == BDiskBaseOperationRequest::OperationType::OPERATION_GET) {
+        m_reply = m_networkMgr->get(request);
+    } else {
+        if (m_reply) {
+            m_requestAborted = true;
+            m_reply->abort();
+            m_reply->deleteLater();
+        }
+        m_reply = nullptr;
+    }
     if (m_reply) {
         connect(m_reply, &QNetworkReply::finished,
                 [&](){
@@ -128,9 +158,29 @@ void BDiskBaseRequest::request()
     }
 }
 
-void BDiskBaseRequest::setParameters(const QString &key, const QString &value)
+//void BDiskBaseRequest::setParameters(const QString &key, const QString &value)
+//{
+//    m_parameters.insert(key, value);
+//}
+
+BDiskBaseOperationRequest *BDiskBaseRequest::operationPtr()
 {
-    m_parameters.insert(key, value);
+    if (!m_operationInitiated) {
+        m_operation = operation();
+        m_operationInitiated = true;
+    }
+    return &m_operation;
+}
+
+bool BDiskBaseRequest::isFinished()
+{
+    return m_reply && m_reply->isFinished();
+}
+
+void BDiskBaseRequest::abort()
+{
+    if (m_reply)
+        m_reply->abort();
 }
 
 BDiskBaseOperationRequest BDiskBaseRequest::operation()

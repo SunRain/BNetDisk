@@ -5,9 +5,13 @@
 #include <QVariantList>
 #include <QTimer>
 #include <QSharedData>
+#include <QFileInfo>
+#include <QDateTime>
+#include <QStandardPaths>
 
 #include <QNetworkCookie>
 
+#include "DLTransmissionDatabase.h"
 #include "DLRequest.h"
 #include "DLTask.h"
 
@@ -16,6 +20,31 @@
 #include "BDiskEvent.h"
 
 using namespace YADownloader;
+
+class BDiskDownloadCompleteTaskDB : public YADownloader::DLTransmissionDatabase
+{
+    Q_OBJECT
+public:
+    explicit BDiskDownloadCompleteTaskDB(QObject *parent = 0)
+        : DLTransmissionDatabase(parent)
+    {
+        initiate();
+    }
+    virtual ~BDiskDownloadCompleteTaskDB() {}
+
+    // DLTransmissionDatabase interface
+protected:
+    QString cfgFile() {
+        QString dataPath = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+        return QString("%1/complete_task.json").arg(dataPath);
+    }
+    void onAppendTaskInfo(const DLTaskInfo &info) {
+        dataHash()->insert(info.identifier(), info);
+    }
+    int onRemoveTaskInfo(const DLTaskInfo &info) {
+        return dataHash()->remove(info.identifier());
+    }
+};
 
 class BDiskDownloadDelegateNodePriv : public QSharedData
 {
@@ -68,6 +97,7 @@ BDiskDownloadDelegateNode &BDiskDownloadDelegateNode::operator =(const BDiskDown
 {
     if (this != &other)
         d.operator =(other.d);
+    this->m_task = other.task();
     return *this;
 }
 
@@ -115,28 +145,53 @@ BDiskDownloadDelegate::BDiskDownloadDelegate(QObject *parent)
     : QObject(parent)
     , m_downloadMgr(new DLTaskAccessMgr(this))
     , m_timer(new QTimer(this))
+    , m_completeDB(new BDiskDownloadCompleteTaskDB(this))
+//    , m_diskEvent(BDiskEvent::instance())
     , m_timerCount(0)
 {
     m_timer->setInterval(1000);
     m_timer->setSingleShot(false);
     connect(m_timer, &QTimer::timeout, [&]{
         m_timerCount++;
+        m_locker.lock();
         foreach (QString key, m_nodeHash.keys()) {
             BDiskDownloadDelegateNode node = m_nodeHash.value(key);
             if (!node.task() || (node.identifier() != node.task()->uuid()))
                 continue;
+            if (node.placeholderTaskInfo().status() == DLTaskInfo::TaskStatus::STATUS_STOP) {
+//                node.setElapsedTimeOffset(m_timerCount);
+                continue;
+            }
             int elapsedOffset = node.elapsedTimeOffset();
             int elapse = m_timerCount - elapsedOffset;
-            int fSize = node.task()->bytesFileSize();
+            qint64 runOffset = m_timerStartedMSecsSinceEpoch + elapsedOffset*1000;
+            qint64 runElapse = QDateTime::currentMSecsSinceEpoch() - runOffset;
+//            qDebug()<<Q_FUNC_INFO<<"=========== runElapse "<<runElapse;
+
+//            int fSize = node.task()->bytesFileSize();
             int bd = node.task()->bytesDownloaded();
 //          int boffset = task->bytesStartOffest();
             int br = node.task()->bytesReceived();
             int dlSpeed = br/elapse;
-            float dlPercent = (float)bd/(float)fSize;
-            BDiskEvent::instance()->dispatchDownloadProgress(key,
-                                                             QString::number(dlSpeed),
-                                                             QString::number(dlPercent));
+//            float dlPercent = (float)bd/(float)fSize;
+//            m_diskEvent->dispatchDownloadProgress(key,
+//                                                  QString::number(dlSpeed),
+//                                                  QString::number(dlPercent));
+            BDiskEvent::instance()->dispatchDownloadProgress(key, dlSpeed, bd, runElapse);
         }
+        m_locker.unlock();
+    });
+
+    connect(m_completeDB, &DLTransmissionDatabase::listChanged, [&]() {
+        DLTaskInfoList list = m_completeDB->list();
+        qStableSort(list.begin(), list.end(), [](const DLTaskInfo &l, const DLTaskInfo &r) -> bool {
+            return l.identifier() < r.identifier();
+        });
+        QVariantList ll;
+        foreach (DLTaskInfo info, list) {
+            ll.append(info.toMap());
+        }
+        setCompletedTasks(ll);
     });
 
     connect(m_downloadMgr, &DLTaskAccessMgr::resumablesChanged, [&](const DLTaskInfoList &list) {
@@ -150,9 +205,8 @@ BDiskDownloadDelegate::BDiskDownloadDelegate(QObject *parent)
     parseDLTaskInfoList(m_downloadMgr->resumables());
     setTasks(convertTaskInfoHash());
 
-    qDebug()<<Q_FUNC_INFO<<" .............. m_nodeHash size "<<m_nodeHash.size();
-
     m_timer->start();
+    m_timerStartedMSecsSinceEpoch = QDateTime::currentMSecsSinceEpoch();
 }
 
 BDiskDownloadDelegate::~BDiskDownloadDelegate()
@@ -173,7 +227,6 @@ BDiskDownloadDelegate::~BDiskDownloadDelegate()
         }
         node.setTask(nullptr);
     }
-//    qDeleteAll(m_nodeHash);
     m_nodeHash.clear();
 
     if (m_downloadMgr)
@@ -206,70 +259,96 @@ void BDiskDownloadDelegate::download(const QString &from, const QString &savePat
     connect(task, &DLTask::statusChanged, [&](const QString &uuid, DLTask::TaskStatus status) {
         QMutexLocker locker(&m_locker);
         if (status == DLTask::TaskStatus::DL_FINISH) {
-            if (m_nodeHash.value(uuid).task() && m_nodeHash.value(uuid).identifier() == uuid) {
-                m_nodeHash.value(uuid).task()->deleteLater();
+            BDiskDownloadDelegateNode node = m_nodeHash.value(uuid);
+            if (node.task() && node.identifier() == uuid) {
+                DLTaskInfo info = node.task()->taskInfo();
+                node.task()->deleteLater();
+                node.setTask(nullptr);
+                m_nodeHash.insert(uuid, node);
                 m_nodeHash.remove(uuid);
+
+                info.setIdentifier(QString::number(QDateTime::currentMSecsSinceEpoch()));
+                m_completeDB->appendTaskInfo(info);
+
                 QVariantList list = convertTaskInfoHash();
                 locker.unlock();
                 setTasks(list);
             }
         } else  if (status == DLTask::TaskStatus::DL_STOP) {
             if (m_nodeHash.value(uuid).task() && m_nodeHash.value(uuid).identifier() == uuid) {
-                m_nodeHash.value(uuid).task()->deleteLater();
+                BDiskDownloadDelegateNode node = m_nodeHash.value(uuid);
+                DLTaskInfo info = node.task()->taskInfo();//node.placeholderTaskInfo();
+                info.setStatus(DLTaskInfo::TaskStatus::STATUS_STOP);
+                node.setPlaceholderTaskInfo(info);
+                node.task()->deleteLater();
+                node.setTask(nullptr);
+//                m_nodeHash.value(uuid).task()->deleteLater();
+                m_nodeHash.insert(uuid, node);
                 QVariantList list = convertTaskInfoHash();
                 locker.unlock();
                 setTasks(list);
+                BDiskEvent::instance()->dispatchTaskStatus(uuid, BDiskEvent::TaskStatus::STATUS_STOP);
             }
         } else  if (status == DLTask::TaskStatus::DL_START) {
-            qDebug()<<Q_FUNC_INFO<<" ............... DL_START";
+            qDebug()<<Q_FUNC_INFO<<" DL_START for hash "<<uuid;
+
             QStringList idList = m_nodeHash.keys();
             if (idList.contains(uuid)) {
                 BDiskDownloadDelegateNode node = m_nodeHash.value(uuid);
                 if (!node.task()) {
-                    qWarning()<<Q_FUNC_INFO<<"Current running task not in nodelist!!";
-                    return;
+                    if (!m_tmpNode.isEmpty()) {
+                        if (m_tmpNode.keys().contains(uuid)) {
+                            qDebug()<<Q_FUNC_INFO<<QString("Insert running task [%1] to nodelist!!").arg(uuid);
+                            node = m_tmpNode.value(uuid);
+                            node.setIdentifier(uuid);
+                            DLTaskInfo info = m_tmpNode.value(uuid).task()->taskInfo();
+                            info.setStatus(DLTaskInfo::TaskStatus::STATUS_RUNNING);
+                            node.setPlaceholderTaskInfo(info);
+                            node.setElapsedTimeOffset(m_timerCount);
+                            m_tmpNode.remove(uuid);
+                            m_nodeHash.insert(uuid, node);
+                        }
+                    }
+                } else {
+                    DLTaskInfo info = node.task()->taskInfo();
+                    info.setStatus(DLTaskInfo::TaskStatus::STATUS_RUNNING);
+                    node.setPlaceholderTaskInfo(info);
+                    node.setIdentifier(uuid);
+                    node.setElapsedTimeOffset(m_timerCount);
+                    m_nodeHash.insert(uuid, node);
                 }
-                DLTaskInfo info = node.task()->taskInfo();
-                info.setStatus(DLTaskInfo::TaskStatus::STATUS_RUNNING);
-                node.setPlaceholderTaskInfo(info);
-                node.setIdentifier(uuid);
-                node.setElapsedTimeOffset(m_timerCount);
-                m_nodeHash.insert(uuid, node);
             } else {
                 /// tmp QHash to ensure order not changed
                 QHash<QString, BDiskDownloadDelegateNode> hash;
                 foreach (QString key, idList) {
                     BDiskDownloadDelegateNode node = m_nodeHash.value(key);
                     if (!node.task()) {
-                        //TODO cause crash, better method needed
-//                        QObject *t = sender();
-//                        qDebug()<<Q_FUNC_INFO<<" ............... t is nullptr "<<(t == nullptr);
-//                        if (t) {
-//                            DLTask *ts = qobject_cast<DLTask*>(t);
-//                            if (ts) {
-//                                qDebug()<<Q_FUNC_INFO<<" ............... ts is nullptr "<<(ts == nullptr);
-//                                if (node.placeholderTaskInfo().hasSameIdentifier(ts->taskInfo())) {
-//                                    qDebug()<<Q_FUNC_INFO<<" ............. running task find in database";
-//                                    node.setIdentifier(ts->uuid());
-//                                    node.setTask(ts);
-//                                    DLTaskInfo info = node.task()->taskInfo();
-//                                    info.setStatus(DLTaskInfo::TaskStatus::STATUS_RUNNING);
-//                                    node.setPlaceholderTaskInfo(info);
-//                                    node.setElapsedTimeOffset(m_timerCount);
-//                                    hash.insert(node.identifier(), node);
-//                                }
-//                            }
-//                        } else {
-//                            hash.insert(node.identifier(), node);
-//                        }
+                        if (!m_tmpNode.isEmpty()) {
+                            if (m_tmpNode.keys().contains(uuid)) {
+                                qDebug()<<Q_FUNC_INFO<<" fond node in tmp node";
+                                BDiskDownloadDelegateNode n = m_tmpNode.value(uuid);
+                                n.setIdentifier(uuid);
+                                DLTaskInfo info = n.task()->taskInfo();
+                                info.setStatus(DLTaskInfo::TaskStatus::STATUS_RUNNING);
+                                n.setPlaceholderTaskInfo(info);
+                                n.setElapsedTimeOffset(m_timerCount);
+                                m_tmpNode.remove(uuid);
+                                hash.insert(uuid, n);
+                                continue;
+                            }
+                        }
+                        hash.insert(node.identifier(), node);
                         continue;
-                    }
-                    DLTaskInfo placeholder = node.placeholderTaskInfo();
-                    if (placeholder.hasSameIdentifier(node.task()->taskInfo())) {
-                        node.setIdentifier(uuid);
-                        node.setPlaceholderTaskInfo(node.task()->taskInfo());
-                        node.setElapsedTimeOffset(m_timerCount);
-                        hash.insert(uuid, node);
+                    } else {
+                        DLTaskInfo placeholder = node.placeholderTaskInfo();
+                        if (placeholder.hasSameIdentifier(node.task()->taskInfo())) {
+                            node.setIdentifier(uuid);
+                            DLTaskInfo info = node.task()->taskInfo();
+                            info.setStatus(DLTaskInfo::TaskStatus::STATUS_RUNNING);
+                            node.setPlaceholderTaskInfo(info);
+                            node.setElapsedTimeOffset(m_timerCount);
+                            hash.insert(uuid, node);
+                        }
                     }
                 }
                 m_nodeHash = hash;
@@ -277,57 +356,72 @@ void BDiskDownloadDelegate::download(const QString &from, const QString &savePat
             QVariantList list = convertTaskInfoHash();
             locker.unlock();
             setTasks(list);
+            BDiskEvent::instance()->dispatchTaskStatus(uuid, BDiskEvent::TaskStatus::STATUS_RUNNING);
         }
-
-//        qDebug()<<Q_FUNC_INFO<<" .............. m_nodeHash size "<<m_nodeHash.size();
-
     });
     connect(task, &DLTask::taskInfoChanged, [&](const QString &uuid, const DLTaskInfo &info) {
-        m_locker.lock();
+        QMutexLocker locker(&m_locker);
         QStringList idList = m_nodeHash.keys();
         if (idList.contains(uuid)) {
             BDiskDownloadDelegateNode node = m_nodeHash.value(uuid);
-            if (!node.task())
-                return;
-            node.setIdentifier(uuid);
-            node.setPlaceholderTaskInfo(info);
-            m_nodeHash.insert(uuid, node);
-        } else {
+            if (node.task()) {
+                node.setIdentifier(uuid);
+                node.setPlaceholderTaskInfo(info);
+                m_nodeHash.insert(uuid, node);
+            }
+        } /*else {
             /// tmp QHash to ensure order not changed
             QHash<QString, BDiskDownloadDelegateNode> hash;
             foreach (QString key, idList) {
                 BDiskDownloadDelegateNode node = m_nodeHash.value(key);
                 if (!node.task()) {
+                    node.setPlaceholderTaskInfo(info);
                     hash.insert(node.identifier(), node);
                     continue;
                 }
                 DLTaskInfo placeholder = node.placeholderTaskInfo();
                 if (placeholder.hasSameIdentifier(node.task()->taskInfo())) {
                     node.setIdentifier(uuid);
-                    node.setPlaceholderTaskInfo(node.task()->taskInfo());
+                    node.setPlaceholderTaskInfo(info);
                     node.setElapsedTimeOffset(m_timerCount);
                     hash.insert(uuid, node);
                 }
             }
             m_nodeHash = hash;
-        }
-        m_locker.unlock();
+        }*/
+        QVariantList list = convertTaskInfoHash();
+        locker.unlock();
+        setTasks(list);
 
-//        qDebug()<<Q_FUNC_INFO<<" .............. m_nodeHash size "<<m_nodeHash.size();
-
+//        if (info.status() == DLTaskInfo::TaskStatus::STATUS_STOP) {
+//            BDiskEvent::instance()->dispatchTaskStatus(uuid, BDiskEvent::TaskStatus::STATUS_STOP);
+//        } else {
+//            BDiskEvent::instance()->dispatchTaskStatus(uuid, BDiskEvent::TaskStatus::STATUS_RUNNING);
+//        }
     });
 
-//    m_locker.lock();
-//    BDiskDownloadDelegateNode node;
-//    node.setIdentifier(task->uuid());
-//    node.setPlaceholderTaskInfo(task->taskInfo());
-//    node.setTask(task);
-//    m_nodeHash.insert(task->uuid(), node);
-//    m_locker.unlock();
-
-//    qDebug()<<Q_FUNC_INFO<<" .............. m_nodeHash size "<<m_nodeHash.size();
+    m_locker.lock();
+    BDiskDownloadDelegateNode node;
+    node.setIdentifier(task->uuid());
+    node.setPlaceholderTaskInfo(task->taskInfo());
+    node.setTask(task);
+    m_tmpNode.insert(task->uuid(), node);
+    m_locker.unlock();
 
     task->start();
+}
+
+bool BDiskDownloadDelegate::taskRunning(const QString &hash)
+{
+    if (hash.isEmpty())
+        return false;
+    if (!m_nodeHash.keys().contains(hash)) {
+        qWarning()<<Q_FUNC_INFO<<QString("Current hash [%1] not existed in database!!!").arg(hash);
+        return false;
+    }
+    if (m_nodeHash.value(hash).placeholderTaskInfo().status() == DLTaskInfo::TaskStatus::STATUS_STOP)
+        return false;
+    return true;
 }
 
 QVariantList BDiskDownloadDelegate::tasks() const
@@ -335,12 +429,76 @@ QVariantList BDiskDownloadDelegate::tasks() const
     return m_tasks;
 }
 
+QVariantList BDiskDownloadDelegate::completedTasks() const
+{
+    return m_completedTasks;
+}
+
+void BDiskDownloadDelegate::stop(const QString &hash)
+{
+    if (hash.isEmpty())
+        return;
+    if (!m_nodeHash.keys().contains(hash)) {
+        qWarning()<<Q_FUNC_INFO<<QString("Current hash [%1] not existed in database!!!").arg(hash);
+        return;
+    }
+    if (m_nodeHash.value(hash).task()) {
+        m_nodeHash.value(hash).task()->suspend();
+    }
+}
+
+void BDiskDownloadDelegate::resume(const QString &hash)
+{
+    if (hash.isEmpty())
+        return;
+    if (!m_nodeHash.keys().contains(hash)) {
+        qWarning()<<Q_FUNC_INFO<<QString("Current hash [%1] not existed in database!!!").arg(hash);
+        return;
+    }
+    QMutexLocker lock(&m_locker);
+    if (m_nodeHash.value(hash).task()) {
+        m_nodeHash.value(hash).task()->resume();
+        lock.unlock();
+    } else {
+        DLTaskInfo info = m_nodeHash.value(hash).placeholderTaskInfo();
+        QString url = info.requestUrl();
+        QStringList list = url.split("?");
+        if (list.length() != 2)
+            return;
+        list = list.at(1).split("&");
+        QString from;
+        foreach (QString str, list) {
+            if (str.startsWith("path=")) {
+                from = str.replace("path=", "");
+                break;
+            }
+        }
+        if (from.isEmpty())
+            return;
+        QFileInfo fi(info.filePath());
+        QString p = fi.absolutePath();
+        QString s = fi.fileName();
+        lock.unlock();
+        download(from, p, s);
+    }
+}
+
+void BDiskDownloadDelegate::setCompletedTasks(const QVariantList &completedTasks)
+{
+    if (m_completedTasks == completedTasks)
+        return;
+
+    m_completedTasks = completedTasks;
+    emit completedTasksChanged(completedTasks);
+}
+
 void BDiskDownloadDelegate::setTasks(const QVariantList &tasks)
 {
     if (m_tasks == tasks)
         return;
 
-    qDebug()<<Q_FUNC_INFO<<" tasks changed ";
+    //    qDebug()<<Q_FUNC_INFO<<"================== setTasks ";
+
     m_tasks = tasks;
     emit tasksChanged(tasks);
 }
@@ -348,14 +506,21 @@ void BDiskDownloadDelegate::setTasks(const QVariantList &tasks)
 void BDiskDownloadDelegate::parseDLTaskInfoList(const DLTaskInfoList &list)
 {
     QStringList keys = m_nodeHash.keys();
+    QHash<QString, BDiskDownloadDelegateNode> hash;
 
+    /// change list in m_nodeHash
+    ///
     foreach (DLTaskInfo info, list) {
         bool skip = false;
         foreach (QString key, keys) {
             BDiskDownloadDelegateNode node = m_nodeHash.value(key);
             if (node.placeholderTaskInfo().hasSameIdentifier(info) || node.identifier() == info.identifier()) {
                 node.setPlaceholderTaskInfo(info);
-                m_nodeHash.insert(node.identifier(), node);
+                if (key != info.identifier()) {
+                    hash.insert(info.identifier(), node);
+                } else {
+                    hash.insert(key, node);
+                }
                 skip = true;
                 break;
             }
@@ -371,8 +536,22 @@ void BDiskDownloadDelegate::parseDLTaskInfoList(const DLTaskInfoList &list)
         node.setIdentifier(info.identifier());
         node.setPlaceholderTaskInfo(info);
         node.setTask(nullptr);
-        m_nodeHash.insert(node.identifier(), node);
+        hash.insert(node.identifier(), node);
     }
+    /// append exist to hash
+    ///
+    QStringList tmpKeys;
+    foreach (const QString key, keys) {
+        if (hash.keys().contains(key))
+            continue;
+        tmpKeys.append(key);
+    }
+    foreach (QString key, tmpKeys) {
+        BDiskDownloadDelegateNode node = m_nodeHash.value(key);
+//        qDebug()<<Q_FUNC_INFO<<" insert exist, task pointer "<<(node.task());
+        hash.insert(key, node);
+    }
+    m_nodeHash = hash;
 }
 
 QVariantList BDiskDownloadDelegate::convertTaskInfoHash()
@@ -384,9 +563,15 @@ QVariantList BDiskDownloadDelegate::convertTaskInfoHash()
         } else {
             if (!m_nodeHash.value(key).placeholderTaskInfo().isEmpty()) {
                 ll.append(m_nodeHash.value(key).placeholderTaskInfo().toMap());
+            } else {
+                qWarning()<<Q_FUNC_INFO<<" skip hash "<<m_nodeHash.value(key).identifier()
+                         <<"  as placeholderTaskInfo is empty";
             }
         }
     }
     return ll;
 }
+
+
+#include "BDiskDownloadDelegate.moc"
 

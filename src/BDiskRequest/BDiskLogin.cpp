@@ -197,6 +197,7 @@ void BDiskLogin::loginByCookie()
                 m_tokenProvider->setUidStr(uname);
 //            }
             freeReply();
+            m_tokenProvider->flush();
             emit loginByCookieSuccess();
         });
     }
@@ -781,6 +782,8 @@ void BDiskLogin::run()
         }
         m_breakThread = true;
     } while (true);
+
+    m_tokenProvider->flush();
 
     if (!m_loginFailureOrAborted)
         m_handler->dispatch(InnerEvent::EVENT_LOGIN_SUCCESS);

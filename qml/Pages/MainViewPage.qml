@@ -8,6 +8,7 @@ import ".."
 import "../QuickFlux/Stores"
 import "../QuickFlux/Actions"
 import "../QuickFlux/Scripts"
+import "../UI"
 
 import "../Script/Utility.js" as Utility
 
@@ -125,141 +126,15 @@ Page {
 //        }
 //    }
 
-    actionBar.customContent: Item {
-        anchors.fill: parent
-        IconButton {
-            id: refreshBtn
-            anchors {
-                left: parent.left
-                verticalCenter: parent.verticalCenter
-            }
-            color: Theme.lightDark(theme.primaryColor, Theme.light.iconColor, Theme.dark.iconColor)
-            action: Action {
-                iconName: "navigation/refresh"
-                onTriggered: {
-                    AppActions.refreshCurrentDir();
-                }
-            }
-        }
-        ListView {
-            id: pathView
-            anchors {
-                left: refreshBtn.right
-                leftMargin: Const.middleSpace
-                right: parent.right
-                rightMargin: Const.middleSpace
-            }
-            height: parent.height > dp(48) ? dp(48) : parent.height
-            clip: true
-            orientation: Qt.Horizontal
-            spacing: Const.tinySpace
-            onCountChanged: {
-                pathView.positionViewAtEnd();
-            }
-            onWidthChanged: {
-                pathView.positionViewAtEnd();
-            }
-            model: DirListStore.currentPathList
-            delegate: ListItem.BaseListItem {
-                id: pathItem
-                height: parent.height
-                /// NOTE anchors.left && anchors.right should set before width property,
-                /// This fix qml-material View component bug
-                anchors.left: undefined
-                anchors.right: undefined
-                width: itemRow.width
-                onClicked: {
-                    if (index == 0) {
-                        AppActions.showDir("/");
-                    } else {
-                        var dir = "";
-                        for(var i=1; i<=index; ++i) {
-                            dir += "/";
-                            dir += DirListStore.currentPathList[i];
-                        }
-                        AppActions.showDir(dir);
-                    }
-                }
-                Row {
-                    id: itemRow
-                    height: parent.height
-                    spacing: Const.tinySpace
-                    Label {
-                        anchors.verticalCenter: parent.verticalCenter
-                        style: "subheading"
-                        color:  Theme.isDarkColor(actionBar.backgroundColor)
-                                ? Theme.dark.textColor
-                                : Theme.light.accentColor
-                        text: index == 0 ? qsTr("BNetDisk") : DirListStore.currentPathList[index]
-                        verticalAlignment: Text.AlignVCenter
-                    }
-                    Icon {
-                        anchors.verticalCenter: parent.verticalCenter
-                        color: Theme.isDarkColor(actionBar.backgroundColor)
-                               ? Theme.dark.iconColor
-                               : Theme.light.accentColor
-                        name: "navigation/chevron_right"
-                        visible: index != DirListStore.currentPathList.length -1
-                    }
-                }
-            }
-        }
-        Scrollbar {
-            flickableItem: pathView
-        }
-    }
+    actionBar.customContent: AddrBar {}
 
     FileSavePathDialog {}
 
-    Sidebar {
+    MainViewSidebar {
         id: sidebar
         anchors.bottom: infoBanner.top
-        width: dp(200)
-        property var nameList: [qsTr("All"), qsTr("Image"), qsTr("Document"), qsTr("Video"),
-            qsTr("BT"), qsTr("Audio"), qsTr("Other")]
-        property var iconList: ["file/attachment", "image/image", "image/texture", "av/movie",
-        "file/attachment", "image/music_note", "file/attachment"]
-        Column {
-            width: parent.width
-            ListItem.Subheader {
-                text: qsTr("Cloud Storage")
-            }
-            Repeater {
-                model: sidebar.nameList.length
-                delegate: ListItem.Standard {
-                    text: sidebar.nameList[index]
-                    iconName: sidebar.iconList[index]
-                }
-            }
-            ListItem.Divider{}
-            ListItem.Standard {
-                action: IconButton {
-                    anchors {
-                        left: parent.left
-                        verticalCenter: parent.verticalCenter
-                    }
-                    action: Action {
-                        iconName: "social/share"
-                        onTriggered: {
-                            console.log("===== share icon click")
-                        }
-                    }
-                }
-                content: IconButton {
-                    anchors {
-                        left: parent.left
-                        verticalCenter: parent.verticalCenter
-                    }
-                    action: Action {
-                        iconName: "action/delete"
-                        onTriggered: {
-                            console.log("===== trash icon click")
-                        }
-                    }
-                }
-            }
-        }
     }
+
     View {
         id: infoBanner
         width: sidebar.width
@@ -329,6 +204,7 @@ Page {
             property string path: object[FileObjectKey.keyPath]
             property string fileName: AppUtility.fileObjectPathToFileName(path)
             property string mtime: object[FileObjectKey.keyServerMTime]
+            property string fsID: object[FileObjectKey.keyFsId]
             property int category: object[FileObjectKey.keyCategory]
             property int size: object[FileObjectKey.keySize]
             showDivider: true
@@ -361,6 +237,12 @@ Page {
                     action: Action {
                         iconName: "social/share"
                     }
+                    onClicked: {
+                        console.log('=========== fsid '+dirItem.fsID);
+                        shareMenu.shareId = dirItem.fsID;
+                        shareMenu.parent = dirItem;
+                        shareMenu.open(dirItem, 0, 0);
+                    }
                 }
                 IconButton {
                     action: Action {
@@ -378,5 +260,77 @@ Page {
 
     Scrollbar {
         flickableItem: content
+    }
+
+    Dropdown {
+        id: shareMenu
+        anchor: Item.TopRight
+        width: mainViewPage.width /4
+        height: options.height
+        property string shareId: ""
+
+        Rectangle {
+            anchors.fill: parent
+            radius: 2 * Units.dp
+        }
+        Column {
+            id: options
+            width: parent.width
+            ListItem.Standard {
+                text: qsTr("share public")
+                onClicked: {
+                    shareLinkView.open(mainViewPage);
+                    AppActions.pubShare(shareMenu.shareId);
+                    shareMenu.close();
+                }
+            }
+            ListItem.Standard {
+                text: qsTr("share private")
+                onClicked: {
+                    shareLinkView.open(mainViewPage);
+                    AppActions.privShare(shareMenu.shareId);
+                    shareMenu.close();
+                }
+            }
+        }
+    }
+
+    OverlayView {
+        id: shareLinkView
+        width: Const.screenWidth * 0.6
+        height: shareLinkContent.height + Const.middleSpace * 2
+        anchors.centerIn: parent
+        Column {
+            id: shareLinkContent
+            width: parent.width - Const.middleSpace * 2
+            anchors.centerIn: parent
+            spacing: Const.middleSpace * 2
+            Label {
+                width: parent.width
+                anchors.horizontalCenter: parent.horizontalCenter
+                style: "title"
+                text: qsTr("share link")
+            }
+            Label {
+                width: parent.width
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: qsTr("Share error");
+                visible: ShareStore.showErrorLabel
+            }
+            TextField {
+                width: parent.width
+                text: ShareStore.sharelink
+                placeholderText: qsTr("share link")
+                floatingLabel: true
+                visible: ShareStore.sharelink != ""
+            }
+            TextField {
+                width: parent.width
+                text: ShareStore.password
+                placeholderText: qsTr("password")
+                floatingLabel: true
+                visible: ShareStore.password
+            }
+        }
     }
 }

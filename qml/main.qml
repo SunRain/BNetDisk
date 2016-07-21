@@ -12,6 +12,9 @@ ApplicationWindow {
     title: qsTr("BNetDisk")
     visible: true
 
+    width: Const.screenWidth
+    height: Const.screenHeight
+
     theme {
         primaryColor: "blue"
         accentColor: "red"

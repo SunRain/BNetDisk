@@ -65,6 +65,9 @@ ActionCreator {
     signal showRootDir();
     signal cdup();
     signal refreshCurrentDir();
+    signal showDownloadingComponent();
+    signal showCompletedComponent();
+
     function showDir(dir) {
         AppDispatcher.dispatch(ActionTypes.showDir, {"dir":dir});
     }
@@ -94,5 +97,19 @@ ActionCreator {
 
     function showDownloadPage(stack) {
         stack.push(Qt.resolvedUrl("../../Pages/DownloadViewPage.qml"))
+    }
+
+    function stopTask(hash) {
+        AppDispatcher.dispatch(ActionTypes.stopTask, {"hash":hash});
+    }
+    function startTask(hash) {
+        AppDispatcher.dispatch(ActionTypes.startTask, {"hash":hash});
+    }
+
+    function privShare(fsId) {
+        AppDispatcher.dispatch(ActionTypes.privShare, {"fsid":fsId});
+    }
+    function pubShare(fsId) {
+        AppDispatcher.dispatch(ActionTypes.pubShare, {"fsid":fsId});
     }
 }

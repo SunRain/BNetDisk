@@ -22,6 +22,7 @@ public:
     BDiskBaseOperationRequest::OperationType op;
     bool isInitiated;
     QHash<QString, QString> parameters;
+    QHash<QString, QString> postDataParameters;
 };
 
 
@@ -42,7 +43,7 @@ BDiskBaseOperationRequest::~BDiskBaseOperationRequest()
 
 void BDiskBaseOperationRequest::initiate()
 {
-    d.data()->op = getOp();
+    d.data()->op = initOperationType();
     initParameters();
     d.data()->isInitiated = true;
 }
@@ -103,12 +104,12 @@ BDiskBaseOperationRequest &BDiskBaseOperationRequest::operator()(const QString &
     return *this;
 }
 
-BDiskBaseOperationRequest::OperationType BDiskBaseOperationRequest::getOp()
+BDiskBaseOperationRequest::OperationType BDiskBaseOperationRequest::initOperationType()
 {
     return BDiskBaseOperationRequest::OPERATION_UNDEFINED;
 }
 
-BDiskBaseOperationRequest::OperationType BDiskBaseOperationRequest::op()
+BDiskBaseOperationRequest::OperationType BDiskBaseOperationRequest::operationType()
 {
     if (!d.data()->isInitiated)
         qWarning()<<Q_FUNC_INFO<<"Please call initiate first!!!";
@@ -122,6 +123,23 @@ void BDiskBaseOperationRequest::setParameters(const QString &key, const QString 
     }
 }
 
+void BDiskBaseOperationRequest::appendPostDataParameters(const QString &key, const QString &value)
+{
+    if (key.isEmpty())
+        return;
+    d.data()->postDataParameters.insert(key.simplified(), value.simplified());
+}
+
+QHash<QString, QString> BDiskBaseOperationRequest::postDataParameters() const {
+    return d.data()->postDataParameters;
+}
+
+QString BDiskBaseOperationRequest::postDataParameter(const QString &key, const QString &defaultValue) const {
+    if (!d.data()->postDataParameters.isEmpty() && d.data()->postDataParameters.contains(key))
+        return d.data()->postDataParameters.value(key, defaultValue);
+    return QString();
+}
+// 
 void BDiskBaseOperationRequest::initParameters()
 {
     qWarning()<<Q_FUNC_INFO<<"Empty parameters!";

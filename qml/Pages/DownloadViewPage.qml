@@ -19,12 +19,18 @@ Page {
             width: parent.width
             ListItem.Standard {
                 text: qsTr("Downloading")
+                onClicked: {
+                    AppActions.showDownloadingComponent();
+                }
             }
             ListItem.Standard {
                 text: qsTr("Uploading")
             }
             ListItem.Standard {
                 text: qsTr("Finished")
+                onClicked: {
+                    AppActions.showCompletedComponent();
+                }
             }
         }
     }
@@ -39,113 +45,8 @@ Page {
             rightMargin: Const.tinySpace
             bottom: parent.bottom
         }
-        sourceComponent: dlComponent
+        source: DownloadStore.downloadPageviewComponentUri;
     }
-
-
-
-
-
-
-
-
-    Component {
-        id: dlComponent
-        ListView {
-            anchors.fill: parent
-            clip: true
-//            spacing: dp(8)
-            model: DownloadStore.downloadingModel
-            delegate: ListItem.BaseListItem {
-                id: dlItem
-                property var object: DownloadStore.downloadingModel[index]
-                property var uuid: object[DownloaderObjectKey.KeyIdentifier]
-                property string path: object[DownloaderObjectKey.keyFilePath]
-                property string fileName: AppUtility.fileObjectPathToFileName(path)
-                property int totalSize: object[DownloaderObjectKey.keyTotalSize];
-                property int readySize: object[DownloaderObjectKey.keyReadySize];
-                property string speed: ""
-                property string percent: ""
-                width: parent.width
-                height: dlItemColumn.height + Const.middleSpace
-                showDivider: true
-                Component.onCompleted: {
-                    for (var prop in object) {
-                        console.log("Object item:", prop, "=", object[prop])
-                    }
-                    console.log("==== uuid ["+uuid+"] object ["+object+"]");
-                }
-                Connections {
-                    target: BDiskEvent
-                    onDownloadProgress: { //const QString &hash, const QString &speed, const QString &percent
-                        if (hash == uuid) {
-                            console.log("======= speed "+speed +" percent " +percent);
-                            dlItem.speed = speed;
-                            dlItem.percent = percent;
-                        }
-                    }
-                }
-
-                IconButton {
-                    id: dlItemIcon
-                    size: parent.height * 0.5
-                    anchors {
-                        left: parent.left
-                        verticalCenter: parent.verticalCenter
-                    }
-                    action: Action {
-                        iconName: "av/play_circle_filled"
-                    }
-                }
-                Column {
-                    id: dlItemColumn
-                    anchors {
-                        left: dlItemIcon.right
-                        leftMargin: Const.middleSpace
-                        right: parent.right
-                        rightMargin: Const.middleSpace
-                        verticalCenter: parent.verticalCenter
-                    }
-                    spacing: Const.tinySpace
-                    Label {
-                        width: parent.width
-                        elide: Text.ElideRight
-                        style: "subheading"
-                        text: fileName
-                    }
-                    ProgressBar {
-                        width: parent.width
-                        color: theme.accentColor
-                        maximumValue: 100
-                        minimumValue: 0
-                        value: 50
-                        NumberAnimation on value {
-                            to: value
-                            duration: 100
-                        }
-                    }
-                    Label {
-                        width: parent.width
-                        color: Theme.light.subTextColor
-                        elide: Text.ElideRight
-                        wrapMode: Text.WordWrap
-                        style: "body1"
-                        text: "downloading info"
-                    }
-                    Label {
-                        width: parent.width
-                        color: Theme.light.subTextColor
-                        elide: Text.ElideRight
-                        wrapMode: Text.WordWrap
-                        style: "body1"
-                        text: dlItem.speed + " " + dlItem.percent//"downloading info2"
-                    }
-                }
-            }
-        }
-    }
-
-
 
 
 }
