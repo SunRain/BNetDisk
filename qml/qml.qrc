@@ -20,5 +20,9 @@
         <file>QuickFlux/Stores/ShareStore.qml</file>
         <file>UI/AddrBar.qml</file>
         <file>UI/MainViewSidebar.qml</file>
+        <file>QuickFlux/Scripts/DiskOperationDialog.qml</file>
+        <file>QuickFlux/Adapters/StoreAdapter.qml</file>
+        <file>QuickFlux/StoreWorkers/FileOperationStoreWorker.qml</file>
+        <file>QuickFlux/StoreWorkers/StoreWorker.qml</file>
     </qresource>
 </RCC>

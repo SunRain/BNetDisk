@@ -135,6 +135,10 @@ Page {
         anchors.bottom: infoBanner.top
     }
 
+    DiskOperationDialog {
+        id: opDialog
+    }
+
     View {
         id: infoBanner
         width: sidebar.width
@@ -248,6 +252,11 @@ Page {
                     action: Action {
                         iconName: "navigation/more_vert"
                     }
+                    onClicked: {
+                        moreVertMenu.renamePath = dirItem.path;
+                        moreVertMenu.parent = dirItem;
+                        moreVertMenu.open(dirItem, 0, 0);
+                    }
                 }
             }
             onClicked: {
@@ -290,6 +299,31 @@ Page {
                     shareLinkView.open(mainViewPage);
                     AppActions.privShare(shareMenu.shareId);
                     shareMenu.close();
+                }
+            }
+        }
+    }
+
+    Dropdown {
+        id: moreVertMenu
+        anchor: Item.TopRight
+        width: mainViewPage.width /4
+        height: moreVertColumn.height
+
+        property string renamePath: ""
+
+        Rectangle {
+            anchors.fill: parent
+            radius: 2 * Units.dp
+        }
+        Column {
+            id: moreVertColumn
+            width: parent.width
+            ListItem.Standard {
+                text: qsTr("rename")
+                onClicked: {
+                    AppActions.askToRename(moreVertMenu.renamePath);
+                    moreVertMenu.close();
                 }
             }
         }

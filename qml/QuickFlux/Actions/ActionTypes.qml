@@ -27,6 +27,9 @@ KeyTable {
     property string privShare
     property string pubShare
 
+    property string askToRename
+    property string fileRename
+
 //    property string openFileDialog
 
 

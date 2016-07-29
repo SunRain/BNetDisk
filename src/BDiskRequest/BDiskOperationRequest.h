@@ -171,4 +171,43 @@ protected:
     }
 };
 
+class BDiskOpFileRename : public BDiskBaseOperationRequest
+{
+public:
+    BDiskOpFileRename()
+        : BDiskBaseOperationRequest() {
+        setUrlPath("filemanager");
+        initiate();
+//        filelist:"[{"path":"/Material+Design/linux软件/xware-desktop.tar.gz","newname":"xware-desktop-aa.tar.gz"}]"
+        appendPostDataParameters("filelist", "[]");
+    }
+    virtual ~BDiskOpFileRename() {}
+
+    // BDiskBaseOperationRequest interface
+protected:
+    OperationType initOperationType() {
+        return OPERATION_POST;
+    }
+
+    void initParameters() {
+        (*this)
+        ("opera", "rename")
+        ("async", "2")
+        ("channel", "chunlei")
+        ("web", "1")
+        ("app_id", "250528")
+        ("bdstoken", "")
+//        ("logid", "")
+        ("clienttype", "0")
+        ;
+    }
+};
+
+
+
+
+
+
+
+
 #endif // BDISKOPERATIONREQUEST_H
