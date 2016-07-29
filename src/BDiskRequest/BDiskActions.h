@@ -50,4 +50,18 @@ protected:
     }
 };
 
+class BDiskActionFileRename : public BDiskBaseRequest
+{
+    Q_OBJECT
+public:
+    explicit BDiskActionFileRename(QObject *parent = 0): BDiskBaseRequest(parent) {}
+
+    // BDiskBaseRequest interface
+protected:
+    BDiskBaseOperationRequest operation() {
+        CREATE_OPR(BDiskOpFileRename);
+    }
+};
+
+
 #endif // BDISKACTIONS_H

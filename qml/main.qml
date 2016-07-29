@@ -5,6 +5,7 @@ import QuickFlux 1.0
 import "."
 import "Pages"
 import "QuickFlux/Actions"
+import "QuickFlux/Adapters"
 
 ApplicationWindow {
     id: bdiskWindow
@@ -80,5 +81,11 @@ ApplicationWindow {
             console.log("===== MainViewPage onCompleted")
             AppActions.showRootDir();
         }
+    }
+
+    // StoreAdapter is a utility to initial Store singleton component and
+    // setup waitFor relationship. It is a workaround for QTBUG-49370
+    StoreAdapter {
+
     }
 }

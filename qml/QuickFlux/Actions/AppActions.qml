@@ -112,4 +112,14 @@ ActionCreator {
     function pubShare(fsId) {
         AppDispatcher.dispatch(ActionTypes.pubShare, {"fsid":fsId});
     }
+
+    function askToRename(path) {
+        AppDispatcher.dispatch(ActionTypes.askToRename, {"path":path});
+    }
+
+    function fileRename(path, newName) {
+        console.log("===== dispatch path "+path+" new name "+newName)
+        AppDispatcher.dispatch(ActionTypes.fileRename,
+                               {"path":path, "newName":newName});
+    }
 }
