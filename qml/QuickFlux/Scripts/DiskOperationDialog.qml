@@ -21,6 +21,11 @@ Item {
         }
     }
 
+    Dialog {
+        id: info
+        hasActions: true
+    }
+
     AppScript {
         runWhen: ActionTypes.askToRename
         script: {
@@ -36,7 +41,20 @@ Item {
             });
             once(rename.onRejected, exit.bind(this, 0));
         }
+    }
 
+    AppScript {
+        runWhen: ActionTypes.askToDelete
+        script: {
+            var path = message.path;
+            info.text = qsTr("Confirm to delete")+" ["+path+"] ?";
+            info.open();
+            once(info.onAccepted, function() {
+                console.log("===== delete "+path);
+                AppActions.fileDelete(path)
+            });
+            once(info.onRejected, exit.bind(this, 0));
+        }
     }
 
 

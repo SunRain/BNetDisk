@@ -63,5 +63,18 @@ protected:
     }
 };
 
+class BDiskActionFileDelete : public BDiskBaseRequest
+{
+    Q_OBJECT
+public:
+    explicit BDiskActionFileDelete(QObject *parent = 0): BDiskBaseRequest(parent) {}
+    virtual ~BDiskActionFileDelete() {}
+
+    // BDiskBaseRequest interface
+protected:
+    BDiskBaseOperationRequest operation() {
+        CREATE_OPR(BDiskOpFileDelete);
+    }
+};
 
 #endif // BDISKACTIONS_H

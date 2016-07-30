@@ -203,6 +203,37 @@ protected:
     }
 };
 
+class BDiskOpFileDelete : public BDiskBaseOperationRequest
+{
+public:
+    BDiskOpFileDelete()
+        : BDiskBaseOperationRequest() {
+        setUrlPath("filemanager");
+        initiate();
+        //filelist:"["/aaa/aaa.file"]"
+        appendPostDataParameters("filelist", "[]");
+    }
+    virtual ~BDiskOpFileDelete() {}
+
+    // BDiskBaseOperationRequest interface
+protected:
+    OperationType initOperationType() {
+        return OPERATION_POST;
+    }
+
+    void initParameters() {
+        (*this)
+        ("opera", "delete")
+        ("async", "2")
+        ("channel", "chunlei")
+        ("web", "1")
+        ("app_id", "250528")
+        ("bdstoken", "")
+//        ("logid", "")
+        ("clienttype", "0")
+        ;
+    }
+};
 
 
 

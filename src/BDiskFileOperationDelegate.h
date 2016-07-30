@@ -10,7 +10,8 @@ class BDiskFileOperationDelegate : public QObject
     Q_OBJECT
 public:
     enum OperationType{
-        OPERATION_RENAME = 0x0
+        OPERATION_RENAME = 0x0,
+        OPERATION_DELETE
     };
     Q_ENUM(OperationType)
 
@@ -18,8 +19,10 @@ public:
     virtual ~BDiskFileOperationDelegate();
 
     Q_INVOKABLE void rename(const QString &path, const QString &newName);
+    Q_INVOKABLE void deleteFile(const QString &path);
 private:
     BDiskActionFileRename *m_fileRename;
+    BDiskActionFileDelete *m_fileDelete;
 
 signals:
     void startRequest(OperationType t);

@@ -32,6 +32,9 @@ KeyTable {
     property string askToRename
     property string fileRename
 
+    property string askToDelete
+    property string fileDelete
+
 //    property string openFileDialog
 
 

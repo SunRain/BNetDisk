@@ -253,7 +253,7 @@ Page {
                         iconName: "navigation/more_vert"
                     }
                     onClicked: {
-                        moreVertMenu.renamePath = dirItem.path;
+                        moreVertMenu.path = dirItem.path;
                         moreVertMenu.parent = dirItem;
                         moreVertMenu.open(dirItem, 0, 0);
                     }
@@ -310,7 +310,7 @@ Page {
         width: mainViewPage.width /4
         height: moreVertColumn.height
 
-        property string renamePath: ""
+        property string path: ""
 
         Rectangle {
             anchors.fill: parent
@@ -322,7 +322,14 @@ Page {
             ListItem.Standard {
                 text: qsTr("rename")
                 onClicked: {
-                    AppActions.askToRename(moreVertMenu.renamePath);
+                    AppActions.askToRename(moreVertMenu.path);
+                    moreVertMenu.close();
+                }
+            }
+            ListItem.Standard {
+                text: qsTr("delete")
+                onClicked: {
+                    AppActions.askToDelete(moreVertMenu.path);
                     moreVertMenu.close();
                 }
             }

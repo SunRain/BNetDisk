@@ -126,4 +126,12 @@ ActionCreator {
         AppDispatcher.dispatch(ActionTypes.fileRename,
                                {"path":path, "newName":newName});
     }
+
+    function askToDelete(path) {
+        AppDispatcher.dispatch(ActionTypes.askToDelete, {"path":path});
+    }
+
+    function fileDelete(path) {
+        AppDispatcher.dispatch(ActionTypes.fileDelete, {"path":path});
+    }
 }

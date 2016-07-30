@@ -13,12 +13,12 @@ StoreWorker {
         onRequestFailure: {
             if (t == BDiskFileOperationDelegate.OPERATION_RENAME) {
                 AppActions.snackbarInfo(qsTr("Rename file error!"));
+            } else if (t == BDiskFileOperationDelegate.OPERATION_DELETE) {
+                AppActions.snackbarInfo(qsTr("Delete file error!"));
             }
         }
         onRequestSuccess: {
-            if (t == BDiskFileOperationDelegate.OPERATION_RENAME) {
-                delayRefreshDir.restart();
-            }
+            delayRefreshDir.restart();
         }
     }
 
@@ -38,6 +38,14 @@ StoreWorker {
             var path = message.path
             var name = message.newName
             fileOperationDelegate.rename(path, name);
+        }
+    }
+
+    Filter {
+        type: ActionTypes.fileDelete
+        onDispatched: {
+            var path = message.path;
+            fileOperationDelegate.deleteFile(path);
         }
     }
 
