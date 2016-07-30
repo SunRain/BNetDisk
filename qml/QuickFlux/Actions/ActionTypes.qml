@@ -15,6 +15,8 @@ KeyTable {
     property string refreshCurrentDir
     property string infomToNeedRelogin
 
+    property string snackbarInfo
+
     property string askToSelectDownloadPath
     property string downloadFile
 

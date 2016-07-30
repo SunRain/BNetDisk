@@ -68,6 +68,10 @@ ActionCreator {
     signal showDownloadingComponent();
     signal showCompletedComponent();
 
+    function snackbarInfo(info) {
+        AppDispatcher.dispatch(ActionTypes.snackbarInfo, {"info":info});
+    }
+
     function showDir(dir) {
         AppDispatcher.dispatch(ActionTypes.showDir, {"dir":dir});
     }

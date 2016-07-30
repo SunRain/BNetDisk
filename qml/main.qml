@@ -74,6 +74,13 @@ ApplicationWindow {
                 dialogSnackBar.open(text);
             }
         }
+        Filter {
+            type: ActionTypes.snackbarInfo
+            onDispatched: {
+                var info = message.info
+                dialogSnackBar.open(info);
+            }
+        }
     }
 
     initialPage: MainViewPage {

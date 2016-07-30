@@ -10,6 +10,26 @@ StoreWorker {
 
     BDiskFileOperationDelegate {
         id: fileOperationDelegate
+        onRequestFailure: {
+            if (t == BDiskFileOperationDelegate.OPERATION_RENAME) {
+                AppActions.snackbarInfo(qsTr("Rename file error!"));
+            }
+        }
+        onRequestSuccess: {
+            if (t == BDiskFileOperationDelegate.OPERATION_RENAME) {
+                delayRefreshDir.restart();
+            }
+        }
+    }
+
+    // use a timer to delay refresh dirs to waiting for remote http server change internal data
+    Timer {
+        id: delayRefreshDir
+        interval: 500
+        repeat: false
+        onTriggered: {
+            AppActions.refreshCurrentDir();
+        }
     }
 
     Filter {
@@ -17,7 +37,7 @@ StoreWorker {
         onDispatched: {
             var path = message.path
             var name = message.newName
-            console.log("====== onDispatched fileRename "+path+" name "+name);
+            fileOperationDelegate.rename(path, name);
         }
     }
 
