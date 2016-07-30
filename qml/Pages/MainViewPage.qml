@@ -144,7 +144,7 @@ Page {
         width: sidebar.width
         height: infoColumn.height
         anchors {
-            left: parent.left
+            left: sidebar.left//parent.left
             bottom: parent.bottom
         }
         backgroundColor: style === "default" ? "white" : "#333"
@@ -165,14 +165,8 @@ Page {
             ListItem.Standard {
                 width: parent.width
                 text: DownloadStore.downloadingModel.length + " " + qsTr("running task");
-                secondaryItem: IconButton {
-                    anchors.verticalCenter: parent.verticalCenter
-                    action: Action {
-                        iconName: "action/settings"
-                        onTriggered: {
-                            AppActions.showDownloadPage(pageStack);
-                        }
-                    }
+                onClicked: {
+                    AppActions.showDownloadPage(pageStack);
                 }
             }
         }
