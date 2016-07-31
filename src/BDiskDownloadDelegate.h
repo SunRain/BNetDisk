@@ -77,6 +77,7 @@ public slots:
 private slots:
     void setCompletedTasks(const QVariantList &completedTasks);
     void setTasks(const QVariantList &tasks);
+    void connectTask(YADownloader::DLTask **task);
 
 private:
     ///
