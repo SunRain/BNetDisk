@@ -77,6 +77,7 @@ public slots:
 private slots:
     void setCompletedTasks(const QVariantList &completedTasks);
     void setTasks(const QVariantList &tasks);
+    void connectTask(YADownloader::DLTask **task);
 
 private:
     ///
@@ -95,7 +96,7 @@ private:
 //    BDiskEvent *m_diskEvent;
     QMutex m_locker;
     QHash<QString, BDiskDownloadDelegateNode> m_nodeHash;
-    QHash<QString, BDiskDownloadDelegateNode> m_tmpNode;
+//    QHash<QString, BDiskDownloadDelegateNode> m_tmpNode;
 
     QVariantList m_tasks;
     qint64 m_timerCount;
