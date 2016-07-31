@@ -241,7 +241,7 @@ void BDiskDownloadDelegate::download(const QString &from, const QString &savePat
     QUrl url = m_downloadOp.initUrl();
     qDebug()<<Q_FUNC_INFO<<"download url is "<<url;
 //    QString path = qApp->applicationDirPath();
-    DLRequest req(url, savePath, saveName);
+    DLRequest req(url.toString(), savePath, saveName);
     req.setRawHeader("User-Agent", "Mozilla/5.0 (Windows;U;Windows NT 5.1;zh-CN;rv:1.9.2.9) Gecko/20100101 Firefox/43.0");
     req.setRawHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
 //    req.setRawHeader("Accept", "*/*");
