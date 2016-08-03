@@ -21,7 +21,12 @@ const static QString BDISK_FILE_KEY_MD5 ("md5");
 const static QString BDISK_FILE_KEY_PATH ("path");
 const static QString BDISK_FILE_KEY_LOCAL_CTIME ("local_ctime");
 const static QString BDISK_FILE_KEY_SERVER_FILENAME ("server_filename");
-
+const static QString BDISK_FILE_KEY_OBJECT_KEY ("object_key");
+const static QString BDISK_FILE_KEY_THUBMS ("thumbs");
+const static QString BDISK_FILE_KEY_THUBMS_ICON ("icon");
+const static QString BDISK_FILE_KEY_THUBMS_SMALL ("url1");
+const static QString BDISK_FILE_KEY_THUBMS_MIDDLE ("url2");
+const static QString BDISK_FILE_KEY_THUBMS_LARGE ("url3");
 
 class BDiskFileObjectKeyName : public QObject
 {
@@ -42,6 +47,12 @@ class BDiskFileObjectKeyName : public QObject
     Q_PROPERTY(QString keyPath READ keyPath CONSTANT)
     Q_PROPERTY(QString keyLocalCTime READ keyLocalCTime CONSTANT)
     Q_PROPERTY(QString keyServerFilename READ keyServerFilename CONSTANT)
+    Q_PROPERTY(QString keyFileObjKey READ keyFileObjKey CONSTANT)
+    Q_PROPERTY(QString keyThumbs READ keyThumbs CONSTANT)
+    Q_PROPERTY(QString keyThumbsIcon READ keyThumbsIcon CONSTANT)
+    Q_PROPERTY(QString keyThumbsSmall READ keyThumbsSmall CONSTANT)
+    Q_PROPERTY(QString keyThumbsMiddle READ keyThumbsMiddle CONSTANT)
+    Q_PROPERTY(QString keyThumbsLarge READ keyThumbsLarge CONSTANT)
 
 public:
     BDiskFileObjectKeyName(QObject *parent = 0)
@@ -72,7 +83,13 @@ public:
                 << BDISK_FILE_KEY_MD5
                 << BDISK_FILE_KEY_PATH
                 << BDISK_FILE_KEY_LOCAL_CTIME
-                << BDISK_FILE_KEY_SERVER_FILENAME;
+                << BDISK_FILE_KEY_SERVER_FILENAME
+                << BDISK_FILE_KEY_OBJECT_KEY
+                << BDISK_FILE_KEY_THUBMS
+                << BDISK_FILE_KEY_THUBMS_ICON
+                << BDISK_FILE_KEY_THUBMS_LARGE
+                << BDISK_FILE_KEY_THUBMS_MIDDLE
+                << BDISK_FILE_KEY_THUBMS_SMALL;
         return list;
     }
 
@@ -135,6 +152,30 @@ public:
     QString keyServerFilename() const
     {
         return BDISK_FILE_KEY_SERVER_FILENAME;
+    }
+    QString keyFileObjKey() const
+    {
+        return BDISK_FILE_KEY_OBJECT_KEY;
+    }
+    QString keyThumbs() const
+    {
+        return BDISK_FILE_KEY_THUBMS;
+    }
+    QString keyThumbsIcon() const
+    {
+        return BDISK_FILE_KEY_THUBMS_ICON;
+    }
+    QString keyThumbsSmall() const
+    {
+        return BDISK_FILE_KEY_THUBMS_SMALL;
+    }
+    QString keyThumbsMiddle() const
+    {
+        return BDISK_FILE_KEY_THUBMS_MIDDLE;
+    }
+    QString keyThumbsLarge() const
+    {
+        return BDISK_FILE_KEY_THUBMS_LARGE;
     }
 };
 

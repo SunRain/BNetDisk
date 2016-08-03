@@ -134,4 +134,54 @@ ActionCreator {
     function fileDelete(path) {
         AppDispatcher.dispatch(ActionTypes.fileDelete, {"path":path});
     }
+
+    function showVideo(page) {
+        AppDispatcher.dispatch(ActionTypes.showCategory,
+                               {
+                                   "page":page,
+                                   "category":"video"
+                               });
+    }
+    function showImage(page) {
+        AppDispatcher.dispatch(ActionTypes.showCategory,
+                               {
+                                   "page":page,
+                                   "category":"image"
+                               });
+    }
+    function showDoc(page) {
+        AppDispatcher.dispatch(ActionTypes.showCategory,
+                               {
+                                   "page":page,
+                                   "category":"doc"
+                               });
+    }
+    function showExe(page) {
+        AppDispatcher.dispatch(ActionTypes.showCategory,
+                               {
+                                   "page":page,
+                                   "category":"exe"
+                               });
+    }
+    function showBT(page) {
+        AppDispatcher.dispatch(ActionTypes.showCategory,
+                               {
+                                   "page":page,
+                                   "category":"bt"
+                               });
+    }
+    function showMusic(page) {
+        AppDispatcher.dispatch(ActionTypes.showCategory,
+                               {
+                                   "page":page,
+                                   "category":"music"
+                               });
+    }
+    function showOther(page) {
+        AppDispatcher.dispatch(ActionTypes.showCategory,
+                               {
+                                   "page":page,
+                                   "category":"other"
+                               });
+    }
 }

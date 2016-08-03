@@ -57,4 +57,26 @@ AppListener {
             listDelegate.show(dir);
         }
     }
+    Filter {
+        type: ActionTypes.showCategory
+        onDispatched: {
+            var category = message.category;
+            var page = message.page;
+            if (category == "video") {
+                listDelegate.showVideo(page);
+            } else if (category == "image") {
+                listDelegate.showImage(page);
+            } else if (category == "doc") {
+                listDelegate.showDoc(page);
+            } else if (category == "exe") {
+                listDelegate.showExe(page);
+            } else if (category == "bt") {
+                listDelegate.showBT(page);
+            } else if (category == "music") {
+                listDelegate.showMusic(page);
+            } else if (category == "other") {
+                listDelegate.showOther(page);
+            }
+        }
+    }
 }

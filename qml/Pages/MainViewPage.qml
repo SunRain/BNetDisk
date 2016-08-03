@@ -214,6 +214,10 @@ Page {
                 v += AppUtility.formatDate(mtime);
                 return v;
             }
+            Component.onCompleted: {
+
+            }
+
             secondaryItem: Row {
                 height: childrenRect.height
                 anchors.verticalCenter: parent.verticalCenter

@@ -15,6 +15,17 @@ class BDiskDirListDelegate : public QObject
     Q_PROPERTY(QStringList currentPathList READ currentPathList NOTIFY currentPathListChanged)
     Q_PROPERTY(QVariantList dirList READ dirList NOTIFY dirListChanged)
 public:
+//    enum CategoryType {
+//        TYPE_VIDEO = 0x0,
+//        TYPE_IMAGE,
+//        TYPE_DOC,
+//        TYPE_EXE,
+//        TYPE_BT,
+//        TYPE_MUSIC,
+//        TYPE_OTHER
+//    };
+//    Q_ENUM(CategoryType)
+
     explicit BDiskDirListDelegate(QObject *parent = 0);
     virtual ~BDiskDirListDelegate();
 
@@ -23,10 +34,26 @@ public:
     Q_INVOKABLE void cdup();
     Q_INVOKABLE void refresh();
 
+    Q_INVOKABLE void showVideo(int page = 1);
+    Q_INVOKABLE void showImage(int page = 1);
+    Q_INVOKABLE void showDoc(int page = 1);
+    Q_INVOKABLE void showExe(int page = 1);
+    Q_INVOKABLE void showBT(int page = 1);
+    Q_INVOKABLE void showMusic(int page = 1);
+    Q_INVOKABLE void showOther(int page = 1);
+
     QString currentPath() const;
 
+    ///
+    /// \brief dirList
+    /// \return dirs and files at current path
+    ///
     QVariantList dirList() const;
 
+    ///
+    /// \brief currentPathList
+    /// \return current path as list, splited by "/"
+    ///
     QStringList currentPathList() const;
 
 signals:
@@ -37,12 +64,19 @@ signals:
     void dirListChanged(const QVariantList &dirList);
     void currentPathListChanged(const QStringList &currentPathList);
 
+private slots:
+    void handleDirList(BDiskBaseRequest::RequestRet ret, const QString &replyData);
+    void handleCategoryList(BDiskBaseRequest::RequestRet ret, const QString &replyData);
+
 private:
     void setCurrentPath(const QString &currentPath);
     void setCurrentPathList(const QStringList &currentPathList);
     void sync();
+    void showCategory(int categoryType, int page);
+
 private:
     BDiskActionListDir *m_action;
+    BDiskActionCategoryList *m_categoryList;
     QVariantList m_dataList;
     QString m_currentPath;
     QStringList m_currentPathList;

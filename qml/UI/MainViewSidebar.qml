@@ -32,6 +32,35 @@ Sidebar {
             delegate: ListItem.Standard {
                 text: sidebar.nameList[index]
                 iconName: sidebar.iconList[index]
+                onClicked: {
+                    console.log("sidebar, click "+index);
+                    switch (index) {
+                    case 0:
+                        AppActions.refreshCurrentDir();
+                        break;
+                    case 1:
+                        AppActions.showImage(1);
+                        break;
+                    case 2:
+                        AppActions.showDoc(1);
+                        break;
+                    case 3:
+                        AppActions.showVideo(1);
+                        break;
+                    case 4:
+                        AppActions.showBT(1);
+                        break;
+                    case 5:
+                        AppActions.showMusic(1);
+                        break;
+                    case 6:
+                        AppActions.showOther(1)
+                        break;
+                    default:
+                        AppActions.refreshCurrentDir();
+                        break;
+                    }
+                }
             }
         }
         ListItem.Divider{}

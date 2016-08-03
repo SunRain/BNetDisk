@@ -77,4 +77,18 @@ protected:
     }
 };
 
+class BDiskActionCategoryList : public BDiskBaseRequest
+{
+    Q_OBJECT
+public:
+    explicit BDiskActionCategoryList(QObject *parent = 0): BDiskBaseRequest(parent) {}
+    virtual ~BDiskActionCategoryList() {}
+
+    // BDiskBaseRequest interface
+protected:
+    BDiskBaseOperationRequest operation() {
+        CREATE_OPR(BDiskOpCategoryList);
+    }
+};
+
 #endif // BDISKACTIONS_H

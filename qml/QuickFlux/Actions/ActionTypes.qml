@@ -35,6 +35,8 @@ KeyTable {
     property string askToDelete
     property string fileDelete
 
+    property string showCategory
+
 //    property string openFileDialog
 
 

@@ -235,6 +235,39 @@ protected:
     }
 };
 
+class BDiskOpCategoryList : public BDiskBaseOperationRequest
+{
+public:
+    BDiskOpCategoryList()
+        : BDiskBaseOperationRequest() {
+        setUrlPath("categorylist");
+        initiate();
+    }
+    virtual ~BDiskOpCategoryList() {}
+
+    // BDiskBaseOperationRequest interface
+protected:
+    OperationType initOperationType() {
+        return OPERATION_GET;
+    }
+
+    void initParameters() {
+        (*this)
+        ("category", "3") // 1 video, 3 pic, 4 doc, 5 exe, 6 other, 7 bt, 2 music
+        ("bdstoken", "")
+//        ("logid", "")
+        ("num", "100")
+        ("order", "name") // name, size, time
+        ("desc", "0")
+        ("clienttype", "0")
+        ("showempty", "0")
+        ("web", "1")
+        ("page", "1")
+        ("channel", "chunlei")
+        ("app_id", "250528")
+        ;
+    }
+};
 
 
 
