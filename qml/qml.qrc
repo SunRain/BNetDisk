@@ -24,5 +24,6 @@
         <file>QuickFlux/Adapters/StoreAdapter.qml</file>
         <file>QuickFlux/StoreWorkers/FileOperationStoreWorker.qml</file>
         <file>QuickFlux/StoreWorkers/StoreWorker.qml</file>
+        <file>UI/ListItemContent.qml</file>
     </qresource>
 </RCC>
