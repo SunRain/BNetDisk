@@ -36,7 +36,8 @@ Sidebar {
                     console.log("sidebar, click "+index);
                     switch (index) {
                     case 0:
-                        AppActions.refreshCurrentDir();
+//                        AppActions.refreshCurrentDir();
+                        AppActions.showCategoryAll();
                         break;
                     case 1:
                         AppActions.showImage(1);
@@ -57,7 +58,8 @@ Sidebar {
                         AppActions.showOther(1)
                         break;
                     default:
-                        AppActions.refreshCurrentDir();
+//                        AppActions.refreshCurrentDir();
+                        AppActions.showCategoryAll();
                         break;
                     }
                 }

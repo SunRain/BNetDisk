@@ -91,4 +91,8 @@ ListView {
             }
         }
     }
+
+    Scrollbar {
+        flickableItem: parent
+    }
 }

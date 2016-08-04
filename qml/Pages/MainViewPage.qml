@@ -172,7 +172,7 @@ Page {
         }
     }
 
-    ListItemContent {
+    Loader {
         id: content
         width: parent.width
         anchors {
@@ -183,21 +183,39 @@ Page {
             rightMargin: Const.tinySpace
             bottom: parent.bottom
         }
-        onShareMenuClicked: {
-            shareMenu.shareId = id;
-            shareMenu.parent = parentItem;
-            shareMenu.open(parentItem, 0, 0);
+        sourceComponent: DirListStore.showGridView ? gridItemComponent : listItemComponent
+    }
 
-        }
-        onMoreVertMenuClicked: {
-            moreVertMenu.path = path;
-            moreVertMenu.parent = parentItem;
-            moreVertMenu.open(parentItem, 0, 0);
+    Component {
+        id: listItemComponent
+        ListItemContent {
+            anchors.fill: parent
+            onShareMenuClicked: {
+                shareMenu.shareId = id;
+                shareMenu.parent = parentItem;
+                shareMenu.open(parentItem, 0, 0);
+
+            }
+            onMoreVertMenuClicked: {
+                moreVertMenu.path = path;
+                moreVertMenu.parent = parentItem;
+                moreVertMenu.open(parentItem, 0, 0);
+            }
         }
     }
 
-    Scrollbar {
-        flickableItem: content
+    Component {
+        id: gridItemComponent
+        GridItemContent {
+            onMenuClicked: {
+                moreVertMenu.path = path;
+                moreVertMenu.parent = parentItem;
+                moreVertMenu.open(parentItem, 0, 0);
+            }
+            onImageClicked: {
+
+            }
+        }
     }
 
     Dropdown {

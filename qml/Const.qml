@@ -13,7 +13,7 @@ QtObject {
     readonly property real middleSpace: Units.dp * 16
     readonly property real largeSpace: Units.dp * 24
     readonly property real sidebarWidth: Units.dp * 200
-//    readonly property real cardSize: Units.dp * 156
+    readonly property real cardSize: Units.dp * 192//156
     //rightSidebarWidth width copyed from material lib
 //    readonly property real rightSidebarWidth: 250 * Units.dp
 

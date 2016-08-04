@@ -135,6 +135,10 @@ ActionCreator {
         AppDispatcher.dispatch(ActionTypes.fileDelete, {"path":path});
     }
 
+    function showCategoryAll() {
+        AppDispatcher.dispatch(ActionTypes.showCategory, {"category":"all"});
+    }
+
     function showVideo(page) {
         AppDispatcher.dispatch(ActionTypes.showCategory,
                                {

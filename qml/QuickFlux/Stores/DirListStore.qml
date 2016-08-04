@@ -15,6 +15,8 @@ AppListener {
     property alias currentPath: listDelegate.currentPath
     property alias currentPathList: listDelegate.currentPathList
 
+    property bool showGridView: false
+
     DirListDelegate {
         id: listDelegate
         onStartRequest: {
@@ -62,6 +64,13 @@ AppListener {
         onDispatched: {
             var category = message.category;
             var page = message.page;
+
+            if (category == "image") {
+                dirListStore.showGridView = true;
+            } else {
+                dirListStore.showGridView = false;
+            }
+
             if (category == "video") {
                 listDelegate.showVideo(page);
             } else if (category == "image") {
@@ -76,6 +85,8 @@ AppListener {
                 listDelegate.showMusic(page);
             } else if (category == "other") {
                 listDelegate.showOther(page);
+            } else if (category == "all") {
+                listDelegate.refresh();
             }
         }
     }
