@@ -37,6 +37,8 @@ KeyTable {
 
     property string showCategory
 
+    property string askToOpenOverlayView
+
 //    property string openFileDialog
 
 

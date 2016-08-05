@@ -19,7 +19,7 @@ Item {
     property int gridColumns: width > Const.cardSize ? width/Const.cardSize : 1
 
     signal menuClicked(var parentItem, var path)
-    signal imageClicked(var thumbLarge)
+    signal imageClicked(var thumbLarge, var index)
 
     GridView {
         id: gridView
@@ -92,7 +92,7 @@ Item {
                             anchors.fill: parent
                             enabled: true
                             onClicked: {
-                                imageClicked(card.thumbLarge)
+                                imageClicked(card.thumbLarge, index);
                             }
                         }
                     }

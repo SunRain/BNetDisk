@@ -188,4 +188,12 @@ ActionCreator {
                                    "category":"other"
                                });
     }
+
+    function openShareOverlayView() {
+        AppDispatcher.dispatch(ActionTypes.askToOpenOverlayView, {"view":"shareView"});
+    }
+
+    function openImagePreviewOverlayView(currentIndex) {
+        AppDispatcher.dispatch(ActionTypes.askToOpenOverlayView, {"view":"imagePreview", "index":currentIndex});
+    }
 }

@@ -26,5 +26,8 @@
         <file>QuickFlux/StoreWorkers/StoreWorker.qml</file>
         <file>UI/ListItemContent.qml</file>
         <file>UI/GridItemContent.qml</file>
+        <file>UI/ShareLinkView.qml</file>
+        <file>QuickFlux/Stores/OverlayViewStore.qml</file>
+        <file>UI/ImagePreviewView.qml</file>
     </qresource>
 </RCC>
