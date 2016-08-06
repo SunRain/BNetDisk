@@ -29,5 +29,6 @@
         <file>UI/ShareLinkView.qml</file>
         <file>QuickFlux/Stores/OverlayViewStore.qml</file>
         <file>UI/ImagePreviewView.qml</file>
+        <file>Component/BDIconButton.qml</file>
     </qresource>
 </RCC>

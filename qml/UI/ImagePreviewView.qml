@@ -8,75 +8,181 @@ import ".."
 import "../QuickFlux/Stores"
 import "../QuickFlux/Actions"
 import "../QuickFlux/Scripts"
+import "../Component"
 
 Item {
     id: previewItem
     width: parent.width
-    height: left.height
+    height: Const.screenHeight * 0.8
 
-    Item {
-        id: left
-        width: parent.width * 0.8
-        height: column.height + Const.tinySpace * 2
-        Column {
-            id: column
-            width: parent.width
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: Const.tinySpace
-            Image {
-                id: image
-                width: parent.width - Const.largeSpace * 2
-                height: width
-                anchors {
-                    horizontalCenter: parent.horizontalCenter
-                }
-                fillMode: Image.PreserveAspectFit
+    QtObject {
+        id: inner
+        property int defaultIndex: OverlayViewStore.itemIndex
+        onDefaultIndexChanged: {
+            index = defaultIndex;
+        }
+        property int index: OverlayViewStore.itemIndex
+        property var object: DirListStore.dirlistModel[inner.index]
+        property var thumbObject: object[FileObjectKey.keyThumbs];
+        property string thumbMiddle: thumbObject[FileObjectKey.keyThumbsMiddle]
+        property string thumbLarge: thumbObject[FileObjectKey.keyThumbsLarge]
+        property string icon: thumbObject[FileObjectKey.keyThumbsIcon]
+        property string path: object[FileObjectKey.keyPath]
+        property string fileName: AppUtility.fileObjectPathToFileName(path)
+        property string date: AppUtility.formatDate(object[FileObjectKey.keyServerMTime])
+        property string fromPath: AppUtility.fileObjectPathToPath(path)
+    }
+
+    Image {
+        id: image
+        width: parent.width - Const.largeSpace * 2
+        anchors {
+            top: parent.top
+            topMargin: Const.middleSpace
+            left: parent.left
+            leftMargin: Const.largeSpace
+            bottom: snapList.top
+            bottomMargin: Const.middleSpace
+        }
+        fillMode: Image.PreserveAspectFit
+        source: inner.thumbLarge
+
+        MouseArea {
+            id: hoverMouse
+            property bool hover: false
+            anchors.fill: parent
+            hoverEnabled: true
+            onExited: {
+                hover = false;
             }
-            ListView {
-                id: snapList
-                orientation: ListView.Horizontal
-                width: parent.width
-                height: Const.itemHeight
-                clip: true
-                highlightFollowsCurrentItem: true
-                highlight: Rectangle {
-                    color: "#ee840a"
-                    width: view.cellWidth
-                    height: view.cellHeight
-                    radius: 5
-                    x: view.currentItem.x
-                    y: view.currentItem.y
-                    Behavior on x { SpringAnimation { spring: 3; damping: 0.2 } }
-                    Behavior on y { SpringAnimation { spring: 3; damping: 0.2 } }
-
+            onEntered: {
+                hover = true;
+            }
+        }
+        View {
+            height: infoColumn.height
+            width: parent.width
+            anchors.bottom: parent.bottom
+            Rectangle {
+                anchors.fill: parent
+                color: Qt.rgba(0,0,0,0.2)
+            }
+            Column {
+                id: infoColumn
+                width: parent.width - Const.tinySpace * 2
+                x: Const.tinySpace
+                Label {
+                    width: parent.width
+                    horizontalAlignment: Text.AlignLeft
+                    wrapMode: Text.Wrap
+                    text: inner.fileName
                 }
-                currentIndex: OverlayViewStore.itemIndex
-                onCurrentIndexChanged: {
-                    snapList.positionViewAtIndex(currentIndex, ListView.Center)
+                Label {
+                    width: parent.width
+                    horizontalAlignment: Text.AlignLeft
+                    wrapMode: Text.Wrap
+                    text: qsTr("From")+": "+inner.fromPath
                 }
-
-                model: DirListStore.dirlistModel
-                delegate: MouseArea {
-                    width: height
-                    height: ListView.view.height
-                    onClicked: {
-                        snapList.currentIndex = index;
-                    }
-
-                    property var object: DirListStore.dirlistModel[index]
-                    property var thumbObject: object[FileObjectKey.keyThumbs];
-                    property string thumbMiddle: thumbObject[FileObjectKey.keyThumbsMiddle]
-                    property string thumbLarge: thumbObject[FileObjectKey.keyThumbsLarge]
-                    property string icon: thumbObject[FileObjectKey.keyThumbsIcon]
-                    Image {
-                        anchors.fill: parent
-                        fillMode: Image.PreserveAspectFit
-                        source: icon
-                    }
+                Label {
+                    width: parent.width
+                    horizontalAlignment: Text.AlignLeft
+                    wrapMode: Text.Wrap
+                    text: qsTr("Date")+": "+inner.date
                 }
+            }
+            opacity: hoverMouse.hover || leftBtn.hover || rightBtn.hover ? 1 : 0
+            Behavior on opacity {
+                NumberAnimation { duration: 500; easing.type: Easing.InOutQuad }
+            }
+        }
+        BDIconButton {
+            id: leftBtn
+            iconName: "navigation/arrow_back"
+            anchors {
+                left: parent.left
+                leftMargin: Const.middleSpace
+                verticalCenter: parent.verticalCenter
+            }
+            onClicked: {
+                if (inner.index > 0)
+                    inner.index--;
+            }
+            opacity: hoverMouse.hover || hover || rightBtn.hover ? 1 : 0
+            Behavior on opacity {
+                NumberAnimation { duration: 500; easing.type: Easing.InOutQuad }
+            }
+        }
+        BDIconButton {
+            id: rightBtn
+            iconName: "navigation/arrow_forward"
+            anchors {
+                right: parent.right
+                rightMargin: Const.middleSpace
+                verticalCenter: parent.verticalCenter
+            }
+            onClicked: {
+                if (inner.index >= DirListStore.dirlistModel.length)
+                    inner.index = DirListStore.dirlistModel.length;
+                else
+                    inner.index++;
+            }
+            opacity: hoverMouse.hover || hover || leftBtn.hover ? 1 : 0
+            Behavior on opacity {
+                NumberAnimation { duration: 500; easing.type: Easing.InOutQuad }
             }
         }
     }
-
+    ListView {
+        id: snapList
+        orientation: ListView.Horizontal
+        width: parent.width - Const.largeSpace * 2
+        height: Const.itemHeight + Const.tinySpace * 2
+        anchors {
+            left: parent.left
+            leftMargin: Const.largeSpace
+            bottom: parent.bottom
+            bottomMargin: Const.middleSpace
+        }
+        clip: true
+        highlightFollowsCurrentItem: true
+        highlight: Rectangle {
+            color: Qt.rgba(0,0,0,0.2)
+            width: ListView.view.cellWidth
+            height: ListView.view.cellHeight
+            x: ListView.view.currentItem.x
+            y: ListView.view.currentItem.y
+            Behavior on x { SpringAnimation { spring: 3; damping: 0.2 } }
+            Behavior on y { SpringAnimation { spring: 3; damping: 0.2 } }
+        }
+        preferredHighlightBegin: (snapList.width - snapList.height) /2
+        preferredHighlightEnd: (snapList.width + snapList.height) /2
+        highlightRangeMode: ListView.StrictlyEnforceRange
+        currentIndex: inner.index
+//        onCurrentIndexChanged: {
+//            console.log("===== onCurrentIndexChanged "+currentIndex);
+//            snapList.positionViewAtIndex(currentIndex, ListView.Center)
+//        }
+//        Component.onCompleted: {
+//            snapList.positionViewAtIndex(currentIndex, ListView.Center)
+//        }
+        model: DirListStore.dirlistModel
+        delegate: MouseArea {
+            width: height
+            height: ListView.view.height
+            onClicked: {
+                inner.index = index;
+            }
+            property var object: DirListStore.dirlistModel[index]
+            property var thumbObject: object[FileObjectKey.keyThumbs];
+            property string icon: thumbObject[FileObjectKey.keyThumbsIcon]
+            Image {
+                width: Const.itemHeight
+                height: width
+                anchors.centerIn: parent
+                fillMode: Image.PreserveAspectFit
+                source: icon
+            }
+        }
+    }
 
 }

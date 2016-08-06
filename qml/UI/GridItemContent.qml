@@ -56,7 +56,7 @@ Item {
             Card {
                 id: card
                 width: Const.cardSize - Const.tinySpace * 2
-                height: Const.cardSize + 48 * Units.dp // 48 * Units.dp for ListItem.Standard
+                height: Const.cardSize - Const.tinySpace * 2 + 48 * Units.dp // 48 * Units.dp for ListItem.Standard
                 x: Const.tinySpace
                 y: Const.tinySpace
 

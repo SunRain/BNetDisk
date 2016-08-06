@@ -288,7 +288,7 @@ Page {
 
     OverlayView {
         id: overlayView
-        width: Const.screenWidth * 0.6
+        width: Const.screenWidth * 0.8
         height: overlayViewLoader.height
         Loader {
             id: overlayViewLoader
