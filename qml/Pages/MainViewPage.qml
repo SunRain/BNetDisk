@@ -183,7 +183,16 @@ Page {
             rightMargin: Const.tinySpace
             bottom: parent.bottom
         }
-        sourceComponent: DirListStore.showGridView ? gridItemComponent : listItemComponent
+        sourceComponent: sidebar.displayType == sidebar.displayTypeCategoryView
+        ? (DirListStore.showGridView ? gridItemComponent : listItemComponent)
+        : (sidebar.displayType == sidebar.displayTypeShareRecord ? shareRecordView : content.Null)
+    }
+
+    Component {
+        id: shareRecordView
+        ShareRecordView {
+            anchors.fill: parent
+        }
     }
 
     Component {

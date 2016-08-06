@@ -22,6 +22,11 @@ Sidebar {
         "file/attachment", "image/music_note", "file/attachment"
     ]
 
+    readonly property string displayTypeCategoryView: "CategoryView"
+    readonly property string displayTypeShareRecord: "ShareRecordView"
+    readonly property string displayTypeTrashView: "TrashView"
+    property string displayType: "CategoryView"
+
     Column {
         width: parent.width
         ListItem.Subheader {
@@ -33,6 +38,8 @@ Sidebar {
                 text: sidebar.nameList[index]
                 iconName: sidebar.iconList[index]
                 onClicked: {
+                    displayType = displayTypeCategoryView;
+
                     console.log("sidebar, click "+index);
                     switch (index) {
                     case 0:
@@ -67,30 +74,45 @@ Sidebar {
         }
         ListItem.Divider{}
         ListItem.Standard {
-            action: IconButton {
-                anchors {
-                    left: parent.left
-                    verticalCenter: parent.verticalCenter
-                }
-                action: Action {
-                    iconName: "social/share"
-                    onTriggered: {
-                        console.log("===== share icon click")
-                    }
-                }
-            }
-            content: IconButton {
-                anchors {
-                    left: parent.left
-                    verticalCenter: parent.verticalCenter
-                }
-                action: Action {
-                    iconName: "action/delete"
-                    onTriggered: {
-                        console.log("===== trash icon click")
-                    }
-                }
+            text: qsTr("My Share")
+            onClicked: {
+                console.log("======== Share onClicked")
+                displayType = displayTypeShareRecord;
+                AppActions.showShareRecord("1");
             }
         }
+        ListItem.Standard {
+            text: qsTr("Trash")
+            onClicked: {
+                displayType = displayTypeTrashView;
+            }
+        }
+
+//        ListItem.Standard {
+//            action: IconButton {
+//                anchors {
+//                    left: parent.left
+//                    verticalCenter: parent.verticalCenter
+//                }
+//                action: Action {
+//                    iconName: "social/share"
+//                    onTriggered: {
+//                        console.log("===== share icon click")
+//                    }
+//                }
+//            }
+//            content: IconButton {
+//                anchors {
+//                    left: parent.left
+//                    verticalCenter: parent.verticalCenter
+//                }
+//                action: Action {
+//                    iconName: "action/delete"
+//                    onTriggered: {
+//                        console.log("===== trash icon click")
+//                    }
+//                }
+//            }
+//        }
     }
 }

@@ -11,6 +11,7 @@ AppListener {
         id: container
 
         FileOperationStoreWorker{}
+        ShareStoreWorker{}
     }
 
     onDispatched: {

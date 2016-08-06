@@ -196,4 +196,8 @@ ActionCreator {
     function openImagePreviewOverlayView(currentIndex) {
         AppDispatcher.dispatch(ActionTypes.askToOpenOverlayView, {"view":"imagePreview", "index":currentIndex});
     }
+
+    function showShareRecord(page) {
+        AppDispatcher.dispatch(ActionTypes.showShareRecord, {"page":page});
+    }
 }

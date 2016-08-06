@@ -269,6 +269,34 @@ protected:
     }
 };
 
+class BDiskOpShareRecord : public BDiskBaseOperationRequest
+{
+public:
+    BDiskOpShareRecord()
+        : BDiskBaseOperationRequest() {
+        setBaseUrl("https://pan.baidu.com/share/record");
+        initiate();
+    }
+    virtual ~BDiskOpShareRecord() {}
+
+    // BDiskBaseOperationRequest interface
+protected:
+    OperationType initOperationType() {
+        return OPERATION_GET;
+    }
+    void initParameters() {
+        (*this)
+        ("channel", "chunlei")
+        ("clienttype", "0")
+        ("web", "1")
+        ("page", "1")
+        ("order", "ctime")
+        ("desc", "1")
+        ("bdstoken", "")
+        ("app_id", "250528")
+        ;
+    }
+};
 
 
 

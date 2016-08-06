@@ -13,42 +13,5 @@ AppListener {
     property string sharelink: ""
     property string password: ""
     property bool showErrorLabel: false
-
-    BDiskShareDelegate {
-        id: shareDelegate
-        onRequestFailure: {
-            showErrorLabel = true;
-        }
-        onPubShareLink: {
-            sharelink = url;
-        }
-        onPrivShareLink: {
-            sharelink = url;
-            password = passwd;
-        }
-    }
-
-    Filter {
-        type: ActionTypes.privShare
-        onDispatched: {
-            clear();
-            var id = message.fsid;
-            console.log('=================== onDispatched privShare ' + id);
-            shareDelegate.privShare(id);
-        }
-    }
-    Filter {
-        type: ActionTypes.pubShare
-        onDispatched: {
-            clear();
-            var id = message.fsid;
-            console.log('=================== onDispatched pubShare ' + id);
-            shareDelegate.pubShare(id);
-        }
-    }
-    function clear() {
-        sharelink = "";
-        password = "";
-        showErrorLabel = false;
-    }
+    property var shareRecordList
 }

@@ -3,11 +3,13 @@
 #include <QJsonParseError>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QJsonArray>
 
 BDiskShareDelegate::BDiskShareDelegate(QObject *parent)
     : QObject(parent)
     , m_privShare(nullptr)
     , m_pubShare(nullptr)
+    , m_shareRecord(nullptr)
 {
 
 }
@@ -78,6 +80,38 @@ void BDiskShareDelegate::pubShare(const QString &fsID)
     m_pubShare->request();
 }
 
+void BDiskShareDelegate::showShareRecord(int page)
+{
+    if (page <= 0)
+        return;
+    if (m_shareRecord) {
+        if (!m_shareRecord->isFinished())
+            m_shareRecord->abort();
+        QObject::disconnect(m_shareRecord, 0, 0, 0);
+        m_shareRecord->deleteLater();
+        m_shareRecord = nullptr;
+    }
+    m_shareRecord = new BDiskActionShareRecord();
+    m_shareRecord->operationPtr()->setParameters("page", QString::number(page));
+
+    connect(m_shareRecord, &BDiskActionPrivShare::requestStarted,
+            this, &BDiskShareDelegate::startRequest);
+
+    connect(m_shareRecord, &BDiskActionPrivShare::requestResult,
+            [&](BDiskBaseRequest::RequestRet ret, const QString &replyData) {
+        parseShareRecord(ret, replyData);
+    });
+
+    m_shareRecord->request();
+}
+
+QVariantList BDiskShareDelegate::shareRecords() const
+{
+    return m_shareRecords;
+}
+
+
+
 void BDiskShareDelegate::parseReply(BDiskBaseRequest::RequestRet ret, const QString &replyData, bool isPrivShare)
 {
     if (ret != BDiskBaseRequest::RET_SUCCESS) {
@@ -106,4 +140,61 @@ void BDiskShareDelegate::parseReply(BDiskBaseRequest::RequestRet ret, const QStr
     else
         emit pubShareLink(url);
 
+}
+
+void BDiskShareDelegate::parseShareRecord(BDiskBaseRequest::RequestRet ret, const QString &replyData)
+{
+    if (ret != BDiskBaseRequest::RET_SUCCESS) {
+        emit requestFailure();
+        return;
+    }
+    QJsonParseError error;
+    QJsonDocument doc = QJsonDocument::fromJson(replyData.toLocal8Bit(), &error);
+    if (error.error != QJsonParseError::NoError) {
+        qDebug()<<Q_FUNC_INFO<<"Parse json error => "<<error.errorString ();
+        emit requestFailure();
+        return;
+    }
+    QJsonObject obj = doc.object();
+    int err = obj.value("errno").toInt(-1);
+    if (err != 0) {
+        qDebug()<<Q_FUNC_INFO<<"Error number "<<err;
+        emit requestFailure();
+        return;
+    }
+
+    QJsonArray array = obj.value("list").toArray();
+    QVariantList list;
+    foreach (QJsonValue v, array) {
+        QJsonObject o = v.toObject();
+        QVariantMap map;
+        foreach (QString key, o.keys()) {
+            QJsonValue v = o.value(key);
+            if (v.isBool()) {
+                bool ret = v.toBool();
+                map.insert(key, ret ? "1" : "0");
+            } else if (v.isDouble()) {
+                map.insert(key, QString::number(v.toDouble(), 'f', 0));
+            } else if (v.isString()) {
+                map.insert(key, v.toString());
+            } else if (v.isObject()) {
+                map.insert(key, v.toObject().toVariantMap());
+            } else if (v.isArray()) {
+                map.insert(key, v.toArray());
+            }
+        }
+//        qDebug()<<Q_FUNC_INFO<<" append "<<map;
+        list.append(map);
+    }
+    setShareRecords(list);
+    emit finishRequest();
+}
+
+void BDiskShareDelegate::setShareRecords(const QVariantList &shareRecords)
+{
+    if (m_shareRecords == shareRecords)
+        return;
+
+    m_shareRecords = shareRecords;
+    emit shareRecordsChanged(shareRecords);
 }

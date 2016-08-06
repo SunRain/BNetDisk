@@ -30,5 +30,8 @@
         <file>QuickFlux/Stores/OverlayViewStore.qml</file>
         <file>UI/ImagePreviewView.qml</file>
         <file>Component/BDIconButton.qml</file>
+        <file>QuickFlux/StoreWorkers/ShareStoreWorker.qml</file>
+        <file>Component/ShareRecordObject.qml</file>
+        <file>UI/ShareRecordView.qml</file>
     </qresource>
 </RCC>

@@ -39,6 +39,8 @@ KeyTable {
 
     property string askToOpenOverlayView
 
+    property string showShareRecord
+
 //    property string openFileDialog
 
 

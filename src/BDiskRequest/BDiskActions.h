@@ -91,4 +91,18 @@ protected:
     }
 };
 
+class BDiskActionShareRecord : public BDiskBaseRequest
+{
+    Q_OBJECT
+public:
+    explicit BDiskActionShareRecord(QObject *parent = 0): BDiskBaseRequest(parent) {}
+    virtual ~BDiskActionShareRecord() {}
+
+    // BDiskBaseRequest interface
+protected:
+    BDiskBaseOperationRequest operation() {
+        CREATE_OPR(BDiskOpShareRecord);
+    }
+};
+
 #endif // BDISKACTIONS_H
