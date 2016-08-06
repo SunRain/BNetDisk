@@ -15,8 +15,9 @@ ListView {
     id: content
     width: parent.width
     height: parent.height
+
     signal shareMenuClicked(var parentItem, var id)
-    signal moreVertMenuClicked(var parentItem, var path)
+    signal moreVertMenuClicked(var parentItem, var path, var isDir)
 
     clip: true
     interactive: contentHeight > height
@@ -81,7 +82,7 @@ ListView {
                     iconName: "navigation/more_vert"
                 }
                 onClicked: {
-                    moreVertMenuClicked(dirItem, dirItem.path);
+                    moreVertMenuClicked(dirItem, dirItem.path, dirItem.isDir);
                 }
             }
         }

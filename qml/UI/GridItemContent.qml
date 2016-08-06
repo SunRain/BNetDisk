@@ -18,7 +18,7 @@ Item {
 
     property int gridColumns: width > Const.cardSize ? width/Const.cardSize : 1
 
-    signal menuClicked(var parentItem, var path)
+    signal menuClicked(var parentItem, var path, var name, var fsid)
     signal imageClicked(var thumbLarge, var index)
 
     GridView {
@@ -105,7 +105,7 @@ Item {
                                 iconName: "navigation/more_vert"
                             }
                             onClicked: {
-                                menuClicked(infoBanner, card.path)
+                                menuClicked(infoBanner, card.path, card.fileName, card.fsID)
                             }
                         }
                     }

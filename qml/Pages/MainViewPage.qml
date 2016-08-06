@@ -199,6 +199,8 @@ Page {
             onMoreVertMenuClicked: {
                 moreVertMenu.path = path;
                 moreVertMenu.parent = parentItem;
+                moreVertMenu.showDownload = false;
+                moreVertMenu.showShare = false;
                 moreVertMenu.open(parentItem, 0, 0);
             }
         }
@@ -209,7 +211,11 @@ Page {
         GridItemContent {
             onMenuClicked: {
                 moreVertMenu.path = path;
+                moreVertMenu.fileName = name;
                 moreVertMenu.parent = parentItem;
+                moreVertMenu.shareId = fsid;
+                moreVertMenu.showDownload = true;
+                moreVertMenu.showShare = true;
                 moreVertMenu.open(parentItem, 0, 0);
             }
             onImageClicked: {
@@ -261,6 +267,12 @@ Page {
         height: moreVertColumn.height
 
         property string path: ""
+        property string fileName: ""
+
+        property string shareId: ""
+
+        property bool showShare: false
+        property bool showDownload: false
 
         Rectangle {
             anchors.fill: parent
@@ -269,6 +281,15 @@ Page {
         Column {
             id: moreVertColumn
             width: parent.width
+            ListItem.Standard {
+                text: qsTr("download")
+                enabled: moreVertMenu.showDownload
+                visible: moreVertMenu.showDownload
+                onClicked: {
+                    AppActions.askToSelectDownloadPath(moreVertMenu.path, moreVertMenu.fileName);
+                    moreVertMenu.close();
+                }
+            }
             ListItem.Standard {
                 text: qsTr("rename")
                 onClicked: {
@@ -280,6 +301,28 @@ Page {
                 text: qsTr("delete")
                 onClicked: {
                     AppActions.askToDelete(moreVertMenu.path);
+                    moreVertMenu.close();
+                }
+            }
+            ListItem.Standard {
+                enabled: moreVertMenu.showShare
+                visible: moreVertMenu.showShare
+                text: qsTr("share public")
+                onClicked: {
+                    AppActions.openShareOverlayView();
+                    AppActions.pubShare(moreVertMenu.shareId);
+                    overlayView.open(mainViewPage);
+                    moreVertMenu.close();
+                }
+            }
+            ListItem.Standard {
+                enabled: moreVertMenu.showShare
+                visible: moreVertMenu.showShare
+                text: qsTr("share private")
+                onClicked: {
+                    AppActions.openShareOverlayView();
+                    AppActions.privShare(moreVertMenu.shareId);
+                    overlayView.open(mainViewPage);
                     moreVertMenu.close();
                 }
             }
