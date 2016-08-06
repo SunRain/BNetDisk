@@ -65,7 +65,7 @@ AppListener {
             var category = message.category;
             var page = message.page;
 
-            if (category == "image") {
+            if (category == "image" || category == "video") {
                 dirListStore.showGridView = true;
             } else {
                 dirListStore.showGridView = false;

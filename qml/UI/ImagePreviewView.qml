@@ -29,8 +29,9 @@ Item {
         property string icon: thumbObject[FileObjectKey.keyThumbsIcon]
         property string path: object[FileObjectKey.keyPath]
         property string fileName: AppUtility.fileObjectPathToFileName(path)
-        property string date: AppUtility.formatDate(object[FileObjectKey.keyServerMTime])
+        property string date: AppUtility.formatDate(object[FileObjectKey.keyLocalMTime])
         property string fromPath: AppUtility.fileObjectPathToPath(path)
+        property int category: object[FileObjectKey.keyCategory]
     }
 
     Image {
@@ -57,6 +58,15 @@ Item {
             }
             onEntered: {
                 hover = true;
+            }
+            onClicked: {
+                //TODO need refactor
+                if (inner.category == "1") { // for video
+                    var url = "https://pan.baidu.com/play/video#video/path="
+                            + inner.path
+                            + "&t=-1";
+                    Qt.openUrlExternally(url);
+                }
             }
         }
         View {
@@ -147,8 +157,8 @@ Item {
         highlightFollowsCurrentItem: true
         highlight: Rectangle {
             color: Qt.rgba(0,0,0,0.2)
-            width: ListView.view.cellWidth
-            height: ListView.view.cellHeight
+            width: ListView.view.width
+            height: ListView.view.height
             x: ListView.view.currentItem.x
             y: ListView.view.currentItem.y
             Behavior on x { SpringAnimation { spring: 3; damping: 0.2 } }
