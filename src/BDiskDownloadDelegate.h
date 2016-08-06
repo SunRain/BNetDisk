@@ -86,6 +86,9 @@ private:
     /// \param list
     ///
     void parseDLTaskInfoList(const YADownloader::DLTaskInfoList &list);
+
+    void parseCompletedTasks(const YADownloader::DLTaskInfoList &list);
+
     QVariantList convertTaskInfoHash();
 
 private:

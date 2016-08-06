@@ -195,15 +195,7 @@ BDiskDownloadDelegate::BDiskDownloadDelegate(QObject *parent)
     });
 
     connect(m_completeDB, &DLTransmissionDatabase::listChanged, [&]() {
-        DLTaskInfoList list = m_completeDB->list();
-        qStableSort(list.begin(), list.end(), [](const DLTaskInfo &l, const DLTaskInfo &r) -> bool {
-            return l.identifier() < r.identifier();
-        });
-        QVariantList ll;
-        foreach (DLTaskInfo info, list) {
-            ll.append(info.toMap());
-        }
-        setCompletedTasks(ll);
+        parseCompletedTasks(m_completeDB->list());
     });
 
     connect(m_downloadMgr, &DLTaskAccessMgr::resumablesChanged, [&](const DLTaskInfoList &list) {
@@ -216,6 +208,8 @@ BDiskDownloadDelegate::BDiskDownloadDelegate(QObject *parent)
 
     parseDLTaskInfoList(m_downloadMgr->resumables());
     setTasks(convertTaskInfoHash());
+
+    parseCompletedTasks(m_completeDB->list());
 
     m_timer->start();
     m_timerStartedMSecsSinceEpoch = QDateTime::currentMSecsSinceEpoch();
@@ -585,6 +579,19 @@ void BDiskDownloadDelegate::parseDLTaskInfoList(const DLTaskInfoList &list)
         hash.insert(key, node);
     }
     m_nodeHash = hash;
+}
+
+void BDiskDownloadDelegate::parseCompletedTasks(const DLTaskInfoList &list)
+{
+    DLTaskInfoList tasks = list;
+    qStableSort(tasks.begin(), tasks.end(), [](const DLTaskInfo &l, const DLTaskInfo &r) -> bool {
+        return l.identifier() < r.identifier();
+    });
+    QVariantList ll;
+    foreach (DLTaskInfo info, tasks) {
+        ll.append(info.toMap());
+    }
+    setCompletedTasks(ll);
 }
 
 QVariantList BDiskDownloadDelegate::convertTaskInfoHash()
