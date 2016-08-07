@@ -5,6 +5,7 @@ import com.sunrain.bnetdisk.qmlplugin 1.0
 
 import ".."
 import "../QuickFlux/Stores"
+import "../QuickFlux/Actions"
 
 Item {
     id: shareLinkItem
@@ -31,19 +32,56 @@ Item {
             text: qsTr("Share error");
             visible: ShareStore.showErrorLabel
         }
-        TextField {
+        Item {
             width: parent.width
-            text: ShareStore.sharelink
-            placeholderText: qsTr("share link")
-            floatingLabel: true
+            height: Const.itemHeight
             visible: ShareStore.sharelink != ""
-        }
-        TextField {
-            width: parent.width
-            text: ShareStore.password
-            placeholderText: qsTr("password")
-            floatingLabel: true
-            visible: ShareStore.password
+            enabled: visible
+            Row {
+                anchors.left: parent.left
+                height: parent.height
+                spacing: Const.tinySpace
+                Label {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: qsTr("Link") + ": "
+                }
+                Label {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: ShareStore.sharelink
+                    color: Theme.primaryColor
+                }
+                Label {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: qsTr("Password") + ": "
+                    enabled: ShareStore.password
+                    visible: enabled
+                }
+                Label {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: ShareStore.password
+                    enabled: ShareStore.password
+                    visible: enabled
+                }
+            }
+            Button {
+                anchors {
+                    right: parent.right
+                    verticalCenter: parent.verticalCenter
+                }
+                text: qsTr("Copy to clipboard")
+                textColor: Theme.accentColor
+                onClicked: {
+                    var text = ShareStore.sharelink
+                    if (ShareStore.password != "") {
+                        text += " "
+                        text += qsTr("password")
+                        text += ": "
+                        text += ShareStore.password
+                    }
+                    AppUtility.copyToClipboard(text);
+                    AppActions.snackbarInfo(qsTr("Copyed!!"))
+                }
+            }
         }
         Item {
             height: Const.middleSpace
