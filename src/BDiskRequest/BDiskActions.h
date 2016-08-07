@@ -119,4 +119,32 @@ protected:
     }
 };
 
+class BDiskActionRecycleList : public BDiskBaseRequest
+{
+    Q_OBJECT
+public:
+    explicit BDiskActionRecycleList(QObject *parent = 0): BDiskBaseRequest(parent) {}
+    virtual ~BDiskActionRecycleList() {}
+
+    // BDiskBaseRequest interface
+protected:
+    BDiskBaseOperationRequest operation() {
+        CREATE_OPR(BDiskOpRecycleList);
+    }
+};
+
+class BDiskActionRecycleRestore : public BDiskBaseRequest
+{
+    Q_OBJECT
+public:
+    explicit BDiskActionRecycleRestore(QObject *parent = 0): BDiskBaseRequest(parent) {}
+    virtual ~BDiskActionRecycleRestore() {}
+
+    // BDiskBaseRequest interface
+protected:
+    BDiskBaseOperationRequest operation() {
+        CREATE_OPR(BDiskOpRecycleRestore);
+    }
+};
+
 #endif // BDISKACTIONS_H

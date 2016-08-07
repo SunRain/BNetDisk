@@ -20,6 +20,8 @@ const static int CATEGORY_TYPE_OTHER = 6;
 BDiskDirListDelegate::BDiskDirListDelegate(QObject *parent)
     : QObject(parent)
     , m_categoryList(nullptr)
+    , m_recycleList(nullptr)
+    , m_recycleRestore(nullptr)
     , m_currentPath(QString("/"))
 {
     m_action = new BDiskActionListDir(this);
@@ -113,6 +115,53 @@ void BDiskDirListDelegate::showMusic(int page)
 void BDiskDirListDelegate::showOther(int page)
 {
     showCategory(CATEGORY_TYPE_OTHER, page);
+}
+
+void BDiskDirListDelegate::showRecycleList(int page)
+{
+    if (page < 1)
+        return;
+    if (!m_recycleList) {
+        m_recycleList = new BDiskActionRecycleList(this);
+        connect(m_recycleList, &BDiskBaseRequest::requestStarted, this, &BDiskDirListDelegate::startRequest);
+        connect(m_recycleList, &BDiskBaseRequest::requestResult, this, &BDiskDirListDelegate::handleRecycleList);
+    }
+
+    m_recycleList->operationPtr()->setParameters("page", QString::number(page));
+    m_recycleList->request();
+}
+
+void BDiskDirListDelegate::recycleRestore(const QString &fsId)
+{
+    if (fsId.isEmpty())
+        return;
+    if (!m_recycleRestore) {
+        m_recycleRestore = new BDiskActionRecycleRestore(this);
+        connect(m_recycleRestore, &BDiskBaseRequest::requestStarted, this, &BDiskDirListDelegate::startRequest);
+        connect(m_recycleRestore, &BDiskBaseRequest::requestResult,
+                [&](BDiskBaseRequest::RequestRet ret, const QString &replyData) {
+            if (ret == BDiskBaseRequest::RET_SUCCESS) {
+                qDebug()<<Q_FUNC_INFO<<">>>>>> ok";
+                QJsonParseError error;
+                QJsonDocument doc = QJsonDocument::fromJson (replyData.toLocal8Bit(), &error);
+                if (error.error != QJsonParseError::NoError) {
+                    qDebug()<<Q_FUNC_INFO<<"Parse json error => "<<error.errorString ();
+                    return;
+                }
+                QJsonObject obj = doc.object();
+                int ret = obj.value("errno").toInt(-1);
+                if (ret != 0) {
+                    qDebug()<<Q_FUNC_INFO<<"Error number "<<ret;
+                    emit requestFailure();
+                    return;
+                }
+                emit recycleRestoreSuccess();
+            }
+            emit finishRequest();
+        });
+    }
+    m_recycleRestore->operationPtr()->appendPostDataParameters("fidlist", QString("[%1]").arg(fsId));
+    m_recycleRestore->request();
 }
 
 QString BDiskDirListDelegate::currentPath() const
@@ -230,6 +279,53 @@ void BDiskDirListDelegate::handleCategoryList(BDiskBaseRequest::RequestRet ret, 
     emit finishRequest();
 }
 
+void BDiskDirListDelegate::handleRecycleList(BDiskBaseRequest::RequestRet ret, const QString &replyData)
+{
+    qDebug()<<Q_FUNC_INFO<<" ret "<<ret;
+    m_dataList.clear();
+    if (ret == BDiskBaseRequest::RET_SUCCESS) {
+        qDebug()<<Q_FUNC_INFO<<">>>>>> ok";
+        QJsonParseError error;
+        QJsonDocument doc = QJsonDocument::fromJson (replyData.toLocal8Bit(), &error);
+        if (error.error != QJsonParseError::NoError) {
+            qDebug()<<Q_FUNC_INFO<<"Parse json error => "<<error.errorString ();
+            sync();
+            return;
+        }
+        QJsonObject obj = doc.object();
+        int ret = obj.value("errno").toInt(-1);
+        if (ret != 0) {
+            qDebug()<<Q_FUNC_INFO<<"Error number "<<ret;
+            sync();
+            emit requestFailure();
+            return;
+        }
+        QJsonArray array = obj.value("list").toArray();
+        foreach (QJsonValue v, array) {
+            QJsonObject o = v.toObject();
+            QVariantMap map;
+            foreach (QString key, o.keys()) {
+                QJsonValue v = o.value(key);
+                if (v.isBool()) {
+                    bool ret = v.toBool();
+                    map.insert(key, ret ? "1" : "0");
+                } else if (v.isDouble()) {
+                    map.insert(key, QString::number(v.toDouble(), 'f', 0));
+                } else if (v.isString()) {
+                    map.insert(key, v.toString());
+                } else if (v.isObject()) {
+                    map.insert(key, v.toObject().toVariantMap());
+                } else if (v.isArray()) {
+                    map.insert(key, v.toArray());
+                }
+            }
+            m_dataList.append(map);
+        }
+        sync();
+    }
+    emit finishRequest();
+}
+
 void BDiskDirListDelegate::setCurrentPathList(const QStringList &currentPathList)
 {
     if (m_currentPathList == currentPathList)
@@ -268,6 +364,8 @@ void BDiskDirListDelegate::sync()
 
 void BDiskDirListDelegate::showCategory(int categoryType, int page)
 {
+    if (page < 1)
+        return;
     if (!m_categoryList) {
         m_categoryList = new BDiskActionCategoryList(this);
         connect(m_categoryList, &BDiskBaseRequest::requestStarted, this, &BDiskDirListDelegate::startRequest);

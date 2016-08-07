@@ -42,6 +42,10 @@ public:
     Q_INVOKABLE void showMusic(int page = 1);
     Q_INVOKABLE void showOther(int page = 1);
 
+    Q_INVOKABLE void showRecycleList(int page = 1);
+
+    Q_INVOKABLE void recycleRestore(const QString &fsId);
+
     QString currentPath() const;
 
     ///
@@ -63,10 +67,12 @@ signals:
     void currentPathChanged(QString currentPath);
     void dirListChanged(const QVariantList &dirList);
     void currentPathListChanged(const QStringList &currentPathList);
+    void recycleRestoreSuccess();
 
 private slots:
     void handleDirList(BDiskBaseRequest::RequestRet ret, const QString &replyData);
     void handleCategoryList(BDiskBaseRequest::RequestRet ret, const QString &replyData);
+    void handleRecycleList(BDiskBaseRequest::RequestRet ret, const QString &replyData);
 
 private:
     void setCurrentPath(const QString &currentPath);
@@ -77,6 +83,9 @@ private:
 private:
     BDiskActionListDir *m_action;
     BDiskActionCategoryList *m_categoryList;
+    BDiskActionRecycleList *m_recycleList;
+    BDiskActionRecycleRestore *m_recycleRestore;
+
     QVariantList m_dataList;
     QString m_currentPath;
     QStringList m_currentPathList;

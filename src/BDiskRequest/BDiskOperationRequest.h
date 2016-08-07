@@ -325,6 +325,63 @@ protected:
     }
 };
 
+class BDiskOpRecycleList : public BDiskBaseOperationRequest
+{
+public:
+    BDiskOpRecycleList()
+        : BDiskBaseOperationRequest() {
+        setUrlPath("recycle/list");
+        initiate();
+    }
+    virtual ~BDiskOpRecycleList() {}
+
+    // BDiskBaseOperationRequest interface
+protected:
+    OperationType initOperationType() {
+        return OPERATION_GET;
+    }
+    void initParameters() {
+        (*this)
+        ("channel", "chunlei")
+        ("clienttype", "0")
+        ("web", "1")
+        ("page", "1")
+        ("desc", "1")
+        ("bdstoken", "")
+        ("app_id", "250528")
+        ;
+    }
+};
+
+class BDiskOpRecycleRestore : public BDiskBaseOperationRequest
+{
+public:
+    BDiskOpRecycleRestore()
+        : BDiskBaseOperationRequest() {
+        setUrlPath("recycle/restore");
+        initiate();
+        appendPostDataParameters("fidlist", "[]");
+    }
+    virtual ~BDiskOpRecycleRestore() {}
+
+    // BDiskBaseOperationRequest interface
+protected:
+    OperationType initOperationType() {
+        return OPERATION_POST;
+    }
+    void initParameters() {
+        (*this)
+        ("channel", "chunlei")
+        ("clienttype", "0")
+        ("web", "1")
+        ("t", QString::number(QDateTime::currentMSecsSinceEpoch()))
+        ("bdstoken", "")
+        ("async", "1")
+        ("app_id", "250528")
+        ;
+    }
+};
+
 
 
 

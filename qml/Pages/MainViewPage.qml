@@ -185,7 +185,10 @@ Page {
         }
         sourceComponent: sidebar.displayType == sidebar.displayTypeCategoryView
         ? (DirListStore.showGridView ? gridItemComponent : listItemComponent)
-        : (sidebar.displayType == sidebar.displayTypeShareRecord ? shareRecordView : content.Null)
+        : (sidebar.displayType == sidebar.displayTypeShareRecord
+           ? shareRecordView
+           : (DirListStore.showGridView ? gridItemComponent : listItemComponent)
+          )
     }
 
     Component {

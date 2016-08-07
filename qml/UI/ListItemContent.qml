@@ -41,23 +41,33 @@ ListView {
         property string fsID: object[FileObjectKey.keyFsId]
         property int category: object[FileObjectKey.keyCategory]
         property int size: object[FileObjectKey.keySize]
+        property var leftTime: object[FileObjectKey.keyLeftTime]
+        property bool trashView: leftTime != undefined && leftTime != ""
+
         showDivider: true
         iconName: isDir ? "file/folder" : Utility.categoryToIcon(category)
         text: fileName
         subText: {
             var v = isDir ? qsTr("Dir") : AppUtility.sizeToStr(size)
             v += " - ";
-            v += AppUtility.formatDate(mtime);
+            if (trashView) {
+                v += qsTr("Delete Date") + ": ";
+                v += AppUtility.formatDate(mtime);
+                v += " - ";
+                v += qsTr("Left Time") + ": ";
+                v += leftTime + qsTr("Days");
+            } else {
+                v += AppUtility.formatDate(mtime);
+            }
             return v;
         }
-
         secondaryItem: Row {
             height: childrenRect.height
             anchors.verticalCenter: parent.verticalCenter
             spacing: Const.middleSpace
             IconButton {
-                visible: !dirItem.isDir
-                enabled: !dirItem.isDir
+                visible: !dirItem.isDir && !dirItem.trashView
+                enabled: visible
                 action: Action {
                     iconName: "file/file_download"
                 }
@@ -69,6 +79,8 @@ ListView {
                 }
             }
             IconButton {
+                visible: !dirItem.trashView
+                enabled: visible
                 action: Action {
                     iconName: "social/share"
                 }
@@ -78,6 +90,8 @@ ListView {
                 }
             }
             IconButton {
+                visible: !dirItem.trashView
+                enabled: visible
                 action: Action {
                     iconName: "navigation/more_vert"
                 }
@@ -85,6 +99,23 @@ ListView {
                     moreVertMenuClicked(dirItem, dirItem.path, dirItem.isDir);
                 }
             }
+            IconButton {
+                visible: dirItem.trashView
+                enabled: dirItem.trashView
+                action: Action {
+                    iconName: "content/undo"
+                }
+                onClicked: {
+                    AppActions.askToRecycleRestore(dirItem.fsID);
+                }
+            }
+//            IconButton {
+//                visible: dirItem.trashView
+//                enabled: visible
+//                action: Action {
+//                    iconName: "action/delete"
+//                }
+//            }
         }
         onClicked: {
             if (dirItem.isDir) {

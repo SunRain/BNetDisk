@@ -30,6 +30,9 @@ AppListener {
         onRequestFailure: {
             AppActions.infomToNeedRelogin("get dirlist error");
         }
+        onRecycleRestoreSuccess: {
+            AppActions.showRecycleList(1);
+        }
     }
 
     Filter {
@@ -88,6 +91,25 @@ AppListener {
             } else if (category == "all") {
                 listDelegate.refresh();
             }
+        }
+    }
+
+    Filter {
+        type: ActionTypes.showRecycleList
+        onDispatched: {
+            var page = message.page;
+
+            dirListStore.showGridView = false;
+
+            listDelegate.showRecycleList(page);
+        }
+    }
+
+    Filter {
+        type: ActionTypes.recycleRestore
+        onDispatched: {
+            var fsid = message.fsId;
+            listDelegate.recycleRestore(fsid);
         }
     }
 }

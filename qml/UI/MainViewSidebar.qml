@@ -85,6 +85,7 @@ Sidebar {
             text: qsTr("Trash")
             onClicked: {
                 displayType = displayTypeTrashView;
+                AppActions.showRecycleList(1);
             }
         }
 

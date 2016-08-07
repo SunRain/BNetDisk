@@ -44,6 +44,10 @@ KeyTable {
     property string askToCancelShare
     property string cancelShare
 
+    property string showRecycleList
+    property string askToRecycleRestore
+    property string recycleRestore
+
 //    property string openFileDialog
 
 

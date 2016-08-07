@@ -27,6 +27,7 @@ const static QString BDISK_FILE_KEY_THUBMS_ICON ("icon");
 const static QString BDISK_FILE_KEY_THUBMS_SMALL ("url1");
 const static QString BDISK_FILE_KEY_THUBMS_MIDDLE ("url2");
 const static QString BDISK_FILE_KEY_THUBMS_LARGE ("url3");
+const static QString BDISK_FILE_KEY_LEFTTIME ("leftTime");
 
 class BDiskFileObjectKeyName : public QObject
 {
@@ -53,6 +54,7 @@ class BDiskFileObjectKeyName : public QObject
     Q_PROPERTY(QString keyThumbsSmall READ keyThumbsSmall CONSTANT)
     Q_PROPERTY(QString keyThumbsMiddle READ keyThumbsMiddle CONSTANT)
     Q_PROPERTY(QString keyThumbsLarge READ keyThumbsLarge CONSTANT)
+    Q_PROPERTY(QString keyLeftTime READ keyLeftTime CONSTANT)
 
 public:
     BDiskFileObjectKeyName(QObject *parent = 0)
@@ -89,7 +91,8 @@ public:
                 << BDISK_FILE_KEY_THUBMS_ICON
                 << BDISK_FILE_KEY_THUBMS_LARGE
                 << BDISK_FILE_KEY_THUBMS_MIDDLE
-                << BDISK_FILE_KEY_THUBMS_SMALL;
+                << BDISK_FILE_KEY_THUBMS_SMALL
+                << BDISK_FILE_KEY_LEFTTIME;
         return list;
     }
 
@@ -176,6 +179,10 @@ public:
     QString keyThumbsLarge() const
     {
         return BDISK_FILE_KEY_THUBMS_LARGE;
+    }
+    QString keyLeftTime() const
+    {
+        return BDISK_FILE_KEY_LEFTTIME;
     }
 };
 

@@ -208,4 +208,16 @@ ActionCreator {
     function cancelShare(shareId) {
         AppDispatcher.dispatch(ActionTypes.cancelShare, {"shareId":shareId});
     }
+
+    function showRecycleList(page) {
+        AppDispatcher.dispatch(ActionTypes.showRecycleList, {"page":page});
+    }
+
+    function askToRecycleRestore(fsId) {
+        AppDispatcher.dispatch(ActionTypes.askToRecycleRestore, {"fsId":fsId});
+    }
+
+    function recycleRestore(fsId) {
+        AppDispatcher.dispatch(ActionTypes.recycleRestore, {"fsId":fsId});
+    }
 }

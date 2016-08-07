@@ -71,5 +71,18 @@ Item {
         }
     }
 
+    AppScript {
+        runWhen: ActionTypes.askToRecycleRestore
+        script: {
+            var id = message.fsId;
+            info.text = qsTr("Restore current file?");
+            info.open();
+            once(info.onAccepted, function() {
+                AppActions.recycleRestore(id)
+            });
+            once(info.onRejected, exit.bind(this, 0));
+        }
+    }
+
 
 }
