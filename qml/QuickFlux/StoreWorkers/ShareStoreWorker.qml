@@ -24,6 +24,10 @@ StoreWorker {
         onShareRecordsChanged: {
             ShareStore.shareRecordList = shareRecords;
         }
+        onCancelShareSuccess: {
+            console.log("========== onCancelShareSuccess");
+            AppActions.showShareRecord(1);
+        }
     }
 
     function clear() {
@@ -57,6 +61,14 @@ StoreWorker {
             var page = message.page;
             console.log('=================== onDispatched showShareRecord ' + page);
             shareDelegate.showShareRecord(page);
+        }
+    }
+
+    Filter {
+        type: ActionTypes.cancelShare
+        onDispatched: {
+            var shareId = message.shareId;
+            shareDelegate.cancelShare(shareId);
         }
     }
 }

@@ -105,4 +105,18 @@ protected:
     }
 };
 
+class BDiskActionCancelShare : public BDiskBaseRequest
+{
+    Q_OBJECT
+public:
+    explicit BDiskActionCancelShare(QObject *parent = 0): BDiskBaseRequest(parent) {}
+    virtual ~BDiskActionCancelShare() {}
+
+    // BDiskBaseRequest interface
+protected:
+    BDiskBaseOperationRequest operation() {
+        CREATE_OPR(BDiskOpCancelShare);
+    }
+};
+
 #endif // BDISKACTIONS_H

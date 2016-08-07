@@ -92,6 +92,8 @@ void BDiskBaseRequest::request()
     if (m_reply) {
         m_requestAborted = true;
         m_reply->abort();
+        m_reply->deleteLater();
+        m_reply = nullptr;
     }
     if (m_operation.operationType() == BDiskBaseOperationRequest::OperationType::OPERATION_POST) {
         request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");

@@ -57,5 +57,19 @@ Item {
         }
     }
 
+    AppScript {
+        runWhen: ActionTypes.askToCancelShare
+        script: {
+            var shareId = message.shareId;
+            info.title = qsTr("Cancel Share?");
+            info.text = qsTr("Canceling share will delete this share link and prevent people visit file from this link");
+            info.open();
+            once(info.onAccepted, function() {
+                AppActions.cancelShare(shareId);
+            });
+            once(info.onRejected, exit.bind(this, 0));
+        }
+    }
+
 
 }

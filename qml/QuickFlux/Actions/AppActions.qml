@@ -200,4 +200,12 @@ ActionCreator {
     function showShareRecord(page) {
         AppDispatcher.dispatch(ActionTypes.showShareRecord, {"page":page});
     }
+
+    function askToCancelShare(shareId) {
+        AppDispatcher.dispatch(ActionTypes.askToCancelShare, {"shareId":shareId});
+    }
+
+    function cancelShare(shareId) {
+        AppDispatcher.dispatch(ActionTypes.cancelShare, {"shareId":shareId});
+    }
 }

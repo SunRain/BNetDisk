@@ -41,6 +41,9 @@ KeyTable {
 
     property string showShareRecord
 
+    property string askToCancelShare
+    property string cancelShare
+
 //    property string openFileDialog
 
 

@@ -298,6 +298,32 @@ protected:
     }
 };
 
+class BDiskOpCancelShare : public BDiskBaseOperationRequest
+{
+public:
+    BDiskOpCancelShare()
+        : BDiskBaseOperationRequest() {
+        setBaseUrl("https://pan.baidu.com/share/cancel");
+        initiate();
+        appendPostDataParameters("shareid_list", "[]");
+    }
+    virtual ~BDiskOpCancelShare() {}
+
+    // BDiskBaseOperationRequest interface
+protected:
+    OperationType initOperationType() {
+        return OPERATION_POST;
+    }
+    void initParameters() {
+        (*this)
+        ("channel", "chunlei")
+        ("clienttype", "0")
+        ("web", "1")
+        ("bdstoken", "")
+        ("app_id", "250528")
+        ;
+    }
+};
 
 
 

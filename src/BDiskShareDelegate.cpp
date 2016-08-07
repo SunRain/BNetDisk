@@ -10,6 +10,7 @@ BDiskShareDelegate::BDiskShareDelegate(QObject *parent)
     , m_privShare(nullptr)
     , m_pubShare(nullptr)
     , m_shareRecord(nullptr)
+    , m_shareCancel(nullptr)
 {
 
 }
@@ -27,6 +28,18 @@ BDiskShareDelegate::~BDiskShareDelegate()
             m_pubShare->abort();
         m_pubShare->deleteLater();
         m_pubShare = nullptr;
+    }
+    if (m_shareRecord) {
+        if (!m_shareRecord->isFinished())
+            m_shareRecord->abort();
+        m_shareRecord->deleteLater();
+        m_shareRecord = nullptr;
+    }
+    if (m_shareCancel) {
+        if (!m_shareCancel->isFinished())
+            m_shareCancel->abort();
+        m_shareCancel->deleteLater();
+        m_shareCancel = nullptr;
     }
 }
 
@@ -105,12 +118,35 @@ void BDiskShareDelegate::showShareRecord(int page)
     m_shareRecord->request();
 }
 
+void BDiskShareDelegate::cancelShare(const QString &shareId)
+{
+    if (shareId.isEmpty())
+        return;
+    if (m_shareCancel) {
+        if (!m_shareCancel->isFinished())
+            m_shareCancel->abort();
+        QObject::disconnect(m_shareCancel, 0, 0, 0);
+        m_shareCancel->deleteLater();
+        m_shareCancel = nullptr;
+    }
+    m_shareCancel = new BDiskActionCancelShare();
+    m_shareCancel->operationPtr()->appendPostDataParameters("shareid_list", QString("[%1]").arg(shareId));
+
+    connect(m_shareCancel, &BDiskActionCancelShare::requestStarted,
+            this, &BDiskShareDelegate::startRequest);
+
+    connect(m_shareCancel, &BDiskActionCancelShare::requestResult,
+            [&](BDiskBaseRequest::RequestRet ret, const QString &replyData) {
+        parseShareCancel(ret, replyData);
+    });
+
+    m_shareCancel->request();
+}
+
 QVariantList BDiskShareDelegate::shareRecords() const
 {
     return m_shareRecords;
 }
-
-
 
 void BDiskShareDelegate::parseReply(BDiskBaseRequest::RequestRet ret, const QString &replyData, bool isPrivShare)
 {
@@ -188,6 +224,32 @@ void BDiskShareDelegate::parseShareRecord(BDiskBaseRequest::RequestRet ret, cons
     }
     setShareRecords(list);
     emit finishRequest();
+}
+
+void BDiskShareDelegate::parseShareCancel(BDiskBaseRequest::RequestRet ret, const QString &replyData)
+{
+    if (ret != BDiskBaseRequest::RET_SUCCESS) {
+        emit requestFailure();
+        return;
+    }
+    qDebug()<<Q_FUNC_INFO<<" reply data "<<replyData;
+
+    QJsonParseError error;
+    QJsonDocument doc = QJsonDocument::fromJson(replyData.toLocal8Bit(), &error);
+    if (error.error != QJsonParseError::NoError) {
+        qDebug()<<Q_FUNC_INFO<<"Parse json error => "<<error.errorString ();
+        emit requestFailure();
+        return;
+    }
+    QJsonObject obj = doc.object();
+    int err = obj.value("errno").toInt(-1);
+    if (err != 0) {
+        qDebug()<<Q_FUNC_INFO<<"Error number "<<err<<" text "<<obj.value("err_msg").toString();
+        emit requestFailure();
+        return;
+    }
+    emit finishRequest();
+    emit cancelShareSuccess();
 }
 
 void BDiskShareDelegate::setShareRecords(const QVariantList &shareRecords)

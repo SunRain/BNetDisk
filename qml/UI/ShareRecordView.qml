@@ -33,6 +33,7 @@ ListView {
     spacing: dp(8)
     model: ShareStore.shareRecordList
     delegate: ListItem.Subtitled {
+        id: item
         property var object: ShareStore.shareRecordList[index]
         property string shareId: object["shareId"]
         property string passwd: object["passwd"]
@@ -41,81 +42,86 @@ ListView {
         property string shortlink: object["shortlink"]
         property int typicalCategory: object["typicalCategory"]
         property bool isDir: typicalCategory == -1 ? true : false
-        interactive: false
-        showDivider: false
-        iconName: isDir ? "file/folder" : Utility.categoryToIcon(typicalCategory)
+        property bool isPublic: object["public"] == 1 ? true : false
+        interactive: true
+        showDivider: true
+//        iconName: isDir ? "file/folder" : Utility.categoryToIcon(typicalCategory)
         text: fileName
 //        subText: shortlink
-        content: Item {
-            anchors.fill: parent
-            TextField {
-                width: parent.width
-                text: shortlink
+        action: Row {
+            height: parent.height
+            Icon {
+                anchors.verticalCenter: parent.verticalCenter
+                color: item.selected ? Theme.primaryColor : Theme.light.iconColor
+                size: 24 * Units.dp
+                name: item.isPublic ? "" : "action/lock"
+            }
+            Icon {
+                anchors.verticalCenter: parent.verticalCenter
+                color: item.selected ? Theme.primaryColor : Theme.light.iconColor
+                size: 24 * Units.dp
+                name: item.isDir ? "file/folder" : Utility.categoryToIcon(typicalCategory)
             }
         }
-    }
-        /*ListItem.Subtitled {
-        id: dirItem
-        property var object: DirListStore.dirlistModel[index] //.get(index)
-        property bool isDir: object[FileObjectKey.keyIsdir] == 1
-        property string path: object[FileObjectKey.keyPath]
-        property string fileName: AppUtility.fileObjectPathToFileName(path)
-        property string mtime: object[FileObjectKey.keyServerMTime]
-        property string fsID: object[FileObjectKey.keyFsId]
-        property int category: object[FileObjectKey.keyCategory]
-        property int size: object[FileObjectKey.keySize]
-        showDivider: true
-        iconName: isDir ? "file/folder" : Utility.categoryToIcon(category)
-        text: fileName
-        subText: {
-            var v = isDir ? qsTr("Dir") : AppUtility.sizeToStr(size)
-            v += " - ";
-            v += AppUtility.formatDate(mtime);
-            return v;
-        }
-
-        secondaryItem: Row {
-            height: childrenRect.height
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: Const.middleSpace
-            IconButton {
-                visible: !dirItem.isDir
-                enabled: !dirItem.isDir
-                action: Action {
-                    iconName: "file/file_download"
+        content: Item {
+            anchors.fill: parent
+            Row {
+                height: parent.height
+                spacing: Const.tinySpace
+                Label {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: qsTr("Link")+": "
                 }
-                onClicked: {
-                    console.log("=== download file");
-                    if (!dirItem.isDir) {
-                        AppActions.askToSelectDownloadPath(path, fileName);
+                Label {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: item.shortlink
+                    color: Theme.primaryColor
+                }
+                Label {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: qsTr("Password") + ": "
+                    enabled: !item.isPublic
+                    visible: !item.isPublic
+                }
+                Label {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: item.passwd
+                    enabled: !item.isPublic
+                    visible: !item.isPublic
+                }
+            }
+            Row {
+                height: parent.height
+                spacing: Const.tinySpace
+                anchors.right: parent.right
+                anchors.rightMargin: Const.largeSpace
+                Button {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: qsTr("Copy to clipboard")
+                    textColor: Theme.accentColor
+                    onClicked: {
+                        var text = item.shortlink;
+                        if (!item.isPublic) {
+                            text += " "
+                            text += qsTr("password")
+                            text += ": "
+                            text += item.passwd
+                        }
+                        AppUtility.copyToClipboard(text);
+                        AppActions.snackbarInfo(qsTr("Copyed!!"))
+                    }
+                }
+                IconButton {
+                    action: Action {
+                        iconName: "navigation/cancel"
+                    }
+                    onClicked: {
+                        AppActions.askToCancelShare(item.shareId);
                     }
                 }
             }
-            IconButton {
-                action: Action {
-                    iconName: "social/share"
-                }
-                onClicked: {
-                    console.log('=========== fsid '+dirItem.fsID);
-                    shareMenuClicked(dirItem, dirItem.fsID);
-                }
-            }
-            IconButton {
-                action: Action {
-                    iconName: "navigation/more_vert"
-                }
-                onClicked: {
-                    moreVertMenuClicked(dirItem, dirItem.path, dirItem.isDir);
-                }
-            }
         }
-        onClicked: {
-            if (dirItem.isDir) {
-                AppActions.showDir(object[FileObjectKey.keyPath]);
-            }
-        }
-    }*/
-
+    }
     Scrollbar {
         flickableItem: parent
     }

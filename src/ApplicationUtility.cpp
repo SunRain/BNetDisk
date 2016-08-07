@@ -2,6 +2,9 @@
 
 #include <QDateTime>
 #include <QDebug>
+#include <QCoreApplication>
+#include <QGuiApplication>
+#include <QClipboard>
 
 ApplicationUtility::ApplicationUtility(QObject *parent)
     : QObject(parent)
@@ -102,4 +105,11 @@ QString ApplicationUtility::milliSecsToStr(qint64 millseconds)
         qint64 s = ret/1000;
         return QString("%1h%2m%3s").arg(h).arg(m).arg(s);
     }
+}
+
+void ApplicationUtility::copyToClipboard(const QString &text)
+{
+    if (text.isEmpty())
+        return;
+    QGuiApplication::clipboard()->setText(text);
 }

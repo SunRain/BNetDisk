@@ -34,6 +34,8 @@ public:
     Q_INVOKABLE QString downloadPercent(int ready, int total);
 
     Q_INVOKABLE QString milliSecsToStr(qint64 millseconds);
+
+    Q_INVOKABLE void copyToClipboard(const QString &text);
 };
 
 #endif // APPLICATIONUTILITY_H
