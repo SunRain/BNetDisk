@@ -8,6 +8,7 @@
 
 #include "qslistmodel.h"
 
+class QJsonObject;
 class BDiskDirListDelegate : public QObject
 {
     Q_OBJECT
@@ -30,7 +31,7 @@ public:
     virtual ~BDiskDirListDelegate();
 
     Q_INVOKABLE void showRoot();
-    Q_INVOKABLE void show(const QString &dir);
+    Q_INVOKABLE void showDir(const QString &dir);
     Q_INVOKABLE void cdup();
     Q_INVOKABLE void refresh();
 
@@ -79,9 +80,10 @@ private:
     void setCurrentPathList(const QStringList &currentPathList);
     void sync();
     void showCategory(int categoryType, int page);
+    QJsonObject parseToJsonObject(const QString &source) const;
 
 private:
-    BDiskActionListDir *m_action;
+    BDiskActionListDir *m_dirList;
     BDiskActionCategoryList *m_categoryList;
     BDiskActionRecycleList *m_recycleList;
     BDiskActionRecycleRestore *m_recycleRestore;

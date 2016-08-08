@@ -59,7 +59,7 @@ AppListener {
         type: ActionTypes.showDir
         onDispatched: {
             var dir = message.dir
-            listDelegate.show(dir);
+            listDelegate.showDir(dir);
         }
     }
     Filter {

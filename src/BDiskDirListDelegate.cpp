@@ -17,6 +17,15 @@ const static int CATEGORY_TYPE_BT = 7;
 const static int CATEGORY_TYPE_MUSIC = 2;
 const static int CATEGORY_TYPE_OTHER = 6;
 
+
+#define FREE_REQUEST(ptr) \
+    if (ptr) { \
+        if (!ptr->isFinished()) \
+            ptr->abort(); \
+        ptr->deleteLater(); \
+        ptr = nullptr; \
+    }
+
 BDiskDirListDelegate::BDiskDirListDelegate(QObject *parent)
     : QObject(parent)
     , m_categoryList(nullptr)
@@ -24,31 +33,58 @@ BDiskDirListDelegate::BDiskDirListDelegate(QObject *parent)
     , m_recycleRestore(nullptr)
     , m_currentPath(QString("/"))
 {
-    m_action = new BDiskActionListDir(this);
+    m_dirList = new BDiskActionListDir(this);
     setCurrentPathList((QStringList()<<"/"));
 
-    connect(m_action, &BDiskBaseRequest::requestStarted, this, &BDiskDirListDelegate::startRequest);
-    connect(m_action, &BDiskBaseRequest::requestResult, this, &BDiskDirListDelegate::handleDirList);
+    connect(m_dirList, &BDiskBaseRequest::requestStarted, this, &BDiskDirListDelegate::startRequest);
+    connect(m_dirList, &BDiskBaseRequest::requestResult, this, &BDiskDirListDelegate::handleDirList);
 }
 
 BDiskDirListDelegate::~BDiskDirListDelegate()
 {
-    if (m_action)
-        m_action->deleteLater();
-    m_action = nullptr;
+//    if (m_dirList) {
+//        if (!m_dirList->isFinished())
+//            m_dirList->abort();
+//        m_dirList->deleteLater();
+//        m_dirList = nullptr;
+//    }
+//    if (m_categoryList) {
+//        if (!m_categoryList->isFinished())
+//            m_categoryList->abort();
+//        m_categoryList->deleteLater();
+//        m_categoryList = nullptr;
+//    }
+//    if (m_recycleList) {
+//        if (!m_recycleList->isFinished())
+//            m_recycleList->abort();
+//        m_recycleList->deleteLater();
+//        m_recycleList = nullptr;
+//    }
+//    if (m_recycleRestore) {
+//        if (!m_recycleRestore->isFinished())
+//            m_recycleRestore->abort();
+//        m_recycleRestore->deleteLater();
+//        m_recycleRestore = nullptr;
+//    }
+    FREE_REQUEST(m_dirList);
+    FREE_REQUEST(m_categoryList);
+    FREE_REQUEST(m_recycleList);
+    FREE_REQUEST(m_recycleRestore);
 }
 
 void BDiskDirListDelegate::showRoot()
 {
-    m_action->request();
-    setCurrentPath("/");
+//    m_dirList->request();
+//    setCurrentPath("/");
+    showDir("/");
 }
 
-void BDiskDirListDelegate::show(const QString &dir)
+void BDiskDirListDelegate::showDir(const QString &dir)
 {
-//    m_action->setParameters("dir", dir);
-    m_action->operationPtr()->setParameters("dir", dir);
-    m_action->request();
+    if (!m_dirList->isFinished())
+        m_dirList->abort();
+    m_dirList->operationPtr()->setParameters("dir", dir);
+    m_dirList->request();
     setCurrentPath(dir);
 }
 
@@ -57,6 +93,10 @@ void BDiskDirListDelegate::cdup()
     qDebug()<<Q_FUNC_INFO<<" cdup for "<<m_currentPath;
     if (!m_currentPath.contains("/"))
         return;
+    if (m_currentPath == "/") {
+        showDir(m_currentPath);
+        return;
+    }
     QString str = m_currentPath;
     if (str.startsWith("/"))
         str = str.right(str.length() -1);
@@ -72,14 +112,16 @@ void BDiskDirListDelegate::cdup()
     if (!str.startsWith("/"))
         str = QString("/%1").arg(str);
 //    m_action->setParameters("dir", str);
-    m_action->operationPtr()->setParameters("dir", str);
-    m_action->request();
-    setCurrentPath(str);
+//    m_dirList->operationPtr()->setParameters("dir", str);
+//    m_dirList->request();
+//    setCurrentPath(str);
+    showDir(str);
 }
 
 void BDiskDirListDelegate::refresh()
 {
-    m_action->request();
+//    m_dirList->request();
+    showDir(m_currentPath);
 }
 
 void BDiskDirListDelegate::showVideo(int page)
@@ -121,6 +163,9 @@ void BDiskDirListDelegate::showRecycleList(int page)
 {
     if (page < 1)
         return;
+    if (m_recycleList && !m_recycleList->isFinished())
+        m_recycleList->abort();
+
     if (!m_recycleList) {
         m_recycleList = new BDiskActionRecycleList(this);
         connect(m_recycleList, &BDiskBaseRequest::requestStarted, this, &BDiskDirListDelegate::startRequest);
@@ -135,27 +180,39 @@ void BDiskDirListDelegate::recycleRestore(const QString &fsId)
 {
     if (fsId.isEmpty())
         return;
+
+    if (m_recycleRestore && !m_recycleRestore->isFinished())
+        m_recycleRestore->abort();
+
     if (!m_recycleRestore) {
         m_recycleRestore = new BDiskActionRecycleRestore(this);
         connect(m_recycleRestore, &BDiskBaseRequest::requestStarted, this, &BDiskDirListDelegate::startRequest);
         connect(m_recycleRestore, &BDiskBaseRequest::requestResult,
                 [&](BDiskBaseRequest::RequestRet ret, const QString &replyData) {
+
+            FREE_REQUEST(m_recycleRestore);
+
             if (ret == BDiskBaseRequest::RET_SUCCESS) {
                 qDebug()<<Q_FUNC_INFO<<">>>>>> ok";
-                QJsonParseError error;
-                QJsonDocument doc = QJsonDocument::fromJson (replyData.toLocal8Bit(), &error);
-                if (error.error != QJsonParseError::NoError) {
-                    qDebug()<<Q_FUNC_INFO<<"Parse json error => "<<error.errorString ();
-                    return;
-                }
-                QJsonObject obj = doc.object();
-                int ret = obj.value("errno").toInt(-1);
-                if (ret != 0) {
-                    qDebug()<<Q_FUNC_INFO<<"Error number "<<ret;
+//                QJsonParseError error;
+//                QJsonDocument doc = QJsonDocument::fromJson (replyData.toLocal8Bit(), &error);
+//                if (error.error != QJsonParseError::NoError) {
+//                    qDebug()<<Q_FUNC_INFO<<"Parse json error => "<<error.errorString ();
+//                    return;
+//                }
+//                QJsonObject obj = doc.object();
+//                int ret = obj.value("errno").toInt(-1);
+//                if (ret != 0) {
+//                    qDebug()<<Q_FUNC_INFO<<"Error number "<<ret;
+//                    emit requestFailure();
+//                    return;
+//                }
+                QJsonObject o = parseToJsonObject(replyData);
+                if (o.isEmpty()) {
                     emit requestFailure();
-                    return;
+                } else {
+                    emit recycleRestoreSuccess();
                 }
-                emit recycleRestoreSuccess();
             }
             emit finishRequest();
         });
@@ -185,17 +242,23 @@ void BDiskDirListDelegate::handleDirList(BDiskBaseRequest::RequestRet ret, const
     m_dataList.clear();
     if (ret == BDiskBaseRequest::RET_SUCCESS) {
         qDebug()<<Q_FUNC_INFO<<">>>>>> ok";
-        QJsonParseError error;
-        QJsonDocument doc = QJsonDocument::fromJson (replyData.toLocal8Bit(), &error);
-        if (error.error != QJsonParseError::NoError) {
-            qDebug()<<Q_FUNC_INFO<<"Parse json error => "<<error.errorString ();
-            sync();
-            return;
-        }
-        QJsonObject obj = doc.object();
-        int ret = obj.value("errno").toInt(-1);
-        if (ret != 0) {
-            qDebug()<<Q_FUNC_INFO<<"Error number "<<ret;
+//        QJsonParseError error;
+//        QJsonDocument doc = QJsonDocument::fromJson (replyData.toLocal8Bit(), &error);
+//        if (error.error != QJsonParseError::NoError) {
+//            qDebug()<<Q_FUNC_INFO<<"Parse json error => "<<error.errorString ();
+//            sync();
+//            return;
+//        }
+//        QJsonObject obj = doc.object();
+//        int ret = obj.value("errno").toInt(-1);
+//        if (ret != 0) {
+//            qDebug()<<Q_FUNC_INFO<<"Error number "<<ret;
+//            sync();
+//            emit requestFailure();
+//            return;
+//        }
+        QJsonObject obj = parseToJsonObject(replyData);
+        if (obj.isEmpty()) {
             sync();
             emit requestFailure();
             return;
@@ -236,20 +299,29 @@ void BDiskDirListDelegate::handleDirList(BDiskBaseRequest::RequestRet ret, const
 void BDiskDirListDelegate::handleCategoryList(BDiskBaseRequest::RequestRet ret, const QString &replyData)
 {
     qDebug()<<Q_FUNC_INFO<<" ret "<<ret;
+
+    FREE_REQUEST(m_categoryList);
+
     m_dataList.clear();
     if (ret == BDiskBaseRequest::RET_SUCCESS) {
         qDebug()<<Q_FUNC_INFO<<">>>>>> ok";
-        QJsonParseError error;
-        QJsonDocument doc = QJsonDocument::fromJson (replyData.toLocal8Bit(), &error);
-        if (error.error != QJsonParseError::NoError) {
-            qDebug()<<Q_FUNC_INFO<<"Parse json error => "<<error.errorString ();
-            sync();
-            return;
-        }
-        QJsonObject obj = doc.object();
-        int ret = obj.value("errno").toInt(-1);
-        if (ret != 0) {
-            qDebug()<<Q_FUNC_INFO<<"Error number "<<ret;
+//        QJsonParseError error;
+//        QJsonDocument doc = QJsonDocument::fromJson (replyData.toLocal8Bit(), &error);
+//        if (error.error != QJsonParseError::NoError) {
+//            qDebug()<<Q_FUNC_INFO<<"Parse json error => "<<error.errorString ();
+//            sync();
+//            return;
+//        }
+//        QJsonObject obj = doc.object();
+//        int ret = obj.value("errno").toInt(-1);
+//        if (ret != 0) {
+//            qDebug()<<Q_FUNC_INFO<<"Error number "<<ret;
+//            sync();
+//            emit requestFailure();
+//            return;
+//        }
+        QJsonObject obj = parseToJsonObject(replyData);
+        if (obj.isEmpty()) {
             sync();
             emit requestFailure();
             return;
@@ -282,20 +354,29 @@ void BDiskDirListDelegate::handleCategoryList(BDiskBaseRequest::RequestRet ret, 
 void BDiskDirListDelegate::handleRecycleList(BDiskBaseRequest::RequestRet ret, const QString &replyData)
 {
     qDebug()<<Q_FUNC_INFO<<" ret "<<ret;
+
+    FREE_REQUEST(m_recycleList);
+
     m_dataList.clear();
     if (ret == BDiskBaseRequest::RET_SUCCESS) {
         qDebug()<<Q_FUNC_INFO<<">>>>>> ok";
-        QJsonParseError error;
-        QJsonDocument doc = QJsonDocument::fromJson (replyData.toLocal8Bit(), &error);
-        if (error.error != QJsonParseError::NoError) {
-            qDebug()<<Q_FUNC_INFO<<"Parse json error => "<<error.errorString ();
-            sync();
-            return;
-        }
-        QJsonObject obj = doc.object();
-        int ret = obj.value("errno").toInt(-1);
-        if (ret != 0) {
-            qDebug()<<Q_FUNC_INFO<<"Error number "<<ret;
+//        QJsonParseError error;
+//        QJsonDocument doc = QJsonDocument::fromJson (replyData.toLocal8Bit(), &error);
+//        if (error.error != QJsonParseError::NoError) {
+//            qDebug()<<Q_FUNC_INFO<<"Parse json error => "<<error.errorString ();
+//            sync();
+//            return;
+//        }
+//        QJsonObject obj = doc.object();
+//        int ret = obj.value("errno").toInt(-1);
+//        if (ret != 0) {
+//            qDebug()<<Q_FUNC_INFO<<"Error number "<<ret;
+//            sync();
+//            emit requestFailure();
+//            return;
+//        }
+        QJsonObject obj = parseToJsonObject(replyData);
+        if (obj.isEmpty()) {
             sync();
             emit requestFailure();
             return;
@@ -366,6 +447,8 @@ void BDiskDirListDelegate::showCategory(int categoryType, int page)
 {
     if (page < 1)
         return;
+    if (m_categoryList && !m_categoryList->isFinished())
+        m_categoryList->abort();
     if (!m_categoryList) {
         m_categoryList = new BDiskActionCategoryList(this);
         connect(m_categoryList, &BDiskBaseRequest::requestStarted, this, &BDiskDirListDelegate::startRequest);
@@ -375,6 +458,28 @@ void BDiskDirListDelegate::showCategory(int categoryType, int page)
     m_categoryList->operationPtr()->setParameters("category", QString::number(categoryType));
     m_categoryList->operationPtr()->setParameters("page", QString::number(page));
     m_categoryList->request();
+}
+
+QJsonObject BDiskDirListDelegate::parseToJsonObject(const QString &source) const
+{
+    if (source.isEmpty())
+        return QJsonObject();
+
+    QJsonParseError error;
+    QJsonDocument doc = QJsonDocument::fromJson (source.toUtf8(), &error);
+    if (error.error != QJsonParseError::NoError) {
+        qDebug()<<Q_FUNC_INFO<<"Parse json error => "<<error.errorString ();
+        return QJsonObject();
+    }
+    QJsonObject obj = doc.object();
+    int ret = obj.value("errno").toInt(-1);
+    if (ret != 0) {
+        qDebug()<<Q_FUNC_INFO<<"Error number "<<ret;
+//        sync();
+//        emit requestFailure();
+        return QJsonObject();
+    }
+    return obj;
 }
 
 
