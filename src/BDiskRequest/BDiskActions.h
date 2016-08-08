@@ -147,4 +147,18 @@ protected:
     }
 };
 
+class BDiskActionSearch : public BDiskBaseRequest
+{
+    Q_OBJECT
+public:
+    explicit BDiskActionSearch(QObject *parent = 0): BDiskBaseRequest(parent) {}
+    virtual ~BDiskActionSearch() {}
+
+    // BDiskBaseRequest interface
+protected:
+    BDiskBaseOperationRequest operation() {
+        CREATE_OPR(BDiskOpSearch);
+    }
+};
+
 #endif // BDISKACTIONS_H

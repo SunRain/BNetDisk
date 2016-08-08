@@ -382,7 +382,39 @@ protected:
     }
 };
 
+class BDiskOpSearch : public BDiskBaseOperationRequest
+{
+public:
+    BDiskOpSearch()
+        : BDiskBaseOperationRequest() {
+        setUrlPath("search");
+        initiate();
+    }
+    virtual ~BDiskOpSearch() {}
 
+    // BDiskBaseOperationRequest interface
+protected:
+    OperationType initOperationType() {
+        return OPERATION_GET;
+    }
+    void initParameters() {
+        (*this)
+        ("recursion", "1")
+        ("order", "time")
+        ("desc", "1")
+        ("showempty", "0")
+        ("web", "1")
+        ("page", "1")
+        ("num", "100")
+        ("key", "")
+        ("t", QString::number(QDateTime::currentMSecsSinceEpoch()))
+        ("channel", "chunlei")
+        ("clienttype", "0")
+        ("bdstoken", "")
+        ("app_id", "250528")
+        ;
+    }
+};
 
 
 #endif // BDISKOPERATIONREQUEST_H

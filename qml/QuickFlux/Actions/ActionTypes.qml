@@ -48,6 +48,8 @@ KeyTable {
     property string askToRecycleRestore
     property string recycleRestore
 
+    property string search
+
 //    property string openFileDialog
 
 

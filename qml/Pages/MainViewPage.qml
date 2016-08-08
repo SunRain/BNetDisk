@@ -20,8 +20,7 @@ Page {
             iconName: "action/search"
             name: qsTr("Search")
             onTriggered: {
-//                musicLibraryManager.scanLocalMusic();
-//                AppActions.selectMusicScannerDirs();
+                AppActions.showSearchPage(pageStack);
             }
         },
         Action {

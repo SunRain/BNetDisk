@@ -27,7 +27,8 @@ SOURCES += \
     src/BDiskDownloadDelegate.cpp \
     src/BDiskEvent.cpp \
     src/BDiskShareDelegate.cpp \
-    src/BDiskFileOperationDelegate.cpp
+    src/BDiskFileOperationDelegate.cpp \
+    src/BDiskSearchDelegate.cpp
 
 RESOURCES += \
     qml/qml.qrc
@@ -57,7 +58,8 @@ HEADERS += \
     src/BDiskDownloadDelegate.h \
     src/BDiskEvent.h \
     src/BDiskShareDelegate.h \
-    src/BDiskFileOperationDelegate.h
+    src/BDiskFileOperationDelegate.h \
+    src/BDiskSearchDelegate.h
 
 DISTFILES += \
     qml/QuickFlux/Stores/qmldir

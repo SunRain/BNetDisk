@@ -33,5 +33,7 @@
         <file>QuickFlux/StoreWorkers/ShareStoreWorker.qml</file>
         <file>Component/ShareRecordObject.qml</file>
         <file>UI/ShareRecordView.qml</file>
+        <file>QuickFlux/Stores/SearchStore.qml</file>
+        <file>Pages/SearchPage.qml</file>
     </qresource>
 </RCC>

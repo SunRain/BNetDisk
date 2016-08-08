@@ -14,12 +14,15 @@
 #include "BDiskDownloadDelegate.h"
 #include "BDiskShareDelegate.h"
 #include "BDiskFileOperationDelegate.h"
+#include "BDiskSearchDelegate.h"
 
 #include "ApplicationUtility.h"
 #include "BDiskEvent.h"
 
 #include "DLRequest.h"
 #include "DLTransmissionDatabaseKeys.h"
+
+const static char *PLUGIN_URI = "com.sunrain.bnetdisk.qmlplugin";
 
 int main(int argc, char *argv[])
 {
@@ -31,31 +34,29 @@ int main(int argc, char *argv[])
     QScopedPointer<BDiskLogin> login(new BDiskLogin());
     QScopedPointer<ApplicationUtility> appUtility(new ApplicationUtility());
 
-    qmlRegisterType<BDiskDirListDelegate>("com.sunrain.bnetdisk.qmlplugin",
-                                          1, 0, "DirListDelegate");
-    qmlRegisterType<BDiskDownloadDelegate>("com.sunrain.bnetdisk.qmlplugin",
-                                           1, 0, "BDiskDownloadDelegate");
-    qmlRegisterType<BDiskShareDelegate>("com.sunrain.bnetdisk.qmlplugin",
-                                           1, 0, "BDiskShareDelegate");
-    qmlRegisterType<BDiskFileOperationDelegate>("com.sunrain.bnetdisk.qmlplugin",
-                                           1, 0, "BDiskFileOperationDelegate");
+    qmlRegisterType<BDiskDirListDelegate>(PLUGIN_URI, 1, 0, "DirListDelegate");
+    qmlRegisterType<BDiskDownloadDelegate>(PLUGIN_URI, 1, 0, "BDiskDownloadDelegate");
+    qmlRegisterType<BDiskShareDelegate>(PLUGIN_URI, 1, 0, "BDiskShareDelegate");
+    qmlRegisterType<BDiskFileOperationDelegate>(PLUGIN_URI, 1, 0, "BDiskFileOperationDelegate");
+    qmlRegisterType<BDiskSearchDelegate>(PLUGIN_URI, 1, 0, "BDiskSearchDelegate");
 
-    qmlRegisterSingletonType<BDiskFileObjectKeyName>("com.sunrain.bnetdisk.qmlplugin",
-                                                     1, 0, "FileObjectKey", BDiskFileObjectKeyName::qmlSingleton);
-    qmlRegisterSingletonType<YADownloader::DLTransmissionDatabaseKeysName>
-            ("com.sunrain.bnetdisk.qmlplugin",
-             1, 0,
-             "DownloaderObjectKey",
-             YADownloader::DLTransmissionDatabaseKeysName::qmlSingleton);
+    qmlRegisterSingletonType<BDiskFileObjectKeyName>(PLUGIN_URI,
+                                                     1, 0,
+                                                     "FileObjectKey",
+                                                     BDiskFileObjectKeyName::qmlSingleton);
+    qmlRegisterSingletonType<YADownloader::DLTransmissionDatabaseKeysName>(
+                PLUGIN_URI,
+                1, 0,
+                "DownloaderObjectKey",
+                YADownloader::DLTransmissionDatabaseKeysName::qmlSingleton);
 
 
     BDiskEvent *be = BDiskEvent::instance();
     /// QObject singleton type instances are constructed and owned by the QQmlEngine,
     /// and will be destroyed when the engine is destroyed.
-//    qmlRegisterSingletonType<BDiskEvent>("com.sunrain.bnetdisk.qmlplugin",
+//    qmlRegisterSingletonType<BDiskEvent>(PLUGIN_URI,
 //                                         1, 0, "BDiskEvent", BDiskEvent::qmlSingleton);
-    qmlRegisterUncreatableType<BDiskEvent>("com.sunrain.bnetdisk.qmlplugin",
-                                           1, 0, "BDiskEvent", "UncreatableType BDiskEvent");
+    qmlRegisterUncreatableType<BDiskEvent>(PLUGIN_URI, 1, 0, "BDiskEvent", "UncreatableType BDiskEvent");
 
     QQmlApplicationEngine engine;
     engine.addImportPath("qrc:///");

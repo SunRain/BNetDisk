@@ -103,6 +103,10 @@ ActionCreator {
         stack.push(Qt.resolvedUrl("../../Pages/DownloadViewPage.qml"))
     }
 
+    function showSearchPage(stack) {
+        stack.push(Qt.resolvedUrl("../../Pages/SearchPage.qml"))
+    }
+
     function stopTask(hash) {
         AppDispatcher.dispatch(ActionTypes.stopTask, {"hash":hash});
     }
@@ -219,5 +223,9 @@ ActionCreator {
 
     function recycleRestore(fsId) {
         AppDispatcher.dispatch(ActionTypes.recycleRestore, {"fsId":fsId});
+    }
+
+    function search(key) {
+        AppDispatcher.dispatch(ActionTypes.search, {"key":key});
     }
 }
