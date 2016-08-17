@@ -20,12 +20,16 @@ AppListener {
             AppActions.showProgress();
         }
         onFinishRequest: { //ret
-            console.log("====== searchDelegate onFinished")
+            console.log("====== searchDelegate onFinished ")
             AppActions.hideProgress();
         }
         onRequestFailure: {
             AppActions.infomToNeedRelogin("Search error");
         }
+    }
+
+    function clear() {
+        searchDelegate.clear();
     }
 
     Filter {

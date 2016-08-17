@@ -48,6 +48,12 @@ QVariantList BDiskSearchDelegate::resultList() const
     return m_dataList;
 }
 
+void BDiskSearchDelegate::clear()
+{
+    m_dataList.clear();
+    sync();
+}
+
 void BDiskSearchDelegate::handleResult(BDiskBaseRequest::RequestRet ret, const QString &replyData)
 {
     m_dataList.clear();
@@ -103,7 +109,7 @@ void BDiskSearchDelegate::setResultList(const QVariantList &resultList)
 
 void BDiskSearchDelegate::sync()
 {
-    setResultList(m_dataList);
+    emit resultListChanged(m_dataList);
 }
 
 QJsonObject BDiskSearchDelegate::parseToJsonObject(const QString &source) const

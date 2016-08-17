@@ -19,6 +19,8 @@ public:
 
     QVariantList resultList() const;
 
+    Q_INVOKABLE void clear();
+
 signals:
     void startRequest();
     void finishRequest();
