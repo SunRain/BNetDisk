@@ -14,6 +14,8 @@ Item {
     width: parent ? parent.width : Const.screenWidth
     height: parent ? parent.height : Const.screenHeight
 
+    property bool showRefreshAction: false
+
     IconButton {
         id: refreshBtn
         anchors {
@@ -27,14 +29,17 @@ Item {
                 AppActions.refreshCurrentDir();
             }
         }
+        visible: showRefreshAction
+        enabled: visible
     }
+
     ListView {
         id: pathView
         anchors {
-            left: refreshBtn.right
-            leftMargin: Const.middleSpace
+            left: showRefreshAction ? refreshBtn.right :  parent.left
+            leftMargin: showRefreshAction ? Const.middleSpace : 0
             right: parent.right
-            rightMargin: Const.middleSpace
+            rightMargin: showRefreshAction ? Const.middleSpace : 0
         }
         height: parent.height > Const.itemHeight ? Const.itemHeight : parent.height
         clip: true
@@ -77,7 +82,7 @@ Item {
                     color:  Theme.isDarkColor(actionBar.backgroundColor)
                             ? Theme.dark.textColor
                             : Theme.light.accentColor
-                    text: index == 0 ? qsTr("BNetDisk") : DirListStore.currentPathList[index]
+                    text: index == 0 ? (showRefreshAction ? qsTr("BNetDisk") : qsTr("RootDir")) : DirListStore.currentPathList[index]
                     verticalAlignment: Text.AlignVCenter
                 }
                 Icon {

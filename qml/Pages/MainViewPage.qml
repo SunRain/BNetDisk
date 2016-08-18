@@ -125,7 +125,29 @@ Page {
 //        }
 //    }
 
-    actionBar.customContent: AddrBar {}
+//    actionBar.customContent: AddrBar {}
+    actionBar.title: qsTr("BNetDisk")
+
+//    actionBar.extendedContent: Item {
+//        width: parent.width
+//        height: dp(48)
+//    }
+    actionBar.extendedContent: AddrBar {
+        width: parent.width
+        height: Const.itemHeight
+    }
+
+//    actionBar.children: AddrBar {
+////        width: parent.width
+//        height: dp(48)
+//        anchors {
+//            left: parent.left
+//            leftMargin: 16 * Units.dp
+//            right: parent.right
+//            rightMargin: 16 * Units.dp
+//            bottom: parent.bottom
+//        }
+//    }
 
     FileSavePathDialog {}
 
