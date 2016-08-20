@@ -14,4 +14,6 @@ AppListener {
     property string password: ""
     property bool showErrorLabel: false
     property var shareRecordList
+
+    property bool refreshing: false
 }

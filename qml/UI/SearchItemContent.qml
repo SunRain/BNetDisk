@@ -8,6 +8,7 @@ import ".."
 import "../QuickFlux/Stores"
 import "../QuickFlux/Actions"
 import "../QuickFlux/Scripts"
+import "../Component"
 
 import "../Script/Utility.js" as Utility
 
@@ -34,6 +35,14 @@ ListView {
             contentY = 0
     }
     spacing: Const.tinySpace
+
+    PullToRefresh {
+        refreshing: SearchStore.refreshing
+        onRefresh: {
+            SearchStore.refresh();
+        }
+    }
+
     model: SearchStore.searchModel
     delegate: ListItem.Subtitled {
         id: searchItem

@@ -12,16 +12,25 @@ AppListener {
 
     property alias searchModel: searchDelegate.resultList
 
+    property bool refreshing: false
+
+    QtObject {
+        id: inner
+        property string key: ""
+    }
+
     BDiskSearchDelegate {
         id: searchDelegate
 
         onStartRequest: {
             console.log("====== searchDelegate onStarted")
-            AppActions.showProgress();
+//            AppActions.showProgress();
+            refreshing = true;
         }
         onFinishRequest: { //ret
             console.log("====== searchDelegate onFinished ")
-            AppActions.hideProgress();
+//            AppActions.hideProgress();
+            refreshing = false;
         }
         onRequestFailure: {
             AppActions.infomToNeedRelogin("Search error");
@@ -32,12 +41,16 @@ AppListener {
         searchDelegate.clear();
     }
 
+    function refresh() {
+        searchDelegate.search(inner.key);
+    }
+
     Filter {
         type: ActionTypes.search
         onDispatched: {
-            var key = message.key;
-            console.log("------------ search for "+key);
-            searchDelegate.search(key);
+            inner.key = message.key;
+            console.log("------------ search for "+inner.key);
+            searchDelegate.search(inner.key);
         }
     }
 }

@@ -19,15 +19,19 @@ AppListener {
 
     property bool viewShowAllState: true
 
+    property bool refreshing: false
+
     DirListDelegate {
         id: listDelegate
         onStartRequest: {
             console.log("====== DirListDelegate onStarted")
-            AppActions.showProgress();
+//            AppActions.showProgress();
+            refreshing = true;
         }
         onFinishRequest: { //ret
             console.log("====== DirListDelegate onFinished")
-            AppActions.hideProgress();
+//            AppActions.hideProgress();
+            refreshing = false;
         }
         onRequestFailure: {
             AppActions.infomToNeedRelogin("get dirlist error");

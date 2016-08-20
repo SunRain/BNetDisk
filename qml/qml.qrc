@@ -37,5 +37,6 @@
         <file>Pages/SearchPage.qml</file>
         <file>Component/BDTextField.qml</file>
         <file>UI/SearchItemContent.qml</file>
+        <file>Component/PullToRefresh.qml</file>
     </qresource>
 </RCC>

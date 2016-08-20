@@ -40,33 +40,33 @@ ApplicationWindow {
         }
     }
 
-    ProgressCircle {
-        id: progressCircle
-        anchors.centerIn: parent
-        z: 10
-        indeterminate: progressListener.showProgress
-        width: dp(64)
-        height: width
-        dashThickness: dp(8)
-    }
+//    ProgressCircle {
+//        id: progressCircle
+//        anchors.centerIn: parent
+//        z: 10
+//        indeterminate: progressListener.showProgress
+//        width: dp(64)
+//        height: width
+//        dashThickness: dp(8)
+//    }
     Snackbar {
         id: dialogSnackBar
     }
     AppListener {
         id: progressListener
-        property bool showProgress: false
-        Filter {
-            type: ActionTypes.showProgress
-            onDispatched: {
-                progressListener.showProgress = true;
-            }
-        }
-        Filter {
-            type: ActionTypes.hideProgress
-            onDispatched: {
-                progressListener.showProgress = false;
-            }
-        }
+//        property bool showProgress: false
+//        Filter {
+//            type: ActionTypes.showProgress
+//            onDispatched: {
+//                progressListener.showProgress = true;
+//            }
+//        }
+//        Filter {
+//            type: ActionTypes.hideProgress
+//            onDispatched: {
+//                progressListener.showProgress = false;
+//            }
+//        }
         Filter {
             type: ActionTypes.infomToNeedRelogin
             onDispatched: {
