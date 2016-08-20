@@ -17,6 +17,8 @@ AppListener {
 
     property bool showGridView: false
 
+    property bool viewShowAllState: true
+
     DirListDelegate {
         id: listDelegate
         onStartRequest: {
@@ -74,6 +76,8 @@ AppListener {
                 dirListStore.showGridView = false;
             }
 
+            viewShowAllState = false;
+
             if (category == "video") {
                 listDelegate.showVideo(page);
             } else if (category == "image") {
@@ -90,6 +94,7 @@ AppListener {
                 listDelegate.showOther(page);
             } else if (category == "all") {
                 listDelegate.refresh();
+                viewShowAllState = true;
             }
         }
     }

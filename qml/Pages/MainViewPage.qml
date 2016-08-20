@@ -135,7 +135,14 @@ Page {
     actionBar.extendedContent: Loader {
         id: headerLoader
         width: parent.width
-        height: Const.itemHeight
+        height: (sidebar.displayType == sidebar.displayTypeCategoryView && DirListStore.viewShowAllState)
+        || searchMode
+                ? Const.itemHeight
+                : 0
+        NumberAnimation on height {
+            duration: 200
+        }
+
         sourceComponent: searchMode ? searchHeaderComponent : addrBarComponent
     }
 
@@ -144,6 +151,7 @@ Page {
     MainViewSidebar {
         id: sidebar
         anchors.bottom: infoBanner.top
+        clickable: !searchMode
     }
 
     DiskOperationDialog {
@@ -211,6 +219,9 @@ Page {
         AddrBar {
             width: parent.width
             height: parent.height
+            clickable: sidebar.displayType == sidebar.displayTypeCategoryView && DirListStore.viewShowAllState
+            visible: clickable
+            enabled: clickable
             NumberAnimation on x {
                 from: width; to: 0; duration: 200
             }

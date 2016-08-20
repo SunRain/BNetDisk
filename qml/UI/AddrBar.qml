@@ -15,6 +15,7 @@ Item {
     height: parent ? parent.height : Const.screenHeight
 
     property bool showRefreshAction: false
+    property bool clickable: true
 
     IconButton {
         id: refreshBtn
@@ -61,6 +62,7 @@ Item {
             anchors.left: undefined
             anchors.right: undefined
             width: itemRow.width
+            interactive: clickable
             onClicked: {
                 if (index == 0) {
                     AppActions.showDir("/");
