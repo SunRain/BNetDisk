@@ -1,0 +1,33 @@
+<RCC>
+    <qresource prefix="/">
+        <file>action/account_box.svg</file>
+        <file>action/delete.svg</file>
+        <file>action/info.svg</file>
+        <file>action/lock.svg</file>
+        <file>action/search.svg</file>
+        <file>action/settings.svg</file>
+        <file>av/movie.svg</file>
+        <file>av/pause_circle_filled.svg</file>
+        <file>av/play_circle_filled.svg</file>
+        <file>content/undo.svg</file>
+        <file>file/attachment.svg</file>
+        <file>file/cloud_download.svg</file>
+        <file>file/file_download.svg</file>
+        <file>file/folder.svg</file>
+        <file>image/audiotrack.svg</file>
+        <file>image/image.svg</file>
+        <file>image/music_note.svg</file>
+        <file>image/texture.svg</file>
+        <file>navigation/apps.svg</file>
+        <file>navigation/arrow_back.svg</file>
+        <file>navigation/arrow_forward.svg</file>
+        <file>navigation/arrow_upward.svg</file>
+        <file>navigation/cancel.svg</file>
+        <file>navigation/chevron_right.svg</file>
+        <file>navigation/close.svg</file>
+        <file>navigation/more_vert.svg</file>
+        <file>navigation/refresh.svg</file>
+        <file>social/share.svg</file>
+        <file>navigation/menu.svg</file>
+    </qresource>
+</RCC>

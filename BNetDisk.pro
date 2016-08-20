@@ -8,7 +8,7 @@ OPTIONS += roboto
 
 include(thirdparty/qsyncable/qsyncable.pri)
 include(thirdparty/quickflux/quickflux.pri)
-#include(thirdparty/qml-material/material.pri)
+include(thirdparty/qml-material/material.pri)
 include(thirdparty/YADownloader/YADownloader.pri)
 
 SOURCES += \
@@ -31,7 +31,8 @@ SOURCES += \
     src/BDiskSearchDelegate.cpp
 
 RESOURCES += \
-    qml/qml.qrc
+    qml/qml.qrc \
+    image/icons/icons.qrc
 
 # Additional import path used to resolve QML modules in Qt Creator's code model
 QML_IMPORT_PATH =
