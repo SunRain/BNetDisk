@@ -9,6 +9,7 @@ import "../QuickFlux/Stores"
 import "../QuickFlux/Actions"
 import "../QuickFlux/Scripts"
 import "../UI"
+import "../Component"
 
 import "../Script/Utility.js" as Utility
 
@@ -29,12 +30,28 @@ Page {
 
     actionBar.customContent: Item {
         anchors.fill: parent
-        TextField {
+        /*TextField*/BDTextField {
             anchors.verticalCenter: parent.verticalCenter
             text: ""
             onTextChanged: {
                 searchKey = text;
             }
+            action: IconButton {
+                iconName: "file/cloud_download"
+                anchors.verticalCenter: parent.verticalCenter
+                onClicked: {
+                    console.log("===== left click")
+                }
+            }
+
+            secondaryItem: IconButton {
+                iconName: "file/cloud_download"
+                anchors.verticalCenter: parent.verticalCenter
+                onClicked: {
+                    console.log("===== right click")
+                }
+            }
+
             onAccepted: {
                 console.log("====== onAccepted "+searchKey)
             }

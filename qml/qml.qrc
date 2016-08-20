@@ -35,5 +35,7 @@
         <file>UI/ShareRecordView.qml</file>
         <file>QuickFlux/Stores/SearchStore.qml</file>
         <file>Pages/SearchPage.qml</file>
+        <file>Component/BDTextField.qml</file>
+        <file>UI/SearchItemContent.qml</file>
     </qresource>
 </RCC>

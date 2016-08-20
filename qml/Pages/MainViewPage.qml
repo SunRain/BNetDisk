@@ -9,18 +9,22 @@ import "../QuickFlux/Stores"
 import "../QuickFlux/Actions"
 import "../QuickFlux/Scripts"
 import "../UI"
+import "../Component"
 
 import "../Script/Utility.js" as Utility
 
 Page {
     id: mainViewPage
 
+    property bool searchMode: false
+
     actions: [
         Action {
             iconName: "action/search"
             name: qsTr("Search")
             onTriggered: {
-                AppActions.showSearchPage(pageStack);
+//                AppActions.showSearchPage(pageStack);
+                searchMode = true;
             }
         },
         Action {
@@ -125,29 +129,15 @@ Page {
 //        }
 //    }
 
-//    actionBar.customContent: AddrBar {}
+
     actionBar.title: qsTr("BNetDisk")
 
-//    actionBar.extendedContent: Item {
-//        width: parent.width
-//        height: dp(48)
-//    }
-    actionBar.extendedContent: AddrBar {
+    actionBar.extendedContent: Loader {
+        id: headerLoader
         width: parent.width
         height: Const.itemHeight
+        sourceComponent: searchMode ? searchHeaderComponent : addrBarComponent
     }
-
-//    actionBar.children: AddrBar {
-////        width: parent.width
-//        height: dp(48)
-//        anchors {
-//            left: parent.left
-//            leftMargin: 16 * Units.dp
-//            right: parent.right
-//            rightMargin: 16 * Units.dp
-//            bottom: parent.bottom
-//        }
-//    }
 
     FileSavePathDialog {}
 
@@ -204,12 +194,55 @@ Page {
             rightMargin: Const.tinySpace
             bottom: parent.bottom
         }
-        sourceComponent: sidebar.displayType == sidebar.displayTypeCategoryView
-        ? (DirListStore.showGridView ? gridItemComponent : listItemComponent)
-        : (sidebar.displayType == sidebar.displayTypeShareRecord
-           ? shareRecordView
-           : (DirListStore.showGridView ? gridItemComponent : listItemComponent)
-          )
+        sourceComponent: searchMode
+                         ? searchItemComponent
+                         : (
+                            sidebar.displayType == sidebar.displayTypeCategoryView
+                            ? (DirListStore.showGridView ? gridItemComponent : listItemComponent)
+                            : (sidebar.displayType == sidebar.displayTypeShareRecord
+                               ? shareRecordView
+                               : (DirListStore.showGridView ? gridItemComponent : listItemComponent)
+                              )
+                          )
+    }
+
+    Component {
+        id: addrBarComponent
+        AddrBar {
+            width: parent.width
+            height: parent.height
+            NumberAnimation on x {
+                from: width; to: 0; duration: 200
+            }
+        }
+    }
+
+    Component {
+        id: searchHeaderComponent
+        Item {
+            anchors.fill: parent
+            BDTextField {
+                width: parent.width
+                anchors.verticalCenter: parent.verticalCenter
+                textColor: Theme.lightDark(theme.primaryColor, Theme.light.textColor, Theme.dark.textColor)
+                action: IconButton {
+                    action: Action {
+                        iconName: "navigation/close"
+                        name: qsTr("Close search mode")
+                    }
+                    color: Theme.lightDark(theme.primaryColor, Theme.light.iconColor, Theme.dark.iconColor)
+                    onClicked: {
+                        searchMode = false
+                    }
+                }
+                NumberAnimation on x {
+                    from: width; to: 0; duration: 200
+                }
+                onAccepted: {
+                    AppActions.search(text);
+                }
+            }
+        }
     }
 
     Component {
@@ -262,6 +295,32 @@ Page {
             onImageClicked: {
                 AppActions.openImagePreviewOverlayView(index);
                 overlayView.open(mainViewPage);
+            }
+        }
+    }
+
+    Component {
+        id: searchItemComponent
+        SearchItemContent {
+            anchors.fill: parent
+            onShareMenuClicked: {
+                dropDownMenu.shareId = id;
+                dropDownMenu.parent = parentItem;
+                dropDownMenu.showDelete = false;
+                dropDownMenu.showRename = false;
+                dropDownMenu.showDelete = false;
+                dropDownMenu.showShare = true;
+                dropDownMenu.open(parentItem, 0, 0);
+
+            }
+            onMoreVertMenuClicked: {
+                dropDownMenu.path = path;
+                dropDownMenu.parent = parentItem;
+                dropDownMenu.showDownload = false;
+                dropDownMenu.showShare = false;
+                dropDownMenu.showDelete = true;
+                dropDownMenu.showRename = true;
+                dropDownMenu.open(parentItem, 0, 0);
             }
         }
     }
