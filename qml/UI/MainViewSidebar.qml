@@ -27,6 +27,8 @@ Sidebar {
     readonly property string displayTypeTrashView: "TrashView"
     property string displayType: "CategoryView"
 
+    property bool clickable: true
+
     Column {
         width: parent.width
         ListItem.Subheader {
@@ -35,6 +37,7 @@ Sidebar {
         Repeater {
             model: sidebar.nameList.length
             delegate: ListItem.Standard {
+                interactive: clickable
                 text: sidebar.nameList[index]
                 iconName: sidebar.iconList[index]
                 onClicked: {
@@ -74,6 +77,7 @@ Sidebar {
         }
         ListItem.Divider{}
         ListItem.Standard {
+            interactive: clickable
             text: qsTr("My Share")
             onClicked: {
                 console.log("======== Share onClicked")
@@ -83,6 +87,7 @@ Sidebar {
         }
         ListItem.Standard {
             text: qsTr("Trash")
+            interactive: clickable
             onClicked: {
                 displayType = displayTypeTrashView;
                 AppActions.showRecycleList(1);
