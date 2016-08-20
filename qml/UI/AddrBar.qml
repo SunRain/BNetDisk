@@ -42,6 +42,7 @@ Item {
             rightMargin: showRefreshAction ? Const.middleSpace : 0
         }
         height: parent.height > Const.itemHeight ? Const.itemHeight : parent.height
+        boundsBehavior: Flickable.OvershootBounds
         clip: true
         orientation: Qt.Horizontal
         spacing: Const.tinySpace
