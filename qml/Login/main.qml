@@ -51,7 +51,7 @@ ApplicationWindow {
     Image {
         anchors.fill: parent
         fillMode: Image.PreserveAspectCrop
-        source: Qt.resolvedUrl("../../image/image/login_bg.png")
+        source: Qt.resolvedUrl("qrc:/login_bg.png")
     }
 
     Connections {
@@ -140,7 +140,7 @@ ApplicationWindow {
             height: parent.height / 2
             anchors.top: parent.top
             fillMode: Image.PreserveAspectCrop
-            source: Qt.resolvedUrl("../../image/image/login_bg.png")
+            source: Qt.resolvedUrl("qrc:/login_bg.png")
         }
         Loader {
             id: loader
