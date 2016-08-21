@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
         engine.load(QUrl(QStringLiteral("qrc:/main.qml")));
     });
     QObject::connect(login.data(), &BDiskLogin::logouted, [&]() {
-        QQmlComponent cmp(&engine, QStringLiteral("qrc:/Login/main.qml"));
+        QQmlComponent cmp(&engine, QUrl(QStringLiteral("qrc:/Login/main.qml")));
         QObject *obj = cmp.beginCreate(ctx);
         obj->setProperty("st", "ShowLoginView");
         cmp.completeCreate();
