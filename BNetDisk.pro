@@ -31,9 +31,7 @@ SOURCES += \
     src/BDiskSearchDelegate.cpp
 
 RESOURCES += \
-    qml/qml.qrc \
-    image/icons/icons.qrc \
-    image/image/image.qrc
+    qml/qml.qrc
 
 # Additional import path used to resolve QML modules in Qt Creator's code model
 QML_IMPORT_PATH =
