@@ -3,7 +3,10 @@
 
 基于Qt5/qml，使用google material design的第三方百度网盘客户端。
 
-
+![](image/screenshot/1.png) 
+![](image/screenshot/2.png) 
+![](image/screenshot/3.png) 
+![](image/screenshot/4.png) 
 
 目前支持以下功能
 --------
