@@ -52,7 +52,8 @@ Item {
         PullToRefresh {
             refreshing: DirListStore.refreshing
             onRefresh: {
-                AppActions.refreshCurrentDir();
+//                AppActions.refreshCurrentDir();
+                AppActions.refreshCurrentView();
             }
         }
 

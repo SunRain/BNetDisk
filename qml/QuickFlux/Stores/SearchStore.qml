@@ -37,13 +37,13 @@ AppListener {
         }
     }
 
-    function clear() {
-        searchDelegate.clear();
-    }
+//    function clear() {
+//        searchDelegate.clear();
+//    }
 
-    function refresh() {
-        searchDelegate.search(inner.key);
-    }
+//    function refresh() {
+//        searchDelegate.search(inner.key);
+//    }
 
     Filter {
         type: ActionTypes.search
@@ -51,6 +51,20 @@ AppListener {
             inner.key = message.key;
             console.log("------------ search for "+inner.key);
             searchDelegate.search(inner.key);
+        }
+    }
+
+    Filter {
+        type: ActionTypes.refreshCurrentSearch
+        onDispatched: {
+            searchDelegate.search(inner.key);
+        }
+    }
+
+    Filter {
+        type: ActionTypes.clearCurrentSearch
+        onDispatched: {
+            searchDelegate.clear();
         }
     }
 }

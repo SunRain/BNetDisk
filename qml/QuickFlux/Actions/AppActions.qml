@@ -64,7 +64,8 @@ ActionCreator {
 
     signal showRootDir();
     signal cdup();
-    signal refreshCurrentDir();
+//    signal refreshCurrentDir();
+    signal refreshCurrentView();
     signal showDownloadingComponent();
     signal showCompletedComponent();
 
@@ -227,5 +228,13 @@ ActionCreator {
 
     function search(key) {
         AppDispatcher.dispatch(ActionTypes.search, {"key":key});
+    }
+
+    function refreshCurrentSearch() {
+        AppDispatcher.dispatch(ActionTypes.refreshCurrentSearch);
+    }
+
+    function clearCurrentSearch() {
+        AppDispatcher.dispatch(ActionTypes.clearCurrentSearch);
     }
 }

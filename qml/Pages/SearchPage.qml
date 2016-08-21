@@ -59,7 +59,8 @@ Page {
     }
 
     Component.onCompleted: {
-        SearchStore.clear();
+//        SearchStore.clear();
+        AppActions.clearCurrentSearch();
     }
 
     ListView {

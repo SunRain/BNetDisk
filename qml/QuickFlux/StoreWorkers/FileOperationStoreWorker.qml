@@ -18,6 +18,7 @@ StoreWorker {
             }
         }
         onRequestSuccess: {
+            AppActions.snackbarInfo(qsTr("Operation success, but Baidu server may take some time to response. Please refresh manually if view not change."));
             delayRefreshDir.restart();
         }
     }
@@ -28,7 +29,7 @@ StoreWorker {
         interval: 500
         repeat: false
         onTriggered: {
-            AppActions.refreshCurrentDir();
+            AppActions.refreshCurrentView();
         }
     }
 

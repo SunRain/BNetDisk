@@ -21,7 +21,8 @@ ListView {
     signal moreVertMenuClicked(var parentItem, var path, var isDir)
 
     Component.onCompleted: {
-        SearchStore.clear();
+//        SearchStore.clear();
+        AppActions.clearCurrentSearch();
     }
 
     clip: true
@@ -39,7 +40,9 @@ ListView {
     PullToRefresh {
         refreshing: SearchStore.refreshing
         onRefresh: {
-            SearchStore.refresh();
+//            SearchStore.refresh();
+//            AppActions.refreshCurrentSearch();
+            AppActions.refreshCurrentView();
         }
     }
 
