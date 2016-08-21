@@ -151,8 +151,8 @@ Item {
 
     Rectangle {
         id: refreshIndicatorItem
-        width: childrenRect.width + 6 * Units.dp
-        height: childrenRect.height + 6 * Units.dp
+        width: circle.width + 6 * Units.dp
+        height: circle.height + 6 * Units.dp
         anchors.centerIn: parent
 
         property bool running: false
