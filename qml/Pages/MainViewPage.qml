@@ -31,7 +31,8 @@ Page {
             iconName: "action/account_box"
             name: qsTr("Logout")
             onTriggered: {
-                LoginProvider.logout();
+//                LoginProvider.logout();
+                AppActions.askToLogout();
             }
         },
         Action {

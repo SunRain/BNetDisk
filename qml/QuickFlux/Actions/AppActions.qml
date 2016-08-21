@@ -237,4 +237,8 @@ ActionCreator {
     function clearCurrentSearch() {
         AppDispatcher.dispatch(ActionTypes.clearCurrentSearch);
     }
+
+    function askToLogout() {
+        AppDispatcher.dispatch(ActionTypes.askToLogout);
+    }
 }

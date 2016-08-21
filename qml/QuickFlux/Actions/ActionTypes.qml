@@ -54,6 +54,7 @@ KeyTable {
     property string refreshCurrentSearch
     property string clearCurrentSearch
 
+    property string askToLogout
 
 //    property string openFileDialog
 

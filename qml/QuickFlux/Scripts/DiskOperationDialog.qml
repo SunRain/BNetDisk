@@ -84,5 +84,17 @@ Item {
         }
     }
 
+    AppScript {
+        runWhen: ActionTypes.askToLogout
+        script: {
+            info.text = qsTr("Logout now?");
+            info.open();
+            once(info.onAccepted, function() {
+                LoginProvider.logout();
+            });
+            once(info.onRejected, exit.bind(this, 0));
+        }
+    }
+
 
 }
