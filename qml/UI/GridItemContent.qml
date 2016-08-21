@@ -8,6 +8,7 @@ import ".."
 import "../QuickFlux/Stores"
 import "../QuickFlux/Actions"
 import "../QuickFlux/Scripts"
+import "../Component"
 
 import "../Script/Utility.js" as Utility
 
@@ -47,6 +48,14 @@ Item {
 //            Behavior on y { SpringAnimation { spring: 3; damping: 0.2 } }
 
 //        }
+
+        PullToRefresh {
+            refreshing: DirListStore.refreshing
+            onRefresh: {
+//                AppActions.refreshCurrentDir();
+                AppActions.refreshCurrentView();
+            }
+        }
 
         model: DirListStore.dirlistModel
         delegate: Item {

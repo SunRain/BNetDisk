@@ -8,6 +8,7 @@ import ".."
 import "../QuickFlux/Stores"
 import "../QuickFlux/Actions"
 import "../QuickFlux/Scripts"
+import "../Component"
 
 import "../Script/Utility.js" as Utility
 
@@ -20,7 +21,8 @@ ListView {
     signal moreVertMenuClicked(var parentItem, var path, var isDir)
 
     Component.onCompleted: {
-        SearchStore.clear();
+//        SearchStore.clear();
+        AppActions.clearCurrentSearch();
     }
 
     clip: true
@@ -34,6 +36,16 @@ ListView {
             contentY = 0
     }
     spacing: Const.tinySpace
+
+    PullToRefresh {
+        refreshing: SearchStore.refreshing
+        onRefresh: {
+//            SearchStore.refresh();
+//            AppActions.refreshCurrentSearch();
+            AppActions.refreshCurrentView();
+        }
+    }
+
     model: SearchStore.searchModel
     delegate: ListItem.Subtitled {
         id: searchItem

@@ -28,6 +28,12 @@ StoreWorker {
             console.log("========== onCancelShareSuccess");
             AppActions.showShareRecord(1);
         }
+        onStartRequest: {
+            ShareStore.refreshing = true;
+        }
+        onFinishRequest: {
+            ShareStore.refreshing = false;
+        }
     }
 
     function clear() {

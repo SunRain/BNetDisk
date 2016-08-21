@@ -30,7 +30,15 @@ ListView {
         if(contentY != 0 && contentHeight <= height)
             contentY = 0
     }
-    spacing: dp(8)
+    spacing: Const.tinySpace
+
+    PullToRefresh {
+        refreshing: ShareStore.refreshing
+        onRefresh: {
+            AppActions.showShareRecord("1");
+        }
+    }
+
     model: ShareStore.shareRecordList
     delegate: ListItem.Subtitled {
         id: item

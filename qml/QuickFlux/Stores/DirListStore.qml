@@ -17,50 +17,98 @@ AppListener {
 
     property bool showGridView: false
 
-    property bool viewShowAllState: true
+    /// indicate current show category or all
+    property bool viewShowAllState: inner.viewType == inner.viewCategoryAll
+
+    property bool refreshing: false
+
+    QtObject {
+        id: inner
+        readonly property int viewCategoryAll: 0
+        readonly property int viewCategoryVideo: 1
+        readonly property int viewCategoryImage: 2
+        readonly property int viewCategoryDoc: 3
+        readonly property int viewCategoryExe: 4
+        readonly property int viewCategoryBT: 5
+        readonly property int viewCategoryMusic: 6
+        readonly property int viewCategoryOther: 7
+        readonly property int viewRecycleList: 8
+
+        property int viewType: viewCategoryAll
+
+        property int page: 1
+    }
 
     DirListDelegate {
         id: listDelegate
         onStartRequest: {
             console.log("====== DirListDelegate onStarted")
-            AppActions.showProgress();
+//            AppActions.showProgress();
+            refreshing = true;
         }
         onFinishRequest: { //ret
             console.log("====== DirListDelegate onFinished")
-            AppActions.hideProgress();
+//            AppActions.hideProgress();
+            refreshing = false;
         }
         onRequestFailure: {
             AppActions.infomToNeedRelogin("get dirlist error");
         }
         onRecycleRestoreSuccess: {
-            AppActions.showRecycleList(1);
+            AppActions.showRecycleList(inner.page);
         }
     }
 
     Filter {
         type: ActionTypes.showRootDir
         onDispatched: {
-            console.log("==== ActionTypes.showRootDir")
+            inner.viewType = inner.viewCategoryAll;
             listDelegate.showRoot();
         }
     }
     Filter {
         type: ActionTypes.cdup
         onDispatched: {
-            console.log("=== onDispatched cdup")
+            inner.viewType = inner.viewCategoryAll;
             listDelegate.cdup();
         }
     }
+//    Filter {
+//        type: ActionTypes.refreshCurrentDir
+//        onDispatched: {
+//            listDelegate.refresh();
+//        }
+//    }
     Filter {
-        type: ActionTypes.refreshCurrentDir
+        type: ActionTypes.refreshCurrentView
         onDispatched: {
-            listDelegate.refresh();
+            if (inner.viewType == inner.viewCategoryAll) {
+                listDelegate.refresh();
+            } else if (inner.viewType == inner.viewCategoryBT) {
+                listDelegate.showBT(inner.page);
+            } else if (inner.viewType == inner.viewCategoryDoc) {
+                listDelegate.showDoc(inner.page);
+            } else if (inner.viewType == inner.viewCategoryExe) {
+                listDelegate.showExe(inner.page);
+            } else if (inner.viewType == inner.viewCategoryImage) {
+                listDelegate.showImage(inner.page);
+            } else if (inner.viewType == inner.viewCategoryMusic) {
+                listDelegate.showMusic(inner.page);
+            } else if (inner.viewType == inner.viewCategoryOther) {
+                listDelegate.showOther(inner.page);
+            } else if (inner.viewType == inner.viewCategoryVideo) {
+                listDelegate.showVideo(inner.page);
+            } else if (inner.viewType == inner.viewRecycleList) {
+                listDelegate.showRecycleList(inner.page);
+            }
         }
     }
+
     Filter {
         type: ActionTypes.showDir
         onDispatched: {
-            var dir = message.dir
+            inner.viewType = inner.viewCategoryAll;
+            var dir = message.dir;
             listDelegate.showDir(dir);
         }
     }
@@ -68,7 +116,9 @@ AppListener {
         type: ActionTypes.showCategory
         onDispatched: {
             var category = message.category;
-            var page = message.page;
+            if (category != "all") {
+                inner.page = message.page;
+            }
 
             if (category == "image" || category == "video") {
                 dirListStore.showGridView = true;
@@ -76,25 +126,30 @@ AppListener {
                 dirListStore.showGridView = false;
             }
 
-            viewShowAllState = false;
-
             if (category == "video") {
-                listDelegate.showVideo(page);
+                inner.viewType = inner.viewCategoryVideo;
+                listDelegate.showVideo(inner.page);
             } else if (category == "image") {
-                listDelegate.showImage(page);
+                inner.viewType = inner.viewCategoryImage;
+                listDelegate.showImage(inner.page);
             } else if (category == "doc") {
-                listDelegate.showDoc(page);
+                inner.viewType = inner.viewCategoryDoc;
+                listDelegate.showDoc(inner.page);
             } else if (category == "exe") {
-                listDelegate.showExe(page);
+                inner.viewType = inner.viewCategoryExe;
+                listDelegate.showExe(inner.page);
             } else if (category == "bt") {
-                listDelegate.showBT(page);
+                inner.viewType = inner.viewCategoryBT
+                listDelegate.showBT(inner.page);
             } else if (category == "music") {
-                listDelegate.showMusic(page);
+                inner.viewType = inner.viewCategoryMusic;
+                listDelegate.showMusic(inner.page);
             } else if (category == "other") {
-                listDelegate.showOther(page);
+                inner.viewType = inner.viewCategoryOther;
+                listDelegate.showOther(inner.page);
             } else if (category == "all") {
+                inner.viewType = inner.viewCategoryAll;
                 listDelegate.refresh();
-                viewShowAllState = true;
             }
         }
     }
@@ -102,11 +157,13 @@ AppListener {
     Filter {
         type: ActionTypes.showRecycleList
         onDispatched: {
-            var page = message.page;
+            inner.viewType = inner.viewRecycleList;
+
+            inner.page = message.page;
 
             dirListStore.showGridView = false;
 
-            listDelegate.showRecycleList(page);
+            listDelegate.showRecycleList(inner.page);
         }
     }
 

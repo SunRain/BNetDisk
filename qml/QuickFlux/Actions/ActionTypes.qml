@@ -12,7 +12,8 @@ KeyTable {
     property string hideProgress
     property string showDir
     property string cdup
-    property string refreshCurrentDir
+//    property string refreshCurrentDir
+    property string refreshCurrentView
     property string infomToNeedRelogin
 
     property string snackbarInfo
@@ -49,6 +50,11 @@ KeyTable {
     property string recycleRestore
 
     property string search
+
+    property string refreshCurrentSearch
+    property string clearCurrentSearch
+
+    property string askToLogout
 
 //    property string openFileDialog
 

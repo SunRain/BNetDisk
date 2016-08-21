@@ -27,7 +27,8 @@ Item {
         action: Action {
             iconName: "navigation/refresh"
             onTriggered: {
-                AppActions.refreshCurrentDir();
+//                AppActions.refreshCurrentDir();
+                AppActions.refreshCurrentView();
             }
         }
         visible: showRefreshAction

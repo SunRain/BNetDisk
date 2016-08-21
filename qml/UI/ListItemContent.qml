@@ -9,6 +9,8 @@ import "../QuickFlux/Stores"
 import "../QuickFlux/Actions"
 import "../QuickFlux/Scripts"
 
+import "../Component"
+
 import "../Script/Utility.js" as Utility
 
 ListView {
@@ -29,6 +31,15 @@ ListView {
         if(contentY != 0 && contentHeight <= height)
             contentY = 0
     }
+
+    PullToRefresh {
+        refreshing: DirListStore.refreshing
+        onRefresh: {
+//            AppActions.refreshCurrentDir();
+            AppActions.refreshCurrentView();
+        }
+    }
+
     spacing: dp(8)
     model: DirListStore.dirlistModel
     delegate: ListItem.Subtitled {
