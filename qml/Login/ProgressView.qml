@@ -7,8 +7,8 @@ Item {
     ProgressCircle {
         id: cyclicColorProgress
         anchors.centerIn: parent
-        width: height
-        height: parent.height * 0.4
+//        width: height
+//        height: parent.height * 0.4
         dashThickness: dp(8)
         SequentialAnimation {
             running: true
