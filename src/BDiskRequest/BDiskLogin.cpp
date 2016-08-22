@@ -22,83 +22,7 @@
 #include "BDiskConst.h"
 #include "BDiskTokenProvider.h"
 #include "BDiskCookieJar.h"
-
-
-#define INNER_EVENT (QEvent::Type(QEvent::User))
-//#define INNER_CAPTCHA_URL (QEvent::Type(QEvent::User + 1))
-
-class InnerEvent : public QEvent
-{
-public:
-    enum EventState {
-        EVENT_LOGIN_ABORT = 0x0,
-        EVENT_LOGIN_SUCCESS,
-        EVENT_LOGIN_FAILURE,
-        EVENT_CAPTCHA_URL,
-        EVENT_CAPTCHA_TEXT,
-        EVENT_CAPTCHA_URL_NEED_REFRESH
-    };
-
-public:
-    InnerEvent(InnerEvent::EventState ret, const QString &value)
-        : QEvent(INNER_EVENT)
-        , m_url(QUrl())
-    {
-        m_ret = ret;
-        m_data = value;
-    }
-    InnerEvent(InnerEvent::EventState ret, const QUrl &value)
-        : QEvent(INNER_EVENT)
-        , m_data(QString())
-    {
-        m_ret = ret;
-        m_url = value;
-    }
-    virtual ~InnerEvent() {}
-
-    EventState state() const {
-        return m_ret;
-    }
-    QString data() const {
-        return m_data;
-    }
-    QUrl url() const {
-        return m_url;
-    }
-private:
-    EventState m_ret;
-    QString m_data;
-    QUrl m_url;
-};
-
-
-class InnerStateHandler : public QObject
-{
-    Q_OBJECT
-public:
-    InnerStateHandler(QObject *parent = 0)
-        : QObject(parent)
-        , m_mutex(QMutex::Recursive)
-    {
-
-    }
-    virtual ~InnerStateHandler() {}
-
-    void dispatch(InnerEvent::EventState ret, const QString &data = QString()) {
-        m_mutex.lock();
-        qApp->postEvent(parent(), new InnerEvent(ret, data));
-        m_mutex.unlock();
-    }
-    void dispatch(InnerEvent::EventState ret, const QUrl &data) {
-        m_mutex.lock();
-        qApp->postEvent(parent(), new InnerEvent(ret, data));
-        m_mutex.unlock();
-    }
-
-private:
-    QMutex m_mutex;
-};
-
+#include "BDiskLogin_p.h"
 
 BDiskLogin::BDiskLogin(QObject *parent)
     : QThread(parent)
@@ -139,18 +63,11 @@ void BDiskLogin::loginByCookie()
     QUrl url = QUrl(BDISK_URL_DISK_HOME);
     QNetworkRequest request(url);
     fillRequest(&request);
-    m_reply = m_networkMgr->get(request);
 
+    m_reply = m_networkMgr->head(request);
     if (m_reply) {
         connect(m_reply, &QNetworkReply::finished,
                 [&](){
-//            if (m_requestAborted) {
-//                m_requestAborted = false;
-//                m_handler->dispatch(InnerEvent::EVENT_LOGIN_ABORT);
-//                m_breakThread = true;
-//                freeReply();
-//                return;
-//            }
             QNetworkReply::NetworkError e = m_reply->error ();
             bool success = (e == QNetworkReply::NoError);
             if (!success) {
@@ -159,46 +76,74 @@ void BDiskLogin::loginByCookie()
                 emit loginByCookieFailure(str);
                 return;
             }
-            QByteArray qba = m_reply->readAll();
-            qDebug()<<Q_FUNC_INFO<<" reply data "<<qba;
-            if (qba.trimmed().isEmpty()) {
-                freeReply();
-                emit loginByCookieSuccess();
-//                emit loginFailure(" reply data "+qba);
+            QVariant code = m_reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
+            freeReply();
+            if (code.isNull() || !code.isValid()) {
+                emit loginByCookieFailure(QString("Invalid http code."));
+                return;
+            }
+            bool ok = false;
+            int ret = code.toInt(&ok);
+            if (!ok) {
+                emit loginByCookieFailure(QString("Invalid http code to int."));
+                return;
+            }
+            //TODO 302, url redirect
+            if (ret != 200) {
+                emit loginByCookieFailure(QString("Http code [%1] error.").arg(QString::number(ret)));
                 return;
             }
 
-            //TODO get bdstoken from response by key yunData.MYBDSTOKEN or FileUtils.bdstoken
-//            if (m_tokenProvider->bdstoken().isEmpty()) {
-                QString value = truncateYunData(QString(qba));
-                if (value.isEmpty()) {
-                    qDebug()<<Q_FUNC_INFO<<"Can't get yunData values";
+            m_reply = m_networkMgr->get(request);
+
+            if (m_reply) {
+                connect(m_reply, &QNetworkReply::finished,
+                        [&](){
+                    QNetworkReply::NetworkError e = m_reply->error ();
+                    bool success = (e == QNetworkReply::NoError);
+                    if (!success) {
+                        QString str = m_reply->errorString();
+                        freeReply();
+                        emit loginByCookieFailure(str);
+                        return;
+                    }
+                    QByteArray qba = m_reply->readAll();
+                    qDebug()<<Q_FUNC_INFO<<" reply data "<<qba;
                     freeReply();
-                    emit loginByCookieFailure("Can't get yunData values");
-                    return;
-                }
-                QJsonParseError error;
-                QJsonDocument doc = QJsonDocument::fromJson (value.toLocal8Bit(), &error);
-                if (error.error != QJsonParseError::NoError) {
-                    qDebug()<<Q_FUNC_INFO<<"Parse json error => "<<error.errorString ();
-                    freeReply();
-                    emit loginByCookieFailure(QString("Parse json error [%1]").arg(error.errorString()));
-                    return;
-                }
-                QJsonObject obj = doc.object();
-                QString bdstoken = obj.value("bdstoken").toString();
-                if (bdstoken.isEmpty()) {
-                    emit loginByCookieFailure("Can't get bdstoken");
-                    return;
-                }
-                m_tokenProvider->setBdstoken(bdstoken);
-                QString uname = obj.value("username").toString();
-                //FIXME emit failure if uname is empty;
-                m_tokenProvider->setUidStr(uname);
-//            }
-            freeReply();
-            m_tokenProvider->flush();
-            emit loginByCookieSuccess();
+                    if (qba.trimmed().isEmpty()) {
+                        emit loginByCookieSuccess();
+                        return;
+                    }
+                    //TODO get bdstoken from response by key yunData.MYBDSTOKEN or FileUtils.bdstoken
+//                    if (m_tokenProvider->bdstoken().isEmpty()) {
+                    QString value = truncateYunData(QString(qba));
+                    if (value.isEmpty()) {
+                        qDebug()<<Q_FUNC_INFO<<"Can't get yunData values";
+                        emit loginByCookieFailure("Can't get yunData values");
+                        return;
+                    }
+                    QJsonParseError error;
+                    QJsonDocument doc = QJsonDocument::fromJson (value.toLocal8Bit(), &error);
+                    if (error.error != QJsonParseError::NoError) {
+                        qDebug()<<Q_FUNC_INFO<<"Parse json error => "<<error.errorString ();
+                        emit loginByCookieFailure(QString("Parse json error [%1]").arg(error.errorString()));
+                        return;
+                    }
+                    QJsonObject obj = doc.object();
+                    QString bdstoken = obj.value("bdstoken").toString();
+                    if (bdstoken.isEmpty()) {
+                        emit loginByCookieFailure("Can't get bdstoken");
+                        return;
+                    }
+                    m_tokenProvider->setBdstoken(bdstoken);
+                    QString uname = obj.value("username").toString();
+                    //FIXME emit failure if uname is empty;
+                    m_tokenProvider->setUidStr(uname);
+//                    }
+                    m_tokenProvider->flush();
+                    emit loginByCookieSuccess();
+                });
+            }
         });
     }
 }
@@ -975,5 +920,3 @@ void BDiskLogin::fillRequest(QNetworkRequest *req)
     req->setRawHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
 }
 
-
-#include "BDiskLogin.moc"
