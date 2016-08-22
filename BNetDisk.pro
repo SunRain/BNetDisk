@@ -6,7 +6,7 @@ CONFIG += c++11
 DEFINES += QPM_INIT
 OPTIONS += roboto
 
-include(thirdparty/qsyncable/qsyncable.pri)
+#include(thirdparty/qsyncable/qsyncable.pri)
 include(thirdparty/quickflux/quickflux.pri)
 include(thirdparty/qml-material/material.pri)
 include(thirdparty/YADownloader/YADownloader.pri)
