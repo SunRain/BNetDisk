@@ -6,7 +6,7 @@
 
 #include "BDiskRequest/BDiskActions.h"
 
-#include "qslistmodel.h"
+//#include "qslistmodel.h"
 
 class QJsonObject;
 class BDiskDirListDelegate : public QObject

@@ -3,8 +3,10 @@
 #include <QDebug>
 #include <QJsonParseError>
 #include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
 
-#include "qsdiffrunner.h"
+//#include "qsdiffrunner.h"
 
 #include "BDiskRequest/BDiskBaseRequest.h"
 #include "BDiskRequest/BDiskFileObjectKeys.h"
