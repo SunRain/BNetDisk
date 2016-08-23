@@ -17,13 +17,14 @@
 #include "BDiskLogin_p.h"
 #include "BDiskTokenProvider.h"
 
-BDiskLoginCookie::BDiskLoginCookie(QObject *parent)
-    : QObject(parent)
+BDiskLoginCookie::BDiskLoginCookie(InnerStateHandler *handler, QObject *parent)
+    : QThread(parent)
+    , m_handler(handler)
 {
 
 }
 
-void BDiskLoginCookie::login(InnerStateHandler *handler)
+void BDiskLoginCookie::run()
 {
     QNetworkAccessManager networkMgr;
     QNetworkReply *reply;
@@ -77,7 +78,7 @@ void BDiskLoginCookie::login(InnerStateHandler *handler)
                 STOP_LOOP_BLOCK;
             });
         } else {
-            handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, QString("No http header"));
+            m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, QString("No http header"));
             finish = true;
             break;
         }
@@ -87,12 +88,16 @@ void BDiskLoginCookie::login(InnerStateHandler *handler)
             continue;
 
         while(!reply->isFinished()) {
+            if (currentThread()->isInterruptionRequested()) {
+                requestAborted = true;
+                break;
+            }
             qApp->processEvents();
         }
 
         if (requestAborted) {
             FREE_REPLY;
-            handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_ABORT, QString("Http time out"));
+            m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_ABORT, QString("Http time out"));
             finish = true;
             break;
         }
@@ -102,7 +107,7 @@ void BDiskLoginCookie::login(InnerStateHandler *handler)
         if (!success) {
             QString str = reply->errorString();
             FREE_REPLY;
-            handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, str);
+            m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, str);
             finish = true;
             break;
         }
@@ -110,24 +115,24 @@ void BDiskLoginCookie::login(InnerStateHandler *handler)
         const QUrl newUrl = reply->header(QNetworkRequest::LocationHeader).toUrl();
         FREE_REPLY;
         if (code.isNull() || !code.isValid()) {
-            handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, QString("Invalid http code."));
+            m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, QString("Invalid http code."));
             finish = true;
             break;
         }
         bool ok = false;
         const int ret = code.toInt(&ok);
         if (!ok) {
-            handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, QString("Invalid http code to int."));
+            m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, QString("Invalid http code to int."));
             finish = true;
             break;
         } else if (ret == 200) {
-//            handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_SUCCESS, QString());
+//            m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_SUCCESS, QString());
             break;
         } else if (ret == 302) { //redirect url
             url = newUrl;
             continue;
         } else {
-            handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE,
+            m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE,
                               QString("Http code [%1] error.").arg(QString::number(ret)));
             finish = true;
             break;
@@ -149,18 +154,22 @@ void BDiskLoginCookie::login(InnerStateHandler *handler)
             STOP_LOOP_BLOCK;
         });
     } else {
-        handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, QString("No http reply"));
+        m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, QString("No http reply"));
         return;
     }
     DO_LOOP_BLOCK;
 
     while(!reply->isFinished()) {
+        if (currentThread()->isInterruptionRequested()) {
+            requestAborted = true;
+            break;
+        }
         qApp->processEvents();
     }
 
     if (requestAborted) {
         FREE_REPLY;
-        handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_ABORT, QString("Http time out"));
+        m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_ABORT, QString("Http time out"));
         return;
     }
 
@@ -169,7 +178,7 @@ void BDiskLoginCookie::login(InnerStateHandler *handler)
     if (!success) {
         QString str = reply->errorString();
         FREE_REPLY;
-        handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, str);
+        m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, str);
         return;
     }
     QByteArray qba = reply->readAll();
@@ -186,14 +195,14 @@ void BDiskLoginCookie::login(InnerStateHandler *handler)
     QString value = truncateYunData(QString(qba));
     if (value.isEmpty()) {
         qDebug()<<Q_FUNC_INFO<<"Can't get yunData values";
-        handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, QString("Can't get yunData values"));
+        m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, QString("Can't get yunData values"));
         return;
     }
     QJsonParseError error;
     QJsonDocument doc = QJsonDocument::fromJson (value.toLocal8Bit(), &error);
     if (error.error != QJsonParseError::NoError) {
         qDebug()<<Q_FUNC_INFO<<"Parse json error => "<<error.errorString ();
-        handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE,
+        m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE,
                           QString("Parse json error [%1]").arg(error.errorString()));
         return;
     }
@@ -201,7 +210,7 @@ void BDiskLoginCookie::login(InnerStateHandler *handler)
     QString bdstoken = obj.value("bdstoken").toString();
     if (bdstoken.isEmpty()) {
 //        emit loginByCookieFailure("Can't get bdstoken");
-        handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, QString("Can't get bdstoken"));
+        m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, QString("Can't get bdstoken"));
         return;
     }
     BDiskTokenProvider *tokenProvider = BDiskTokenProvider::instance();
@@ -211,7 +220,7 @@ void BDiskLoginCookie::login(InnerStateHandler *handler)
     tokenProvider->setUidStr(uname);
 //                    }
     tokenProvider->flush();
-    handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_SUCCESS, QString());
+    m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_SUCCESS, QString());
 }
 
 QString BDiskLoginCookie::truncateYunData(const QString &data)
