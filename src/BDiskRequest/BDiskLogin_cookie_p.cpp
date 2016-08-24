@@ -16,6 +16,7 @@
 #include "BDiskConst.h"
 #include "BDiskLogin_p.h"
 #include "BDiskTokenProvider.h"
+#include "BDiskCookieJar.h"
 
 BDiskLoginCookie::BDiskLoginCookie(InnerStateHandler *handler, QObject *parent)
     : QThread(parent)
@@ -27,7 +28,9 @@ BDiskLoginCookie::BDiskLoginCookie(InnerStateHandler *handler, QObject *parent)
 void BDiskLoginCookie::run()
 {
     QNetworkAccessManager networkMgr;
-    QNetworkReply *reply;
+    BDiskCookieJar *jar = new BDiskCookieJar(this);
+    networkMgr.setCookieJar(jar);
+    QNetworkReply *reply = Q_NULLPTR;
 //    QNetworkRequest request;
     bool requestAborted = false;
     bool finish = false;
@@ -68,6 +71,14 @@ void BDiskLoginCookie::run()
         FREE_REPLY;
         requestAborted = false;
 
+        qDebug()<<Q_FUNC_INFO<<"     start url "<<url;
+
+        if (!url.isValid()) {
+            qDebug()<<Q_FUNC_INFO<<"Invalid url "<<url;
+            m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, QString("No http header"));
+            finish = true;
+            break;
+        }
         QNetworkRequest req(url);
         req.setRawHeader("User-Agent", "Mozilla/5.0 (Windows;U;Windows NT 5.1;zh-CN;rv:1.9.2.9) Gecko/20100101 Firefox/43.0");
         req.setRawHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
@@ -102,6 +113,8 @@ void BDiskLoginCookie::run()
             break;
         }
 
+        qDebug()<<Q_FUNC_INFO<<" header list "<<reply->rawHeaderPairs();
+
         QNetworkReply::NetworkError e = reply->error ();
         bool success = (e == QNetworkReply::NoError);
         if (!success) {
@@ -112,8 +125,11 @@ void BDiskLoginCookie::run()
             break;
         }
         const QVariant code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
-        const QUrl newUrl = reply->header(QNetworkRequest::LocationHeader).toUrl();
-        FREE_REPLY;
+//        const QUrl newUrl = reply->header(QNetworkRequest::LocationHeader).toUrl();
+
+        qDebug()<<Q_FUNC_INFO<<" loop for reply "<<reply->readAll()<<" header code "<<code;//<<" new url "<<newUrl;
+
+//        FREE_REPLY;
         if (code.isNull() || !code.isValid()) {
             m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, QString("Invalid http code."));
             finish = true;
@@ -129,7 +145,9 @@ void BDiskLoginCookie::run()
 //            m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_SUCCESS, QString());
             break;
         } else if (ret == 302) { //redirect url
-            url = newUrl;
+//            url = newUrl;
+            url = reply->header(QNetworkRequest::LocationHeader).toUrl();
+            qDebug()<<Q_FUNC_INFO<<" redirect : "<<url;
             continue;
         } else {
             m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE,
@@ -139,15 +157,20 @@ void BDiskLoginCookie::run()
         }
     } while (true);
 
+    FREE_REPLY;
+
     if (finish)
         return;
 
     FREE_REPLY;
 
+    qDebug()<<Q_FUNC_INFO<<" url now : "<<url;
+
     QNetworkRequest req(url);
     req.setRawHeader("User-Agent", "Mozilla/5.0 (Windows;U;Windows NT 5.1;zh-CN;rv:1.9.2.9) Gecko/20100101 Firefox/43.0");
     req.setRawHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
 
+    qDebug()<<Q_FUNC_INFO<<" redirect : "<<url;
     reply = networkMgr.get(req);
     if (reply) {
         connect(reply, &QNetworkReply::finished, [&](){
@@ -220,6 +243,10 @@ void BDiskLoginCookie::run()
     tokenProvider->setUidStr(uname);
 //                    }
     tokenProvider->flush();
+    if (jar) {
+        jar->deleteLater();
+        jar = Q_NULLPTR;
+    }
     m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_SUCCESS, QString());
 }
 

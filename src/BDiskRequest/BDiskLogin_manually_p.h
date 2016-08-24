@@ -8,7 +8,6 @@
 class QNetworkRequest;
 class InnerStateHandler;
 class BDiskTokenProvider;
-class BDiskCookieJar;
 class BDiskLoginManually : public QThread
 {
     Q_OBJECT
@@ -36,11 +35,9 @@ private:
     QString getCodeStringFromPostData(const QByteArray &data) const;
     int getErrorFromPostData(const QByteArray &data) const;
 
-
 private:
     InnerStateHandler *m_handler;
     BDiskTokenProvider *m_tokenProvider;
-    BDiskCookieJar *m_cookieJar;
     QWaitCondition m_wait;
 
     QString m_userName;

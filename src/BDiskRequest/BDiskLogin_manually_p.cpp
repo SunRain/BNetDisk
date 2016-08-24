@@ -22,7 +22,9 @@ BDiskLoginManually::BDiskLoginManually(InnerStateHandler *handler, QObject *pare
     : QThread(parent)
     , m_handler(handler)
     , m_tokenProvider(BDiskTokenProvider::instance())
-    , m_cookieJar(BDiskCookieJar::instance())
+    , m_userName(QString())
+    , m_passWord(QString())
+    , m_captchaText(QString())
 {
 
 }
@@ -35,12 +37,13 @@ QWaitCondition *BDiskLoginManually::cond()
 void BDiskLoginManually::run()
 {
     QNetworkAccessManager networkMgr;
-    networkMgr.setCookieJar(m_cookieJar);
-    QNetworkReply *reply;
+    BDiskCookieJar *jar = new BDiskCookieJar(this);
+    networkMgr.setCookieJar(jar);
+
+    QNetworkReply *reply = Q_NULLPTR;
 
     bool requestAborted = false;
     bool finish = false;
-//    bool breakThread = false;
     bool networkSuccess = false;
 
     QNetworkReply::NetworkError networkError;
@@ -83,7 +86,6 @@ void BDiskLoginManually::run()
 #define RESET_FLAGS \
     requestAborted = false; \
     finish = false; \
-    breakThread = false; \
     networkError = QNetworkReply::NetworkError::NoError; \
     networkSuccess = false;
 
@@ -144,7 +146,7 @@ void BDiskLoginManually::run()
         STOP_LOOP_BLOCK;
     });
 
-    while (true) {
+    do {
         /*
          * visit baidu.com to check if network is ok
          */
@@ -183,27 +185,11 @@ void BDiskLoginManually::run()
         CHECK_IF_REPLY_ABORT;
         CHECK_IF_REPLY_SUCCESS;
 
-
-//        QByteArray replyData = reply->readAll();
-//        FREE_REPLY;
-//        QByteArray replyValue = truncateCallback(QString(replyData)).toLocal8Bit();
-////                qDebug()<<Q_FUNC_INFO<<" json value "<<value;
-
-//        QJsonParseError jsonParseError;
-//        QJsonDocument jsonDoc = QJsonDocument::fromJson (replyValue, &jsonParseError);
-//        if (jsonParseError.error != QJsonParseError::NoError) {
-//            qDebug()<<Q_FUNC_INFO<<"Parse json error => "<<jsonParseError.errorString ();
-//            m_handler->dispatch(InnerEvent::EVENT_LOGIN_FAILURE,
-//                                QString("parse json error [%1]").arg(jsonParseError.errorString()));
-//            finish = true;
-//            break;
-//        }
-
-//        QJsonObject jsonObject = jsonDoc.object();
         PARSE_TO_JSONOBJECT;
+
         jsonData = jsonObject.value("data").toObject();
         m_tokenProvider->setToken(jsonData.value("token").toString());
-        qDebug()<<Q_FUNC_INFO<<"logincheck token "<<m_tokenProvider->token();
+//        qDebug()<<Q_FUNC_INFO<<"logincheck token "<<m_tokenProvider->token();
 
         /*
          * setp 2
@@ -212,8 +198,10 @@ void BDiskLoginManually::run()
         RESET_FLAGS;
 
         //"logincheck" "&token=%s" "&tpl=netdisk" "&apiver=v3" "&tt=%d" "&username=%s" "&isphone=false" "&callback=bd__cbs__q4ztud"
-        url = QUrl(QString("%1?logincheck&token=%s&tpl=netdisk&apiver=v3&tt=%2&username=%3&isphone=false&callback=bd__cbs__ps6wfe")
-                   .arg(BDISK_URL_PASSPORT_API).arg(QString::number(QDateTime::currentMSecsSinceEpoch()))
+        url = QUrl(QString("%1?logincheck&token=%2&tpl=netdisk&apiver=v3&tt=%3&username=%4&isphone=false&callback=bd__cbs__ps6wfe")
+                   .arg(BDISK_URL_PASSPORT_API)
+                   .arg(m_tokenProvider->token())
+                   .arg(QString::number(QDateTime::currentMSecsSinceEpoch()))
                    .arg(m_userName));
         qDebug()<<Q_FUNC_INFO<<"url "<<url;
 
@@ -230,25 +218,11 @@ void BDiskLoginManually::run()
         CHECK_IF_REPLY_ABORT;
         CHECK_IF_REPLY_SUCCESS;
 
-//        replyData = reply->readAll();
-//        FREE_REPLY;
-//        replyValue = truncateCallback(QString(replyData)).toLocal8Bit();
-////                qDebug()<<Q_FUNC_INFO<<" json value "<<value;
-
-//        jsonParseError.error = QJsonParseError::NoError;
-//        jsonDoc = QJsonDocument::fromJson (replyValue, &jsonParseError);
-//        if (jsonParseError.error != QJsonParseError::NoError) {
-//            qDebug()<<Q_FUNC_INFO<<"Parse json error => "<<jsonParseError.errorString ();
-//            m_handler->dispatch(InnerEvent::EVENT_LOGIN_FAILURE,
-//                                QString("parse json error [%1]").arg(jsonParseError.errorString()));
-//            finish = true;
-//            break;
-//        }
-//        jsonObject = jsonDoc.object();
         PARSE_TO_JSONOBJECT;
+
         jsonData = jsonObject.value("data").toObject();
 //        QString token = jsonData.value("token").toString();
-        qDebug()<<Q_FUNC_INFO<<"logincheck again token "<<jsonData.value("token").toString();;
+//        qDebug()<<Q_FUNC_INFO<<"logincheck again token "<<jsonData.value("token").toString();
 
         /*
          * step 3
@@ -281,27 +255,12 @@ void BDiskLoginManually::run()
         CHECK_IF_REPLY_ABORT;
         CHECK_IF_REPLY_SUCCESS;
 
-//        replyData = reply->readAll();
-//        FREE_REPLY;
-////                qDebug()<<Q_FUNC_INFO<<" getpublickey ok "<<qba;
-//        replyValue = truncateCallback(QString(replyData)).toLocal8Bit();
-////                qDebug()<<Q_FUNC_INFO<<" json value "<<value;
-
-//        jsonParseError.error = QJsonParseError::NoError;
-//        jsonDoc = QJsonDocument::fromJson (replyValue, &jsonParseError);
-//        if (jsonParseError.error != QJsonParseError::NoError) {
-//            qDebug()<<Q_FUNC_INFO<<"Parse json error => "<<jsonParseError.errorString ();
-//            m_handler->dispatch(InnerEvent::EVENT_LOGIN_FAILURE,
-//                                QString("parse json error [%1]").arg(jsonParseError.errorString()));
-//            finish = true;
-//            break;
-//        }
-//        jsonObject = jsonDoc.object();
         PARSE_TO_JSONOBJECT;
+
         m_tokenProvider->setPubkey(jsonObject.value("pubkey").toString().trimmed());
         m_tokenProvider->setKey(jsonObject.value("key").toString().trimmed());
-        qDebug()<<Q_FUNC_INFO<<" pubkey "<<m_tokenProvider->pubkey();
-        qDebug()<<Q_FUNC_INFO<<" key "<<m_tokenProvider->key();
+//        qDebug()<<Q_FUNC_INFO<<" pubkey "<<m_tokenProvider->pubkey();
+//        qDebug()<<Q_FUNC_INFO<<" key "<<m_tokenProvider->key();
 
         /*
          * step 4
@@ -334,26 +293,11 @@ void BDiskLoginManually::run()
         CHECK_IF_REPLY_ABORT;
         CHECK_IF_REPLY_SUCCESS;
 
-//        replyData = reply->readAll();
-//        FREE_REPLY;
-////                qDebug()<<Q_FUNC_INFO<<" getpublickey ok "<<qba;
-//        replyValue = truncateCallback(QString(replyData)).toLocal8Bit();
-////                qDebug()<<Q_FUNC_INFO<<" json value "<<value;
-
-//        jsonParseError.error = QJsonParseError::NoError;
-//        jsonDoc = QJsonDocument::fromJson (replyValue, &jsonParseError);
-//        if (jsonParseError.error != QJsonParseError::NoError) {
-//            qDebug()<<Q_FUNC_INFO<<"Parse json error => "<<jsonParseError.errorString ();
-//            m_handler->dispatch(InnerEvent::EVENT_LOGIN_FAILURE,
-//                                QString("parse json error [%1]").arg(jsonParseError.errorString()));
-//            finish = true;
-//            break;
-//        }
-//        jsonObject = jsonDoc.object();
         PARSE_TO_JSONOBJECT;
+
         jsonData = jsonObject.value("data").toObject();
         m_tokenProvider->setCodeString(jsonData.value("verifyStr").toString());
-        qDebug()<<Q_FUNC_INFO<<"codeString "<<m_tokenProvider->codeString();
+//        qDebug()<<Q_FUNC_INFO<<"codeString "<<m_tokenProvider->codeString();
 
         FREE_REPLY;
         RESET_FLAGS;
@@ -376,8 +320,60 @@ void BDiskLoginManually::run()
 
         qDebug()<<Q_FUNC_INFO<<"======== continue thread";
 
+        /*
+         * check verifycode
+         */
+        if (!m_captchaText.isEmpty()) {
+            FREE_REPLY;
+            RESET_FLAGS;
+            QString str("https://passport.baidu.com/v2/?checkvcode&");
+            str += QString("token=%1&").arg(m_tokenProvider->token());
+            str += "tpl=netdisk&";
+            str += "subpro=netdisk_web&";
+            str += "apiver=v3&";
+            str += QString("tt=%1&").arg(QString::number(QDateTime::currentMSecsSinceEpoch()));
+            str += QString("verifycode=%1&").arg(m_captchaText);
+            str += QString("codestring=%1&").arg(m_tokenProvider->codeString());
+            str += "callback=bd__cbs__ln4hgj";
+            url = QUrl(str);
+
+            request = QNetworkRequest(url);
+            fillRequest(&request);
+
+            reply = networkMgr.get(request);
+
+            CONNECT_REPLY;
+            DO_LOOP_BLOCK;
+
+            LOOP_TO_WAIT_REPLY_FINISH;
+
+            CHECK_IF_REPLY_ABORT;
+            CHECK_IF_REPLY_SUCCESS;
+
+            PARSE_TO_JSONOBJECT;
+
+            const QJsonObject errInfo = jsonObject.value("errInfo").toObject();
+            const int err = errInfo.value("no").toString().toInt();
+            if (err != 0) {
+                qDebug()<<Q_FUNC_INFO<<">>>> need re-start thread to refresh captcha image";
+
+                /*
+                 * We'll restart whole thread when receive this signal atm,
+                 * as we're using thread and loop event to block QNetworkAccessManager asynchronous call
+                 */
+                m_handler->dispatch(InnerEvent::EVENT_CAPTCHA_URL_NEED_REFRESH,
+                                    QString("Error code [%1], msg [%2]")
+                                    .arg(QString::number(err))
+                                    .arg(errInfo.value("msg").toString()));
+                finish = true;
+                break;
+            }
+        }
+
         FREE_REPLY;
         RESET_FLAGS;
+
+//        qDebug()<<Q_FUNC_INFO<<"codeString "<<m_tokenProvider->codeString();
 
         url = QUrl(QString("%1?login").arg(BDISK_URL_PASSPORT_API));
 
@@ -386,18 +382,22 @@ void BDiskLoginManually::run()
         postStr += "charset=utf-8&";
         postStr += QString("token=%1&").arg(m_tokenProvider->token());
         postStr += "tpl=netdisk&";
-        postStr += "subpro=&";
+//        postStr += "subpro=&";
+        postStr += "subpro=netdisk_web&";
         postStr += "apiver=v3&";
         postStr += QString("tt=%1&").arg(QString::number(QDateTime::currentMSecsSinceEpoch()));
         postStr += QString("codestring=%1&").arg(m_tokenProvider->codeString());
         postStr += "safeflg=0&";
         postStr += "u=http://pan.baidu.com/&";
         postStr += "isPhone=&";
+        postStr += "detect=1&";
+        postStr += "gid=5A889AF-EC9D-4EB1-B7C1-182EB882194B&";
         postStr += "quick_user=0&";
         postStr += "logintype=basicLogin&";
         postStr += "logLoginType=pc_loginBasic&";
         postStr += "idc=&";
         postStr += "loginmerge=true&";
+        postStr += "foreignusername=&";
         postStr += QString("username=%1&").arg(m_userName);
         postStr += QString("password=%1&").arg(m_passWord);
         postStr += QString("verifycode=%1&").arg(m_captchaText);
@@ -405,6 +405,7 @@ void BDiskLoginManually::run()
         //    postStr += "rsakey=&";// rsa_pwd ? pcs->key : "&";
         //    postStr += "crypttype=&";// rsa_pwd ? "12" : "&";
         postStr += "ppui_logintime=1319881&";
+        postStr += "countrycode=&";
         postStr += "callback=parent.bd__pcbs__7vxzg7";
 
         request = QNetworkRequest(url);
@@ -412,7 +413,7 @@ void BDiskLoginManually::run()
         request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
         request.setHeader(QNetworkRequest::ContentLengthHeader, QByteArray::number(postStr.length()));
 
-        qDebug()<<Q_FUNC_INFO<<" post data ["<<postStr<<"] to ["<<url<<"]";
+//        qDebug()<<Q_FUNC_INFO<<" post data ["<<postStr<<"] to ["<<url<<"]";
 
         reply = networkMgr.post(request, postStr.toUtf8());
 
@@ -427,8 +428,9 @@ void BDiskLoginManually::run()
         replyData = reply->readAll();
         FREE_REPLY;
 
-        qDebug()<<Q_FUNC_INFO<<" post login ok "<<replyData;
-        int loginErrorCode = getErrorFromPostData(replyData);
+        const int loginErrorCode = getErrorFromPostData(replyData);
+        qDebug()<<Q_FUNC_INFO<<">>>>>  loginErrCode "<<loginErrorCode;
+
         /*
          * see https://github.com/GangZhuo/BaiduPCS/issues/29
          */
@@ -451,23 +453,12 @@ void BDiskLoginManually::run()
              */
             m_handler->dispatch(InnerEvent::EVENT_CAPTCHA_URL_NEED_REFRESH,
                                 QString("Error code = %1").arg(QString::number(loginErrorCode)));
-            //FIX set m_loginFailureOrAborted to avoid sending EVENT_LOGIN_SUCCESS at thread end
-//            m_loginFailureOrAborted = true;
             finish = true;
-//            m_breakThread = true;
             break;
-        } //else {
-            /*
-             * As we're using event loop to block QNetworkAccessManager asynchronous call
-             * this flag will indicate wether we need to check cookies login
-             */
-        //    m_loginErrCode = ret;
-        //}
+        }
 
         FREE_REPLY;
         RESET_FLAGS;
-
-        qDebug()<<Q_FUNC_INFO<<">>>>>  loginErrCode "<<loginErrorCode;
 
         if (loginErrorCode != -1) {
             if (loginErrorCode == 0 || loginErrorCode == 18 || loginErrorCode == 120016
@@ -478,11 +469,7 @@ void BDiskLoginManually::run()
                 /*
                  *  use loop for cookies login check if url redirected
                  */
-
-                // sine we use block event for QNetworkAccessManager asynchronous call
-                // it is ok to add breakFlag to QNetworkAccessManager lambda call
-//                bool breakFlag = false;
-                while (true) {
+                do {
                     FREE_REPLY;
                     RESET_FLAGS;
 
@@ -497,7 +484,6 @@ void BDiskLoginManually::run()
                     } else {
                         m_handler->dispatch(InnerEvent::EVENT_LOGIN_FAILURE,
                                             QString("Can't get http header")); \
-//                        breakFlag = true;
                         finish = true;
                         break;
                     }
@@ -507,11 +493,12 @@ void BDiskLoginManually::run()
 
                     CHECK_IF_REPLY_ABORT;
                     CHECK_IF_REPLY_SUCCESS;
-//                    int ret = m_reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt(&ok);
+
                     QVariant vrt = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
-                    url = reply->header(QNetworkRequest::LocationHeader).toUrl();
-                    qDebug()<<Q_FUNC_INFO<<"==== http status code "<<vrt;
-                    FREE_REPLY;
+                    /*
+                     * As we call FREE_REPLY first after break loop or loop continue,
+                     * it is OK to skip FREE_REPLY below
+                     */
                     if (vrt.isNull() || !vrt.isValid()) {
                         m_handler->dispatch(InnerEvent::EVENT_LOGIN_FAILURE,
                                             QString("Get http status code error!"));
@@ -529,7 +516,7 @@ void BDiskLoginManually::run()
                         break;
                     } else if (ret == 302) {
                         //302 //redirect url
-//                        url = reply->header(QNetworkRequest::LocationHeader).toUrl();
+                        url = reply->header(QNetworkRequest::LocationHeader).toUrl();
                         qDebug()<<Q_FUNC_INFO<<" redirect : "<<url;
                         continue;
                     } else {
@@ -538,12 +525,13 @@ void BDiskLoginManually::run()
                         finish = true;
                         break;
                     }
-                }
+                } while (true);
 
                 FREE_REPLY;
                 RESET_FLAGS;
 
-                url = QUrl(BDISK_URL_DISK_HOME);
+                qDebug()<<Q_FUNC_INFO<<"url "<<url;
+
                 request = QNetworkRequest(url);
                 fillRequest(&request);
 
@@ -557,34 +545,40 @@ void BDiskLoginManually::run()
                 CHECK_IF_REPLY_ABORT;
                 CHECK_IF_REPLY_SUCCESS;
 
-                QByteArray qba = reply->readAll();
+                const QByteArray qba = reply->readAll();
                 FREE_REPLY;
-                //TODO get bdstoken from response by key yunData.MYBDSTOKEN or FileUtils.bdstoken
-                if (m_tokenProvider->bdstoken().isEmpty()) {
-                    QString value = truncateYunData(QString(qba));
+                const QString bdstoken = m_tokenProvider->bdstoken();
 
-                    QJsonParseError error;
-                    QJsonDocument doc = QJsonDocument::fromJson (value.toLocal8Bit(), &error);
-                    if (error.error != QJsonParseError::NoError) {
-                        qDebug()<<Q_FUNC_INFO<<"Parse json error => "<<error.errorString ();
-                        m_handler->dispatch(InnerEvent::EVENT_LOGIN_FAILURE,
-                                            QString("Parse json error [%1]").arg(error.errorString()));
-                        finish = true;
-                        break;
-                    }
-                    QJsonObject obj = doc.object();
-                    QString bdstoken = obj.value("bdstoken").toString();
-                    if (bdstoken.isEmpty()) {
-                        m_handler->dispatch(InnerEvent::EVENT_LOGIN_FAILURE,
-                                            QString("Can't get bdstoken"));
-                        finish = true;
-                        break;
-                    }
-                    m_tokenProvider->setBdstoken(bdstoken);
-                    QString uname = obj.value("username").toString();
-                    //FIXME send failure if uname is empty
-                    m_tokenProvider->setUidStr(uname);
+                /*
+                 * update bdstoken and username if possible
+                 */
+
+                //TODO get bdstoken from response by key yunData.MYBDSTOKEN or FileUtils.bdstoken
+                const QString value = truncateYunData(QString(qba));
+                QJsonParseError error;
+                const QJsonDocument doc = QJsonDocument::fromJson (value.toLocal8Bit(), &error);
+                if (error.error != QJsonParseError::NoError && bdstoken.isEmpty()) {
+                    qDebug()<<Q_FUNC_INFO<<"Parse json error => "<<error.errorString ();
+                    m_handler->dispatch(InnerEvent::EVENT_LOGIN_FAILURE,
+                                        QString("Parse json error [%1]").arg(error.errorString()));
+                    finish = true;
+                    break;
                 }
+                const QJsonObject obj = doc.object();
+                const QString token = obj.value("bdstoken").toString();
+                if (bdstoken.isEmpty() && token.isEmpty()) {
+                    m_handler->dispatch(InnerEvent::EVENT_LOGIN_FAILURE,
+                                        QString("Can't get bdstoken"));
+                    finish = true;
+                    break;
+                }
+                if (!token.isEmpty()) { //update bdstoken
+                    m_tokenProvider->setBdstoken(token);
+                }
+                QString uname = obj.value("username").toString();
+                //FIXME send failure if uname is empty
+                m_tokenProvider->setUidStr(uname);
+                break;
             } else {
                 qDebug()<<Q_FUNC_INFO<<"Login error, Error code "<<loginErrorCode;
                 m_tokenProvider->setCodeString(QString());
@@ -594,14 +588,20 @@ void BDiskLoginManually::run()
                 break;
             }
         }
-    }
+    } while (true);
     m_tokenProvider->flush();
+
     if (!finish) {
         m_handler->dispatch(InnerEvent::EVENT_LOGIN_SUCCESS);
     }
 
     FREE_REPLY;
     RESET_FLAGS;
+
+    if (jar) {
+        jar->deleteLater();
+        jar = Q_NULLPTR;
+    }
 }
 
 void BDiskLoginManually::fillRequest(QNetworkRequest *req)
