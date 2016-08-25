@@ -7,15 +7,17 @@
 //#include <QMutex>
 #include <QWaitCondition>
 
-class QTimer;
-class QNetworkAccessManager;
-class QNetworkReply;
-class QNetworkRequest;
+//class QTimer;
+//class QNetworkAccessManager;
+//class QNetworkReply;
+//class QNetworkRequest;
 
 class BDiskTokenProvider;
 class InnerStateHandler;
-class BDiskCookieJar;
-class BDiskLogin : public QThread
+//class BDiskCookieJar;
+class BDiskLoginCookie;
+class BDiskLoginManually;
+class BDiskLogin : public QObject
 {
     Q_OBJECT
 
@@ -39,56 +41,32 @@ public:
 public:
     bool event(QEvent *e);
 
-    // QThread interface
-protected:
-    void run();
-
 signals:
     void logouted();
     void loginAbort();
     void loginSuccess();
-    void loginFailure(QString message);
+    void loginFailure(const QString &message);
     void loginByCookieSuccess();
-    void loginByCookieFailure(QString message);
-    void userNameChanged(QString userName);
-    void passWordChanged(QString passWord);
-    void captchaTextChanged(QString captchaText);
-    void captchaImgUrlChanged(QUrl captchaImgUrl);
+    void loginByCookieFailure(const QString &message);
+    void userNameChanged(const QString &userName);
+    void passWordChanged(const QString &passWord);
+    void captchaTextChanged(const QString &captchaText);
+    void captchaImgUrlChanged(const QUrl &captchaImgUrl);
 
 public slots:
-    void setUserName(QString userName);
-    void setPassWord(QString passWord);
-    void setCaptchaText(QString captchaText);
+    void setUserName(const QString &userName);
+    void setPassWord(const QString &passWord);
+    void setCaptchaText(const QString &captchaText);
 
 private:
-    QString truncateCallback(const QString &callback);
-    QString truncateYunData(const QString &data);
-    int getErrorFromPostData(const QByteArray &data);
-    QString getCodeStringFromPostData(const QByteArray &data);
-    void reset();
-    void freeReply();
-    void freeAndStop();
-    void fillRequest(QNetworkRequest *req);
-private:
-    QNetworkAccessManager *m_networkMgr;
-    QNetworkReply *m_reply;
     BDiskTokenProvider *m_tokenProvider;
     InnerStateHandler *m_handler;
-    BDiskCookieJar *m_cookieJar;
+    BDiskLoginCookie *m_cookieLogin;
+    BDiskLoginManually *m_manuallyLogin;
     QString m_userName;
     QString m_passWord;
     QString m_captchaText;
     QUrl m_captchaImgUrl;
-//    QMutex m_lock;
-    QWaitCondition m_wait;
-    bool m_requestAborted;
-    bool m_abortLogin;
-    bool m_breakThread;
-    bool m_loginFailureOrAborted;
-    ///
-    /// \brief m_loginErrCode used to indicate wether we need to check cookies-login in login thread
-    ///
-    int m_loginErrCode;
 };
 
 #endif // BDISKLOGIN_H
