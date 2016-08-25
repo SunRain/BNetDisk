@@ -11,6 +11,7 @@
 
 class QTimer;
 class QNetworkReply;
+class BDiskCookieJar;
 class BDiskBaseRequest : public QObject
 {
     Q_OBJECT
@@ -63,6 +64,7 @@ private:
     QTimer *m_timeout;
     QNetworkReply *m_reply;
     QNetworkAccessManager *m_networkMgr;
+    BDiskCookieJar *m_cookieJar;
     BDiskBaseOperationRequest m_operation;
 //    QHash<QString, QString> m_parameters;
 

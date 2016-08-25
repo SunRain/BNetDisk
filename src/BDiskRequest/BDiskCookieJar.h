@@ -24,6 +24,12 @@ public:
     ///
     void clear();
 
+    ///
+    /// \brief reload
+    /// Re-load cookies from local storage
+    ///
+    void reload();
+
     // QNetworkCookieJar interface
     QList<QNetworkCookie> cookiesForUrl(const QUrl &url) const;
 //    bool setCookiesFromUrl(const QList<QNetworkCookie> &cookieList, const QUrl &url);

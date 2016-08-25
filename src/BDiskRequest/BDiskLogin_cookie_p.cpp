@@ -4,6 +4,7 @@
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QUrl>
+#include <QNetworkCookie>
 
 #include <QEventLoop>
 #include <QTimer>
@@ -31,24 +32,31 @@ void BDiskLoginCookie::run()
     BDiskCookieJar *jar = new BDiskCookieJar(this);
     networkMgr.setCookieJar(jar);
     QNetworkReply *reply = Q_NULLPTR;
-//    QNetworkRequest request;
     bool requestAborted = false;
     bool finish = false;
 
-#define FREE_REPLY  if (reply) { \
-                        if (!reply->isFinished()) { \
-                            requestAborted = true; \
-                            reply->abort(); \
-                        } \
-                        disconnect(reply, 0, 0, 0); \
-                        reply->deleteLater(); \
-                        reply = Q_NULLPTR; \
-                    }
+#define FREE_COOKIEJ_JAR \
+    if (jar) { \
+        jar->deleteLater(); \
+        jar = Q_NULLPTR; \
+    }
+
+#define FREE_REPLY \
+    if (reply) { \
+        if (!reply->isFinished()) { \
+            requestAborted = true; \
+            reply->abort(); \
+        } \
+        disconnect(reply, 0, 0, 0); \
+        reply->deleteLater(); \
+        reply = Q_NULLPTR; \
+    }
 
 #define DO_LOOP_BLOCK   timer.start(); loop.exec();
 
-#define STOP_LOOP_BLOCK if (timer.isActive()) timer.stop(); \
-                        if (loop.isRunning()) loop.quit();
+#define STOP_LOOP_BLOCK \
+    if (timer.isActive()) timer.stop(); \
+    if (loop.isRunning()) loop.quit();
 
     QEventLoop loop;
     QTimer timer;
@@ -83,6 +91,12 @@ void BDiskLoginCookie::run()
         req.setRawHeader("User-Agent", "Mozilla/5.0 (Windows;U;Windows NT 5.1;zh-CN;rv:1.9.2.9) Gecko/20100101 Firefox/43.0");
         req.setRawHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
 
+        QStringList list;
+        foreach (QNetworkCookie c, jar->cookieList()) {
+            list.append(QString("%1=%2").arg(QString(c.name())).arg(QString(c.value())));
+        }
+        req.setRawHeader("Cookie", list.join(";").toUtf8());
+
         reply = networkMgr.head(req);
         if (reply) {
             connect(reply, &QNetworkReply::finished, [&](){
@@ -113,8 +127,6 @@ void BDiskLoginCookie::run()
             break;
         }
 
-        qDebug()<<Q_FUNC_INFO<<" header list "<<reply->rawHeaderPairs();
-
         QNetworkReply::NetworkError e = reply->error ();
         bool success = (e == QNetworkReply::NoError);
         if (!success) {
@@ -125,9 +137,9 @@ void BDiskLoginCookie::run()
             break;
         }
         const QVariant code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
-//        const QUrl newUrl = reply->header(QNetworkRequest::LocationHeader).toUrl();
+        const QUrl newUrl = reply->header(QNetworkRequest::LocationHeader).toUrl();
 
-        qDebug()<<Q_FUNC_INFO<<" loop for reply "<<reply->readAll()<<" header code "<<code;//<<" new url "<<newUrl;
+        qDebug()<<Q_FUNC_INFO<<" loop for reply "<<reply->readAll()<<" header code "<<code<<" new url "<<newUrl;
 
 //        FREE_REPLY;
         if (code.isNull() || !code.isValid()) {
@@ -159,8 +171,10 @@ void BDiskLoginCookie::run()
 
     FREE_REPLY;
 
-    if (finish)
+    if (finish) {
+        FREE_COOKIEJ_JAR;
         return;
+    }
 
     FREE_REPLY;
 
@@ -170,13 +184,13 @@ void BDiskLoginCookie::run()
     req.setRawHeader("User-Agent", "Mozilla/5.0 (Windows;U;Windows NT 5.1;zh-CN;rv:1.9.2.9) Gecko/20100101 Firefox/43.0");
     req.setRawHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
 
-    qDebug()<<Q_FUNC_INFO<<" redirect : "<<url;
     reply = networkMgr.get(req);
     if (reply) {
         connect(reply, &QNetworkReply::finished, [&](){
             STOP_LOOP_BLOCK;
         });
     } else {
+        FREE_COOKIEJ_JAR;
         m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, QString("No http reply"));
         return;
     }
@@ -192,6 +206,7 @@ void BDiskLoginCookie::run()
 
     if (requestAborted) {
         FREE_REPLY;
+        FREE_COOKIEJ_JAR;
         m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_ABORT, QString("Http time out"));
         return;
     }
@@ -201,6 +216,7 @@ void BDiskLoginCookie::run()
     if (!success) {
         QString str = reply->errorString();
         FREE_REPLY;
+        FREE_COOKIEJ_JAR;
         m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, str);
         return;
     }
@@ -208,9 +224,9 @@ void BDiskLoginCookie::run()
     qDebug()<<Q_FUNC_INFO<<" reply data "<<qba;
     FREE_REPLY;
     if (qba.trimmed().isEmpty()) {
-//        emit loginByCookieSuccess();
-//        return;
-        //TODO login success or failure?
+        FREE_COOKIEJ_JAR;
+        m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_SUCCESS, QString());
+        return;
     }
 
     //TODO get bdstoken from response by key yunData.MYBDSTOKEN or FileUtils.bdstoken
@@ -218,6 +234,7 @@ void BDiskLoginCookie::run()
     QString value = truncateYunData(QString(qba));
     if (value.isEmpty()) {
         qDebug()<<Q_FUNC_INFO<<"Can't get yunData values";
+        FREE_COOKIEJ_JAR;
         m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, QString("Can't get yunData values"));
         return;
     }
@@ -225,6 +242,7 @@ void BDiskLoginCookie::run()
     QJsonDocument doc = QJsonDocument::fromJson (value.toLocal8Bit(), &error);
     if (error.error != QJsonParseError::NoError) {
         qDebug()<<Q_FUNC_INFO<<"Parse json error => "<<error.errorString ();
+        FREE_COOKIEJ_JAR;
         m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE,
                           QString("Parse json error [%1]").arg(error.errorString()));
         return;
@@ -233,6 +251,7 @@ void BDiskLoginCookie::run()
     QString bdstoken = obj.value("bdstoken").toString();
     if (bdstoken.isEmpty()) {
 //        emit loginByCookieFailure("Can't get bdstoken");
+        FREE_COOKIEJ_JAR;
         m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, QString("Can't get bdstoken"));
         return;
     }
@@ -243,10 +262,7 @@ void BDiskLoginCookie::run()
     tokenProvider->setUidStr(uname);
 //                    }
     tokenProvider->flush();
-    if (jar) {
-        jar->deleteLater();
-        jar = Q_NULLPTR;
-    }
+    FREE_COOKIEJ_JAR;
     m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_SUCCESS, QString());
 }
 

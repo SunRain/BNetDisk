@@ -22,18 +22,7 @@ BDiskCookieJar::BDiskCookieJar(QObject *parent)
         dir.mkpath(dataPath);
     m_cookieFile = QString("%1/cookie").arg(dataPath);
 
-    QFile file(m_cookieFile);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))  {
-        qDebug()<<Q_FUNC_INFO<<"Can't open exist cookies files";
-    } else {
-        QByteArray line;
-        while (!file.atEnd()) {
-            line = file.readLine();
-            m_cookieList.append(QNetworkCookie::parseCookies(line));
-        }
-    }
-    file.close();
-
+    reload();
 }
 
 BDiskCookieJar::~BDiskCookieJar()
@@ -70,6 +59,24 @@ void BDiskCookieJar::clear()
         if (!file.remove())
             qDebug()<<Q_FUNC_INFO<<"Not remove file!!";
     }
+    m_locker.unlock();
+}
+
+void BDiskCookieJar::reload()
+{
+    m_locker.lock();
+    m_cookieList.clear();
+    QFile file(m_cookieFile);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))  {
+        qDebug()<<Q_FUNC_INFO<<"Can't open exist cookies files";
+    } else {
+        QByteArray line;
+        while (!file.atEnd()) {
+            line = file.readLine();
+            m_cookieList.append(QNetworkCookie::parseCookies(line));
+        }
+    }
+    file.close();
     m_locker.unlock();
 }
 

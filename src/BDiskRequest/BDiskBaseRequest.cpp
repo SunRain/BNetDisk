@@ -20,6 +20,7 @@ BDiskBaseRequest::BDiskBaseRequest(QObject *parent)
     : QObject(parent)
     , m_timeout(new QTimer(this))
     , m_reply(nullptr)
+    , m_cookieJar(new BDiskCookieJar(this))
     , m_requestAborted(true)
     , m_operationInitiated(false)
 {
@@ -37,6 +38,7 @@ BDiskBaseRequest::BDiskBaseRequest(QObject *parent)
 //    if (m_networkMgr) {
 //        m_networkMgr->setCookieJar(BDiskCookieJar::instance());
 //    }
+    m_networkMgr->setCookieJar(m_cookieJar);
 }
 
 BDiskBaseRequest::~BDiskBaseRequest()
@@ -81,7 +83,8 @@ void BDiskBaseRequest::request()
     QNetworkRequest request(url);
     request.setRawHeader("User-Agent", "Mozilla/5.0 (Windows;U;Windows NT 5.1;zh-CN;rv:1.9.2.9) Gecko/20100101 Firefox/43.0");
     request.setRawHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
-    QList<QNetworkCookie> cookies = BDiskCookieJar::instance()->cookieList();
+    m_cookieJar->reload();
+    QList<QNetworkCookie> cookies = m_cookieJar->cookieList();//BDiskCookieJar::instance()->cookieList();
     QStringList list;
     foreach (QNetworkCookie c, cookies) {
         list.append(QString("%1=%2").arg(QString(c.name())).arg(QString(c.value())));
