@@ -599,6 +599,7 @@ void BDiskLoginManually::run()
     RESET_FLAGS;
 
     if (jar) {
+        jar->flush();
         jar->deleteLater();
         jar = Q_NULLPTR;
     }

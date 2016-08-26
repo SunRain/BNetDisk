@@ -14,7 +14,7 @@
 
 BDiskCookieJar::BDiskCookieJar(QObject *parent)
     : QNetworkCookieJar(parent)
-    , m_locker(QMutex::Recursive)
+//    , m_locker(QMutex::Recursive)
 {
     QString dataPath = QStandardPaths::writableLocation (QStandardPaths::DataLocation);
     QDir dir(dataPath);
@@ -27,22 +27,7 @@ BDiskCookieJar::BDiskCookieJar(QObject *parent)
 
 BDiskCookieJar::~BDiskCookieJar()
 {
-    QFile file(m_cookieFile);
-    if (file.exists()) {
-        if (!file.remove())
-            qDebug()<<Q_FUNC_INFO<<"Not remove file!!";
-    }
-
-    if (!file.open(QIODevice::WriteOnly)) {
-        qDebug()<<Q_FUNC_INFO<<"Can't open to write cookies";
-        return;
-    }
-    QTextStream out(&file);
-    foreach (QNetworkCookie c, m_cookieList) {
-        out<<c.toRawForm()<<"\n";
-    }
-    out.flush();
-    file.close();
+    flush();
 }
 
 QList<QNetworkCookie> BDiskCookieJar::cookieList() const
@@ -78,6 +63,27 @@ void BDiskCookieJar::reload()
     }
     file.close();
     m_locker.unlock();
+}
+
+void BDiskCookieJar::flush()
+{
+    QMutexLocker locker(&m_locker);
+    QFile file(m_cookieFile);
+    if (file.exists()) {
+        if (!file.remove())
+            qDebug()<<Q_FUNC_INFO<<"Not remove file!!";
+    }
+
+    if (!file.open(QIODevice::WriteOnly)) {
+        qDebug()<<Q_FUNC_INFO<<"Can't open to write cookies";
+        return;
+    }
+    QTextStream out(&file);
+    foreach (QNetworkCookie c, m_cookieList) {
+        out<<c.toRawForm()<<"\n";
+    }
+    out.flush();
+    file.close();
 }
 
 QList<QNetworkCookie> BDiskCookieJar::cookiesForUrl(const QUrl &url) const
