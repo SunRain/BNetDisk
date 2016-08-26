@@ -37,6 +37,7 @@ void BDiskLoginCookie::run()
 
 #define FREE_COOKIEJ_JAR \
     if (jar) { \
+        jar->flush(); \
         jar->deleteLater(); \
         jar = Q_NULLPTR; \
     }

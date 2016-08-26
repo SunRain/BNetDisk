@@ -30,6 +30,11 @@ public:
     ///
     void reload();
 
+    ///
+    /// \brief flush save cookie data to local storage
+    ///
+    void flush();
+
     // QNetworkCookieJar interface
     QList<QNetworkCookie> cookiesForUrl(const QUrl &url) const;
 //    bool setCookiesFromUrl(const QList<QNetworkCookie> &cookieList, const QUrl &url);
