@@ -31,7 +31,8 @@ SOURCES += \
     src/BDiskSearchDelegate.cpp \
     src/BDiskRequest/BDiskLogin_p.cpp \
     src/BDiskRequest/BDiskLogin_cookie_p.cpp \
-    src/BDiskRequest/BDiskLogin_manually_p.cpp
+    src/BDiskRequest/BDiskLogin_manually_p.cpp \
+    src/BDiskRequest/SyncNetworkRequest.cpp
 
 RESOURCES += \
     qml/qml.qrc
@@ -65,7 +66,8 @@ HEADERS += \
     src/BDiskSearchDelegate.h \
     src/BDiskRequest/BDiskLogin_p.h \
     src/BDiskRequest/BDiskLogin_cookie_p.h \
-    src/BDiskRequest/BDiskLogin_manually_p.h
+    src/BDiskRequest/BDiskLogin_manually_p.h \
+    src/BDiskRequest/SyncNetworkRequest.h
 
 DISTFILES += \
     qml/QuickFlux/Stores/qmldir
