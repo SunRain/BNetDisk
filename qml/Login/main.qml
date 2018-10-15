@@ -275,7 +275,7 @@ ApplicationWindow {
                                 anchors.verticalCenter: parent.verticalCenter
                                 iconName: "navigation/refresh"
                                 onClicked: {
-                                    LoginProvider.login();
+                                    LoginProvider.refreshCaptchaImgUrl();
                                 }
                             }
                         }

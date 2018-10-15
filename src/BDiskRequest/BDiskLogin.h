@@ -32,6 +32,7 @@ public:
     Q_INVOKABLE void login();
     Q_INVOKABLE void loginByCookie();
     Q_INVOKABLE void logout();
+    Q_INVOKABLE void refreshCaptchaImgUrl();
 
     QString userName() const;
     QString passWord() const;

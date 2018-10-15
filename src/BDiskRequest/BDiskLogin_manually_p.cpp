@@ -6,6 +6,7 @@
 #include <QJsonValue>
 #include <QEventLoop>
 #include <QTimer>
+#include <QUuid>
 #include <QCoreApplication>
 
 #include <QNetworkAccessManager>
@@ -23,11 +24,22 @@ BDiskLoginManually::BDiskLoginManually(InnerStateHandler *handler, QObject *pare
     : QThread(parent)
     , m_handler(handler)
     , m_tokenProvider(BDiskTokenProvider::instance())
+    , m_cookieJar(new BDiskCookieJar(0))
     , m_userName(QString())
     , m_passWord(QString())
     , m_captchaText(QString())
 {
+    m_uuid = QUuid::createUuid().toString();
+    m_callbackName = QString("bd__cbs__bdpand");
+}
 
+BDiskLoginManually::~BDiskLoginManually()
+{
+    if (m_cookieJar) {
+        m_cookieJar->flush();
+        m_cookieJar->deleteLater();
+        m_cookieJar = Q_NULLPTR;
+    }
 }
 
 QWaitCondition *BDiskLoginManually::cond()
@@ -37,21 +49,6 @@ QWaitCondition *BDiskLoginManually::cond()
 
 void BDiskLoginManually::run()
 {
-//    QNetworkAccessManager networkMgr;
-//    BDiskCookieJar *jar = new BDiskCookieJar(this);
-//    networkMgr.setCookieJar(jar);
-
-//    QNetworkReply *reply = Q_NULLPTR;
-
-//    bool requestAborted = false;
-//    bool finish = false;
-//    bool networkSuccess = false;
-    SyncNetworkRequest networkMgr;
-    BDiskCookieJar *jar = new BDiskCookieJar(this);
-    networkMgr.setCookieJar(jar);
-
-//    QNetworkReply::NetworkError networkError;
-
     bool breakFlag = false;
 
     QByteArray replyData; // from reply->readAll();
@@ -60,6 +57,16 @@ void BDiskLoginManually::run()
     QJsonDocument jsonDoc;
     QJsonObject jsonObject; //final QJsonObject
     QJsonObject jsonData;
+
+    SyncNetworkRequest networkMgr;
+    networkMgr.setCookieJar(m_cookieJar);
+    m_cookieJar->setParent(0);
+    networkMgr.setTimeOut(BDISK_REQUEST_TIMEOUT);
+    networkMgr.timeOut([&]{
+        breakFlag = true;
+        m_handler->dispatch(InnerEvent::EVENT_LOGIN_FAILURE, QString("Request timeout"));
+    });
+
 
 #define FREE_REPLY(reply) \
     if(reply) { \
@@ -84,68 +91,6 @@ void BDiskLoginManually::run()
         return; \
     }
 
-//#define FREE_REPLY \
-//    if (reply) { \
-//        if (!reply->isFinished()) { \
-//            requestAborted = true; \
-//            reply->abort(); \
-//        } \
-//        disconnect(reply, 0, 0, 0); \
-//        reply->deleteLater(); \
-//        reply = Q_NULLPTR; \
-//    }
-
-//#define DO_LOOP_BLOCK \
-//    timer.start(); loop.exec();
-
-//#define STOP_LOOP_BLOCK \
-//    if (timer.isActive()) timer.stop(); \
-//    if (loop.isRunning()) loop.quit();
-
-//#define CHECK_IF_REPLY_SUCCESS \
-//    networkError = reply->error (); \
-//    networkSuccess = (networkError == QNetworkReply::NoError); \
-//    if (!networkSuccess) { \
-//        m_handler->dispatch(InnerEvent::EVENT_LOGIN_FAILURE,  reply->errorString()); \
-//        FREE_REPLY; \
-//        finish = true; \
-//        break; \
-//    }
-
-//#define RESET_FLAGS \
-//    requestAborted = false; \
-//    finish = false; \
-//    networkError = QNetworkReply::NetworkError::NoError; \
-//    networkSuccess = false;
-
-//#define CONNECT_REPLY \
-//    if (reply) { \
-//        connect(reply, &QNetworkReply::finished, [&](){ \
-//            STOP_LOOP_BLOCK; \
-//        }); \
-//    } else { \
-//        m_handler->dispatch(InnerEvent::EVENT_LOGIN_FAILURE, QString("Can't visit http server")); \
-//        finish = true; \
-//        break; \
-//    }
-
-//#define LOOP_TO_WAIT_REPLY_FINISH \
-//    while (!reply->isFinished()) { \
-//        if (currentThread()->isInterruptionRequested()) { \
-//            requestAborted = true; \
-//            break; \
-//        } \
-//        qApp->processEvents(); \
-//    }
-
-//#define CHECK_IF_REPLY_ABORT \
-//    if (requestAborted) { \
-//        FREE_REPLY; \
-//        m_handler->dispatch(InnerEvent::EVENT_LOGIN_ABORT, QString("Http time out")); \
-//        finish = true; \
-//        break; \
-//    }
-
 #define PARSE_TO_JSONOBJECT(reply) \
     replyData.clear(); \
     replyValue.clear(); \
@@ -154,7 +99,7 @@ void BDiskLoginManually::run()
     jsonData = QJsonObject(); \
     replyData = reply->readAll(); \
     FREE_REPLY(reply); \
-    replyValue = truncateCallback(QString(replyData)).toUtf8(); \
+    replyValue = truncateCallback(QString(replyData), m_callbackName).toUtf8(); \
     jsonParseError.error = QJsonParseError::NoError; \
     jsonDoc = QJsonDocument::fromJson (replyValue, &jsonParseError); \
     if (jsonParseError.error != QJsonParseError::NoError) { \
@@ -166,20 +111,6 @@ void BDiskLoginManually::run()
     } \
     jsonObject = jsonDoc.object();
 
-
-//    QEventLoop loop;
-//    QTimer timer;
-//    timer.setInterval(BDISK_REQUEST_TIMEOUT);
-//    timer.setSingleShot(true);
-//    connect(&timer, &QTimer::timeout,
-//            [&]() {
-//        if (reply && !reply->isFinished()) {
-//            requestAborted = true;
-//            reply->abort();
-//        }
-//        STOP_LOOP_BLOCK;
-//    });
-
     do {
         /*
          * visit baidu.com to check if network is ok
@@ -187,23 +118,6 @@ void BDiskLoginManually::run()
         QUrl url(BDISK_URL_HOME);
         QNetworkRequest request(url);
         fillRequest(&request);
-
-//        reply = networkMgr.get(request);
-//        CONNECT_REPLY;
-//        DO_LOOP_BLOCK;
-
-//        LOOP_TO_WAIT_REPLY_FINISH;
-
-//        CHECK_IF_REPLY_ABORT;
-//        CHECK_IF_REPLY_SUCCESS;
-
-//        FREE_REPLY;
-//        RESET_FLAGS;
-        networkMgr.setTimeOut(BDISK_REQUEST_TIMEOUT);
-        networkMgr.timeOut([&]{
-            breakFlag = true;
-            m_handler->dispatch(InnerEvent::EVENT_LOGIN_FAILURE, QString("Request timeout"));
-        });
         networkMgr.get(request, [&](QNetworkReply *reply) {
             CHECK_IF_REPLY_SUCCESS(reply);
         });
@@ -211,36 +125,34 @@ void BDiskLoginManually::run()
             break;
         }
         breakFlag = false;
+
         /*
          * setp 1
          */
-        url = QUrl(QString("%1?getapi&tpl=netdisk&apiver=v3&tt=%2&class=login&logintype=basicLogin&callback=bd__cbs__k7tkx3")
-                   .arg(BDISK_URL_PASSPORT_API).arg(QString::number(QDateTime::currentMSecsSinceEpoch())));
-        qDebug()<<Q_FUNC_INFO<<"url "<<url;
-
+        url = QUrl(BDISK_URL_PASSPORT_API);
+        {
+            QUrlQuery query;
+            query.addQueryItem("getapi", QString());
+            query.addQueryItem("tpl", "netdisk");
+            query.addQueryItem("subpro", "netdisk_web");
+            query.addQueryItem("apiver", "v3");
+            query.addQueryItem("tt", QString::number(QDateTime::currentMSecsSinceEpoch()));
+            query.addQueryItem("class", "login");
+            query.addQueryItem("gid", m_uuid);
+            query.addQueryItem("loginversion", "v4");
+            query.addQueryItem("logintype", "basicLogin");
+            query.addQueryItem("traceid", QString());
+            query.addQueryItem("callback", m_callbackName);
+            url.setQuery(query);
+        }
         request = QNetworkRequest(url);
         fillRequest(&request);
-//        reply = networkMgr.get(request);
-
-//        CONNECT_REPLY;
-//        DO_LOOP_BLOCK;
-
-//        LOOP_TO_WAIT_REPLY_FINISH;
-
-//        CHECK_IF_REPLY_ABORT;
-//        CHECK_IF_REPLY_SUCCESS;
-
-//        PARSE_TO_JSONOBJECT;
-
-//        jsonData = jsonObject.value("data").toObject();
-//        m_tokenProvider->setToken(jsonData.value("token").toString());
-//        qDebug()<<Q_FUNC_INFO<<"logincheck token "<<m_tokenProvider->token();
         networkMgr.get(request, [&](QNetworkReply *reply) {
             CHECK_IF_REPLY_SUCCESS(reply);
             PARSE_TO_JSONOBJECT(reply);
             jsonData = jsonObject.value("data").toObject();
             m_tokenProvider->setToken(jsonData.value("token").toString());
-            qDebug()<<Q_FUNC_INFO<<"logincheck token "<<m_tokenProvider->token();
+//            qDebug()<<Q_FUNC_INFO<<"getapi token "<<m_tokenProvider->token();
         });
         if (breakFlag) {
             break;
@@ -250,96 +162,27 @@ void BDiskLoginManually::run()
         /*
          * setp 2
          */
-//        FREE_REPLY;
-//        RESET_FLAGS;
-
-        //"logincheck" "&token=%s" "&tpl=netdisk" "&apiver=v3" "&tt=%d" "&username=%s" "&isphone=false" "&callback=bd__cbs__q4ztud"
-        url = QUrl(QString("%1?logincheck&token=%2&tpl=netdisk&apiver=v3&tt=%3&username=%4&isphone=false&callback=bd__cbs__ps6wfe")
-                   .arg(BDISK_URL_PASSPORT_API)
-                   .arg(m_tokenProvider->token())
-                   .arg(QString::number(QDateTime::currentMSecsSinceEpoch()))
-                   .arg(m_userName));
-        qDebug()<<Q_FUNC_INFO<<"url "<<url;
-
-        request = QNetworkRequest(url);
-        fillRequest(&request);
-
-//        reply = networkMgr.get(request);
-
-//        CONNECT_REPLY;
-//        DO_LOOP_BLOCK;
-
-//        LOOP_TO_WAIT_REPLY_FINISH;
-
-//        CHECK_IF_REPLY_ABORT;
-//        CHECK_IF_REPLY_SUCCESS;
-
-//        PARSE_TO_JSONOBJECT;
-
-//        jsonData = jsonObject.value("data").toObject();
-//        QString token = jsonData.value("token").toString();
-//        qDebug()<<Q_FUNC_INFO<<"logincheck again token "<<jsonData.value("token").toString();
-
-        networkMgr.get(request, [&](QNetworkReply *reply) {
-            CHECK_IF_REPLY_SUCCESS(reply);
-            PARSE_TO_JSONOBJECT(reply);
-            jsonData = jsonObject.value("data").toObject();
-            QString token = jsonData.value("token").toString();
-            qDebug()<<Q_FUNC_INFO<<"logincheck again token "<<jsonData.value("token").toString();
-        });
-        if (breakFlag) {
-            break;
-        }
-        breakFlag = false;
-
-        /*
-         * step 3
-         */
-//        FREE_REPLY;
-//        RESET_FLAGS;
-
         url = QUrl(BDISK_URL_GET_PUBLIC_KEY);
-        QUrlQuery query;
-        //"&token=%s" "&tpl=netdisk" "&apiver=v3" "&tt=%d" "&callback=bd__cbs__wl95ks",
-        query.addQueryItem("token", m_tokenProvider->token());
-        query.addQueryItem("tpl", "netdisk");
-        query.addQueryItem("apiver", "v3");
-        query.addQueryItem("tt", QString::number(QDateTime::currentMSecsSinceEpoch()));
-        query.addQueryItem("callback", "bd__cbs__wl95ks");
-        url.setQuery(query);
-
-        qDebug()<<Q_FUNC_INFO<<"url "<<url;
-
+        {
+            QUrlQuery query;
+            query.addQueryItem("token", m_tokenProvider->token());
+            query.addQueryItem("tpl", "netdisk");
+            query.addQueryItem("subpro", "netdisk_web");
+            query.addQueryItem("apiver", "v3");
+            query.addQueryItem("tt", QString::number(QDateTime::currentMSecsSinceEpoch()));
+            query.addQueryItem("gid", m_uuid);
+            query.addQueryItem("loginversion", "v4");
+            query.addQueryItem("traceid", QString());
+            query.addQueryItem("callback", m_callbackName);
+            url.setQuery(query);
+        }
         request = QNetworkRequest(url);
         fillRequest(&request);
-
-//        reply = networkMgr.get(request);
-
-//        CONNECT_REPLY;
-//        DO_LOOP_BLOCK;
-
-//        LOOP_TO_WAIT_REPLY_FINISH;
-
-//        CHECK_IF_REPLY_ABORT;
-//        CHECK_IF_REPLY_SUCCESS;
-
-//        PARSE_TO_JSONOBJECT;
-
-//        m_tokenProvider->setPubkey(jsonObject.value("pubkey").toString().trimmed());
-//        m_tokenProvider->setKey(jsonObject.value("key").toString().trimmed());
-//        qDebug()<<Q_FUNC_INFO<<" pubkey "<<m_tokenProvider->pubkey();
-//        qDebug()<<Q_FUNC_INFO<<" key "<<m_tokenProvider->key();
-
         networkMgr.get(request, [&](QNetworkReply *reply) {
             CHECK_IF_REPLY_SUCCESS(reply);
             PARSE_TO_JSONOBJECT(reply);
-
             QString pubkey = jsonObject.value("pubkey").toString().trimmed();
             QString key = jsonObject.value("key").toString().trimmed();
-
-            qDebug()<<Q_FUNC_INFO<<" pubkey "<<pubkey;
-            qDebug()<<Q_FUNC_INFO<<" key "<<key;
-
             m_tokenProvider->setPubkey(pubkey);
             m_tokenProvider->setKey(key);
         });
@@ -348,59 +191,143 @@ void BDiskLoginManually::run()
         }
         breakFlag = false;
 
-
         /*
-         * step 4
-         *
-         * get codeString, this is also used for captch image
-         * refresh captch image need to call this
-         *
+         * setp 3
          */
-//        FREE_REPLY;
-//        RESET_FLAGS;
-
-        QString str(BDISK_URL_PASSPORT_BASE);
-        str += "?reggetcodestr";
-        str += QString("&token=%1").arg(m_tokenProvider->token());
-        str += "&tpl=netdisk&apiver=v3&fr=login&callback=bd__cbs__l6c16p";
-        str += QString("tt=%1").arg(QString::number(QDateTime::currentMSecsSinceEpoch()));
-        url = QUrl(str);
-        qDebug()<<Q_FUNC_INFO<<"url "<<url;
-
+        {
+            QString str(BDISK_URL_PASSPORT_API);
+            str += "?logincheck&";
+            str += "apiver=v3&";
+            str += QString("callback=%1&").arg(m_callbackName);
+            str += "dv=&";
+            str += "logincheck=&";
+            str += "loginversion=v4&";
+            str += "sub_source=leadsetpwd&";
+            str += "subpro=netdisk_web&";
+            str += QString("token=%1&").arg(m_tokenProvider->token());
+            str += "tpl=netdisk&";
+            str += "traceid=&";
+            str += QString("tt=%1&").arg(QString::number(QDateTime::currentMSecsSinceEpoch()));
+            str += QString("username=%1").arg(m_userName);
+            url = QUrl(str);
+        }
+//        qDebug()<<Q_FUNC_INFO<<"url "<<url;
         request = QNetworkRequest(url);
         fillRequest(&request);
-
-//        reply = networkMgr.get(request);
-
-//        CONNECT_REPLY;
-//        DO_LOOP_BLOCK;
-
-//        LOOP_TO_WAIT_REPLY_FINISH;
-
-//        CHECK_IF_REPLY_ABORT;
-//        CHECK_IF_REPLY_SUCCESS;
-
-//        PARSE_TO_JSONOBJECT;
-
-//        jsonData = jsonObject.value("data").toObject();
-//        m_tokenProvider->setCodeString(jsonData.value("verifyStr").toString());
-////        qDebug()<<Q_FUNC_INFO<<"codeString "<<m_tokenProvider->codeString();
-
-//        FREE_REPLY;
-//        RESET_FLAGS;
-
         networkMgr.get(request, [&](QNetworkReply *reply) {
             CHECK_IF_REPLY_SUCCESS(reply);
             PARSE_TO_JSONOBJECT(reply);
-            jsonData = jsonObject.value("data").toObject();
-            m_tokenProvider->setCodeString(jsonData.value("verifyStr").toString());
+            jsonData = jsonObject.value(("errInfo")).toObject();
+            const int err = jsonData.value("no").toString().toInt();
+            qDebug()<<Q_FUNC_INFO<<"errInfo no "<<err;
+            //TODO if err != 0
+            if (!err) {
+                jsonData = jsonObject.value("data").toObject();
+                QString str = jsonData.value("vcodetype").toString();
+//                qDebug()<<Q_FUNC_INFO<<"vcodetype "<<str;
+                if (!str.isEmpty()) {
+                    m_tokenProvider->setVcodeType(str);
+                }
+                str.clear();
+                str = jsonData.value("codeString").toString();
+//                qDebug()<<Q_FUNC_INFO<<"codeString "<<str;
+                if (!str.isEmpty()) {
+                    m_tokenProvider->setCodeString(str);
+                    QUrl cpUrl(QString("%1?%2").arg(BDISK_URL_CAPTCHA).arg(m_tokenProvider->codeString()));
+                    qDebug()<<Q_FUNC_INFO<<" m_captchaImgUrl "<<cpUrl;
+                    m_handler->dispatch(InnerEvent::EVENT_CAPTCHA_URL, cpUrl);
+                    /*
+                    * lock thread to wait captcha
+                    */
+                    QMutex lock;
+                    qDebug()<<Q_FUNC_INFO<<"============= lock thread";
+                    lock.lock();
+                    m_wait.wait(&lock);
+                    qDebug()<<Q_FUNC_INFO<<"============= continue thread in logincheck";
+                }
+            }
         });
         if (breakFlag) {
             break;
         }
         breakFlag = false;
 
-        if (!m_tokenProvider->codeString().isEmpty()) {
+        /*
+         * step 4
+         *
+         */
+
+DO_LOGIN_POST:
+        url = QUrl(QString("%1?login").arg(BDISK_URL_PASSPORT_API));
+        QString postStr;
+        postStr += "apiver=v3&";
+        postStr += QString("callback=parent.%1&").arg(m_callbackName);
+        postStr += "charset=UTF-8&";
+        postStr += QString("codestring=%1&").arg(m_tokenProvider->codeString());
+//        postStr += "crypttype=12&";
+        postStr += "crypttype=&";
+        postStr += "detect=1&";
+        postStr += "dv=&";
+        postStr += "foreignusername=&";
+        postStr += "fp_info=&";
+        postStr += "fp_uid=&";
+        postStr += QString("gid=%1&").arg(m_uuid);
+        postStr += "idc=&";
+        postStr += "isPhone=&";
+        postStr += "loginmerge=true&";
+        postStr += "logintype=basicLogin&";
+        postStr += "loginversion=v4&";
+        postStr += "logLoginType=pc_loginBasic&";
+        postStr += QString("password=%1&").arg(m_passWord);
+        postStr += "ppui_logintime=162602&"; //what is this?
+        postStr += "quick_user=0&";
+//        postStr += QString("rsakey=%1&").arg(m_tokenProvider->pubkey());
+        postStr += "rsakey=&";
+        postStr += "safeflg=0&";
+        postStr += "staticpage=http://pan.baidu.com/res/static/thirdparty/pass_v3_jump.html&";
+        postStr += "subpro=netdisk_web&";
+        postStr += QString("token=%1&").arg(m_tokenProvider->token());
+        postStr += "tpl=netdisk&";
+        postStr += "traceid=&";
+        postStr += QString("tt=%1&").arg(QString::number(QDateTime::currentMSecsSinceEpoch()));
+        postStr += "u=http://pan.baidu.com/&";
+        postStr += QString("username=%1&").arg(m_userName);
+        postStr += QString("verifycode=%1").arg(m_captchaText);
+
+        request = QNetworkRequest(url);
+        fillRequest(&request);
+        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+        request.setHeader(QNetworkRequest::ContentLengthHeader, QByteArray::number(postStr.length()));
+
+//        qDebug()<<Q_FUNC_INFO<<" post data ["<<postStr<<"] to ["<<url<<"]";
+
+        networkMgr.post(request, postStr.toUtf8(), [&](QNetworkReply *reply) {
+            CHECK_IF_REPLY_SUCCESS(reply);
+            replyData.clear();
+            replyData = reply->readAll();
+            FREE_REPLY(reply);
+        });
+        if (breakFlag) {
+            break;
+        }
+        breakFlag = false;
+        const int loginErrorCode = getErrorFromPostData(replyData);
+        qDebug()<<Q_FUNC_INFO<<">>>>>  loginErrCode "<<loginErrorCode;
+        /*
+         * see https://github.com/GangZhuo/BaiduPCS/issues/29
+         */
+        if (loginErrorCode == 3 || loginErrorCode == 6 || loginErrorCode == 257 || loginErrorCode == 200010) {
+            QString codeStr = getCodeStringFromPostData(replyData);
+//            qDebug()<<Q_FUNC_INFO<<">>>>>  codeString  "<<codeStr;
+            if (codeStr.isEmpty()) {
+                m_tokenProvider->setCodeString(QString());
+                m_handler->dispatch(InnerEvent::EVENT_LOGIN_FAILURE,
+                                    QString("Can't read the codestring from the response [%1]")
+                                    .arg(QString(replyData)));
+                breakFlag = true;
+                break;
+            }
+            m_tokenProvider->setCodeString(codeStr);
 
             //https://passport.baidu.com/cgi-bin/genimage?njGa006de4b5716f53302d914c2a6018300c6ad5b0671018a5b
             QUrl cpUrl(QString("%1?%2").arg(BDISK_URL_CAPTCHA).arg(m_tokenProvider->codeString()));
@@ -414,190 +341,10 @@ void BDiskLoginManually::run()
             qDebug()<<Q_FUNC_INFO<<"============= lock thread";
             lock.lock();
             m_wait.wait(&lock);
+
+            qDebug()<<Q_FUNC_INFO<<"======== continue thread";
+            goto DO_LOGIN_POST;
         }
-
-        qDebug()<<Q_FUNC_INFO<<"======== continue thread";
-
-        /*
-         * check verifycode
-         */
-        if (!m_captchaText.isEmpty()) {
-//            FREE_REPLY;
-//            RESET_FLAGS;
-            breakFlag = false;
-
-            QString str("https://passport.baidu.com/v2/?checkvcode&");
-            str += QString("token=%1&").arg(m_tokenProvider->token());
-            str += "tpl=netdisk&";
-            str += "subpro=netdisk_web&";
-            str += "apiver=v3&";
-            str += QString("tt=%1&").arg(QString::number(QDateTime::currentMSecsSinceEpoch()));
-            str += QString("verifycode=%1&").arg(m_captchaText);
-            str += QString("codestring=%1&").arg(m_tokenProvider->codeString());
-            str += "callback=bd__cbs__ln4hgj";
-            url = QUrl(str);
-
-            request = QNetworkRequest(url);
-            fillRequest(&request);
-
-//            reply = networkMgr.get(request);
-
-//            CONNECT_REPLY;
-//            DO_LOOP_BLOCK;
-
-//            LOOP_TO_WAIT_REPLY_FINISH;
-
-//            CHECK_IF_REPLY_ABORT;
-//            CHECK_IF_REPLY_SUCCESS;
-
-//            PARSE_TO_JSONOBJECT;
-
-//            const QJsonObject errInfo = jsonObject.value("errInfo").toObject();
-//            const int err = errInfo.value("no").toString().toInt();
-//            if (err != 0) {
-//                qDebug()<<Q_FUNC_INFO<<">>>> need re-start thread to refresh captcha image";
-
-//                /*
-//                 * We'll restart whole thread when receive this signal atm,
-//                 * as we're using thread and loop event to block QNetworkAccessManager asynchronous call
-//                 */
-//                m_handler->dispatch(InnerEvent::EVENT_CAPTCHA_URL_NEED_REFRESH,
-//                                    QString("Error code [%1], msg [%2]")
-//                                    .arg(QString::number(err))
-//                                    .arg(errInfo.value("msg").toString()));
-//                finish = true;
-//                break;
-//            }
-            networkMgr.get(request, [&](QNetworkReply *reply) {
-                CHECK_IF_REPLY_SUCCESS(reply);
-//                QByteArray ba = reply->readAll();
-//                qDebug()<<Q_FUNC_INFO<<QString(ba);
-
-                PARSE_TO_JSONOBJECT(reply);
-                const QJsonObject errInfo = jsonObject.value("errInfo").toObject();
-                const int err = errInfo.value("no").toString().toInt();
-                if (err != 0) {
-                    qDebug()<<Q_FUNC_INFO<<">>>> need re-start thread to refresh captcha image";
-
-                    /*
-                     * We'll restart whole thread when receive this signal atm,
-                     * as we're using thread and loop event to block QNetworkAccessManager asynchronous call
-                     */
-                    m_handler->dispatch(InnerEvent::EVENT_CAPTCHA_URL_NEED_REFRESH,
-                                        QString("Error code [%1], msg [%2]")
-                                        .arg(QString::number(err))
-                                        .arg(errInfo.value("msg").toString()));
-                    breakFlag = true;
-                }
-            });
-        }
-
-//        FREE_REPLY;
-//        RESET_FLAGS;
-        if (breakFlag) {
-            break;
-        }
-        breakFlag = false;
-
-//        qDebug()<<Q_FUNC_INFO<<"codeString "<<m_tokenProvider->codeString();
-
-        url = QUrl(QString("%1?login").arg(BDISK_URL_PASSPORT_API));
-
-        QString postStr;
-        postStr += "staticpage=http://pan.baidu.com/res/static/thirdparty/pass_v3_jump.html&";
-        postStr += "charset=utf-8&";
-        postStr += QString("token=%1&").arg(m_tokenProvider->token());
-        postStr += "tpl=netdisk&";
-//        postStr += "subpro=&";
-        postStr += "subpro=netdisk_web&";
-        postStr += "apiver=v3&";
-        postStr += QString("tt=%1&").arg(QString::number(QDateTime::currentMSecsSinceEpoch()));
-        postStr += QString("codestring=%1&").arg(m_tokenProvider->codeString());
-        postStr += "safeflg=0&";
-        postStr += "u=http://pan.baidu.com/&";
-        postStr += "isPhone=&";
-        postStr += "detect=1&";
-        postStr += "gid=5A889AF-EC9D-4EB1-B7C1-182EB882194B&";
-        postStr += "quick_user=0&";
-        postStr += "logintype=basicLogin&";
-        postStr += "logLoginType=pc_loginBasic&";
-        postStr += "idc=&";
-        postStr += "loginmerge=true&";
-        postStr += "foreignusername=&";
-        postStr += QString("username=%1&").arg(m_userName);
-        postStr += QString("password=%1&").arg(m_passWord);
-        postStr += QString("verifycode=%1&").arg(m_captchaText);
-        //    postStr += "mem_pass=on&";
-        //    postStr += "rsakey=&";// rsa_pwd ? pcs->key : "&";
-        //    postStr += "crypttype=&";// rsa_pwd ? "12" : "&";
-        postStr += "ppui_logintime=1319881&";
-        postStr += "countrycode=&";
-        postStr += "callback=parent.bd__pcbs__7vxzg7";
-
-        request = QNetworkRequest(url);
-        fillRequest(&request);
-        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
-        request.setHeader(QNetworkRequest::ContentLengthHeader, QByteArray::number(postStr.length()));
-
-        qDebug()<<Q_FUNC_INFO<<" post data ["<<postStr<<"] to ["<<url<<"]";
-
-//        reply = networkMgr.post(request, postStr.toUtf8());
-
-//        CONNECT_REPLY;
-//        DO_LOOP_BLOCK;
-
-//        LOOP_TO_WAIT_REPLY_FINISH;
-
-//        CHECK_IF_REPLY_ABORT;
-//        CHECK_IF_REPLY_SUCCESS;
-
-//        replyData = reply->readAll();
-//        FREE_REPLY;
-
-        networkMgr.post(request, postStr.toUtf8(), [&](QNetworkReply *reply) {
-            CHECK_IF_REPLY_SUCCESS(reply);
-            replyData.clear();
-            replyData = reply->readAll();
-            FREE_REPLY(reply);
-        });
-        if (breakFlag) {
-            break;
-        }
-        breakFlag = false;
-
-        qDebug()<<Q_FUNC_INFO<<">>>>>  replyData "<<replyData;
-
-        const int loginErrorCode = getErrorFromPostData(replyData);
-        qDebug()<<Q_FUNC_INFO<<">>>>>  loginErrCode "<<loginErrorCode;
-
-        /*
-         * see https://github.com/GangZhuo/BaiduPCS/issues/29
-         */
-        if (loginErrorCode == 3 || loginErrorCode == 6 || loginErrorCode == 257 || loginErrorCode == 200010) {
-            QString codeStr = getCodeStringFromPostData(replyData);
-            if (codeStr.isEmpty()) {
-                m_tokenProvider->setCodeString(QString());
-                m_handler->dispatch(InnerEvent::EVENT_LOGIN_FAILURE,
-                                    QString("Can't read the codestring from the response [%1]")
-                                    .arg(QString(replyData)));
-                breakFlag = true;
-                break;
-            }
-            m_tokenProvider->setCodeString(codeStr);
-            qDebug()<<Q_FUNC_INFO<<">>>> send signal to re-start thread";
-
-            /*
-             * We'll restart whole thread when receive this signal atm,
-             * as we're using thread and loop event to block QNetworkAccessManager asynchronous call
-             */
-            m_handler->dispatch(InnerEvent::EVENT_CAPTCHA_URL_NEED_REFRESH,
-                                QString("Error code = %1").arg(QString::number(loginErrorCode)));
-            breakFlag = true;
-            break;
-        }
-
-//        FREE_REPLY;
-//        RESET_FLAGS;
         if (breakFlag) {
             break;
         }
@@ -645,8 +392,24 @@ void BDiskLoginManually::run()
                         break;
                     } else if (ret == 302) {
                         //302 //redirect url
-                        url = redirectedReply->header(QNetworkRequest::LocationHeader).toUrl();
-                        qDebug()<<Q_FUNC_INFO<<" redirect : "<<url;
+                        QVariant str = redirectedReply->header(QNetworkRequest::LocationHeader);
+                        /* NOTE:
+                         * this is an dirty hack for baidu pan redirect location
+                         * as the last redirect location is start with /disk/home...
+                         * whitch is an invalid value in Qt
+                         */
+                        if (!str.isValid()) {
+                            foreach(const auto &h, redirectedReply->rawHeaderPairs()) {
+                                if (QString(h.first).toLower() == QString("Location").toLower()) {
+                                    QString u = QString("https://pan.baidu.com%1").arg(QString(h.second));
+                                    url = QUrl(u);
+                                    break;
+                                }
+                            }
+                            breakFlag = false;
+                            break;
+                        }
+                        url = QUrl(str.toString());
                         continue;
                     } else {
                         m_handler->dispatch(InnerEvent::EVENT_LOGIN_FAILURE,
@@ -656,36 +419,25 @@ void BDiskLoginManually::run()
                     }
                 } while (true);
 
-//                FREE_REPLY;
-//                RESET_FLAGS;
+                if (redirectedReply) {
+                    redirectedReply->deleteLater();
+                    redirectedReply = Q_NULLPTR;
+                }
+
                 if (breakFlag) {
                     break;
                 }
                 breakFlag = false;
 
-                qDebug()<<Q_FUNC_INFO<<"url "<<url;
-
                 request = QNetworkRequest(url);
                 fillRequest(&request);
-
-//                reply = networkMgr.get(request);
-
-//                CONNECT_REPLY;
-//                DO_LOOP_BLOCK;
-
-//                LOOP_TO_WAIT_REPLY_FINISH;
-
-//                CHECK_IF_REPLY_ABORT;
-//                CHECK_IF_REPLY_SUCCESS;
-
-//                const QByteArray qba = reply->readAll();
-//                FREE_REPLY;
                 QByteArray qba;
                 networkMgr.get(request, [&](QNetworkReply *reply) {
                     CHECK_IF_REPLY_SUCCESS(reply);
                     qba = reply->readAll();
                     FREE_REPLY(reply);
                 });
+
                 const QString bdstoken = m_tokenProvider->bdstoken();
 
                 /*
@@ -733,14 +485,8 @@ void BDiskLoginManually::run()
     if (!breakFlag) {
         m_handler->dispatch(InnerEvent::EVENT_LOGIN_SUCCESS);
     }
-
-//    FREE_REPLY;
-//    RESET_FLAGS;
-
-    if (jar) {
-        jar->flush();
-        jar->deleteLater();
-        jar = Q_NULLPTR;
+    if (m_cookieJar) {
+        m_cookieJar->flush();
     }
 }
 
@@ -752,28 +498,15 @@ inline void BDiskLoginManually::fillRequest(QNetworkRequest *req)
     req->setRawHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
 }
 
-QString BDiskLoginManually::truncateCallback(const QString &callback) const
+QString BDiskLoginManually::truncateCallback(const QString &callback, const QString &callbackName) const
 {
     if (callback.isEmpty())
         return QString();
     QString str(callback);
     str = str.replace("'", "\"");
-    if (str.startsWith("(") && str.endsWith(")")) {
-        return str.mid(1, str.length() -1);
-    }
-    int start = 0;
-    for (; start<str.length(); ++start) {
-        if (QString(str.at(start)) == "{")
-            break;
-    }
-    int end = str.lastIndexOf(")");
-    if (end < 0)
-        end = str.length();
-
-    str = str.mid(start, end-start);
-    qDebug()<<Q_FUNC_INFO<<str;
+    const int length = callbackName.length();
+    str = str.trimmed().mid(length+1, str.length()-length-2);
     return str;
-//    return str.mid(start, end-start);
 }
 
 QString BDiskLoginManually::truncateYunData(const QString &data) const
@@ -888,6 +621,81 @@ QString BDiskLoginManually::captchaText() const
 void BDiskLoginManually::setCaptchaText(const QString &captchaText)
 {
     m_captchaText = captchaText;
+}
+
+void BDiskLoginManually::refreshCaptchaImgUrl()
+{
+    QNetworkAccessManager mgr;
+    mgr.setCookieJar(m_cookieJar);
+    m_cookieJar->setParent(0);
+    QUrl url(BDISK_URL_PASSPORT_BASE);
+    QUrlQuery query;
+//    reggetcodestr=
+//    token=xxx
+//    tpl=netdisk
+//    subpro=netdisk_web
+//    apiver=v3
+//    tt=1523201043180
+//    fr=login
+//    loginversion=v4
+//    vcodetype=xxxx
+//    traceid=
+//    callback=xxx
+
+    query.addQueryItem("reggetcodestr", QString());
+    query.addQueryItem("token", m_tokenProvider->token());
+    query.addQueryItem("tpl", "netdisk");
+    query.addQueryItem("subpro", "netdisk_web");
+    query.addQueryItem("apiver", "v3");
+    query.addQueryItem("tt", QString::number(QDateTime::currentMSecsSinceEpoch()));
+    query.addQueryItem("fr", "login");
+    query.addQueryItem("loginversion", "v4");
+    query.addQueryItem("vcodetype", m_tokenProvider->vcodeType());
+    query.addQueryItem("traceid", QString());
+    query.addQueryItem("callback", m_callbackName);
+    url.setQuery(query);
+
+    qDebug()<<Q_FUNC_INFO<<"url: "<<url;
+
+    QNetworkRequest request(url);
+    fillRequest(&request);
+
+    QNetworkReply *reply = mgr.get(request);
+    connect(reply, &QNetworkReply::finished, [&]() {
+        QNetworkReply::NetworkError error = reply->error();
+        if (error != QNetworkReply::NoError) {
+            qDebug()<<Q_FUNC_INFO<<"network error "<<reply->errorString();
+            reply->deleteLater();
+            reply = Q_NULLPTR;
+            return;
+        }
+        QByteArray ba = reply->readAll();
+        reply->deleteLater();
+        reply = Q_NULLPTR;
+        QByteArray replyValue = truncateCallback(QString(ba), m_callbackName).toUtf8();
+        QJsonParseError jsonParseError;
+        jsonParseError.error = QJsonParseError::NoError;
+        QJsonDocument doc = QJsonDocument::fromJson(replyValue, &jsonParseError);
+        if (jsonParseError.error != QJsonParseError::NoError) {
+             qDebug()<<Q_FUNC_INFO<<"Parse json error => "<<jsonParseError.errorString();
+             return;
+        }
+        QJsonObject jsonObject = doc.object();
+        QJsonObject jsonData = jsonObject.value(("errInfo")).toObject();
+        const int err = jsonData.value("no").toString().toInt();
+        qDebug()<<Q_FUNC_INFO<<"errInfo no "<<err;
+        if (!err) {
+            jsonData = jsonObject.value("data").toObject();
+            QString str = jsonData.value("verifyStr").toString();
+            qDebug()<<Q_FUNC_INFO<<"verifyStr "<<str;
+            if (!str.isEmpty()) {
+                m_tokenProvider->setCodeString(str);
+                QUrl cpUrl(QString("%1?%2").arg(BDISK_URL_CAPTCHA).arg(m_tokenProvider->codeString()));
+                qDebug()<<Q_FUNC_INFO<<" m_captchaImgUrl "<<cpUrl;
+                m_handler->dispatch(InnerEvent::EVENT_CAPTCHA_URL, cpUrl);
+            }
+        }
+    });
 }
 
 QString BDiskLoginManually::passWord() const
