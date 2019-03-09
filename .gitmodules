@@ -12,3 +12,6 @@
 [submodule "thirdparty/YADownloader"]
 	path = thirdparty/YADownloader
 	url = https://github.com/SunRain/YADownloader.git
+[submodule "thirdparty/QCurl"]
+	path = thirdparty/QCurl
+	url = https://gitee.com/wanggjghost/QCurl.git
