@@ -76,6 +76,15 @@ void BDiskLogin::logout()
     emit logouted();
 }
 
+void BDiskLogin::refreshCaptchaImgUrl()
+{
+    if (!m_manuallyLogin) {
+        qWarning()<<Q_FUNC_INFO<<"This function only works on manually login";
+        return;
+    }
+    m_manuallyLogin->refreshCaptchaImgUrl();
+}
+
 QString BDiskLogin::userName() const
 {
     return m_userName;

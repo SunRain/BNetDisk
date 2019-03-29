@@ -10,6 +10,7 @@ OPTIONS += roboto
 include(thirdparty/quickflux/quickflux.pri)
 include(thirdparty/qml-material/material.pri)
 include(thirdparty/YADownloader/YADownloader.pri)
+include(thirdparty/QCurl/src/qcurl.pri)
 
 SOURCES += \
     src/main.cpp \
@@ -31,7 +32,8 @@ SOURCES += \
     src/BDiskSearchDelegate.cpp \
     src/BDiskRequest/BDiskLogin_p.cpp \
     src/BDiskRequest/BDiskLogin_cookie_p.cpp \
-    src/BDiskRequest/BDiskLogin_manually_p.cpp
+    src/BDiskRequest/BDiskLogin_manually_p.cpp \
+    src/BDiskRequest/SyncNetworkRequest.cpp
 
 RESOURCES += \
     qml/qml.qrc \
@@ -67,7 +69,8 @@ HEADERS += \
     src/BDiskSearchDelegate.h \
     src/BDiskRequest/BDiskLogin_p.h \
     src/BDiskRequest/BDiskLogin_cookie_p.h \
-    src/BDiskRequest/BDiskLogin_manually_p.h
+    src/BDiskRequest/BDiskLogin_manually_p.h \
+    src/BDiskRequest/SyncNetworkRequest.h
 
 DISTFILES += \
     qml/QuickFlux/Stores/qmldir

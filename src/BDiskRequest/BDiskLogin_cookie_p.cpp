@@ -19,6 +19,14 @@
 #include "BDiskTokenProvider.h"
 #include "BDiskCookieJar.h"
 
+#include "QCNetworkAccessManager.h"
+#include "QCNetworkRequest.h"
+#include "QCNetworkSyncReply.h"
+#include "QCNetworkAsyncReply.h"
+#include "Utility.h"
+
+using namespace QCurl;
+
 BDiskLoginCookie::BDiskLoginCookie(InnerStateHandler *handler, QObject *parent)
     : QThread(parent)
     , m_handler(handler)
@@ -28,44 +36,54 @@ BDiskLoginCookie::BDiskLoginCookie(InnerStateHandler *handler, QObject *parent)
 
 void BDiskLoginCookie::run()
 {
-    QNetworkAccessManager networkMgr;
-    BDiskCookieJar *jar = new BDiskCookieJar(this);
-    networkMgr.setCookieJar(jar);
-    QNetworkReply *reply = Q_NULLPTR;
+//    QNetworkAccessManager networkMgr;
+//    BDiskCookieJar *jar = new BDiskCookieJar(this);
+//    networkMgr.setCookieJar(jar);
+    QCNetworkAccessManager networkMgr;
+    networkMgr.setCookieFilePath(getCookieFile());
+
+    QCNetworkSyncReply *reply = Q_NULLPTR;
     bool requestAborted = false;
     bool finish = false;
 
-#define FREE_COOKIEJ_JAR \
-    if (jar) { \
-        jar->flush(); \
-        jar->deleteLater(); \
-        jar = Q_NULLPTR; \
-    }
+//#define FREE_COOKIEJ_JAR \
+//    if (jar) { \
+//        jar->flush(); \
+//        jar->deleteLater(); \
+//        jar = Q_NULLPTR; \
+//    }
 
+//#define FREE_REPLY \
+//    if (reply) { \
+//        if (!reply->isFinished()) { \
+//            requestAborted = true; \
+//            reply->abort(); \
+//        } \
+//        disconnect(reply, 0, 0, 0); \
+//        reply->deleteLater(); \
+//        reply = Q_NULLPTR; \
+//    }
 #define FREE_REPLY \
     if (reply) { \
-        if (!reply->isFinished()) { \
-            requestAborted = true; \
-            reply->abort(); \
-        } \
-        disconnect(reply, 0, 0, 0); \
+        requestAborted = true; \
+        reply->abort(); \
         reply->deleteLater(); \
         reply = Q_NULLPTR; \
-    }
+}
 
-#define DO_LOOP_BLOCK   timer.start(); loop.exec();
+#define DO_LOOP_BLOCK   timer.start(); //loop.exec();
 
 #define STOP_LOOP_BLOCK \
-    if (timer.isActive()) timer.stop(); \
-    if (loop.isRunning()) loop.quit();
+    if (timer.isActive()) timer.stop();
+//    if (loop.isRunning()) loop.quit();
 
-    QEventLoop loop;
+//    QEventLoop loop;
     QTimer timer;
     timer.setInterval(BDISK_REQUEST_TIMEOUT);
     timer.setSingleShot(true);
     connect(&timer, &QTimer::timeout,
             [&]() {
-        if (reply && !reply->isFinished()) {
+        if (reply /*&& !reply->isFinished()*/) {
             requestAborted = true;
             reply->abort();
         }
@@ -76,156 +94,238 @@ void BDiskLoginCookie::run()
     // loop to check http header
     QUrl url(BDISK_URL_DISK_HOME);
 
-    do {
-        FREE_REPLY;
-        requestAborted = false;
+//    do {
+//        FREE_REPLY;
+//        requestAborted = false;
 
-        qDebug()<<Q_FUNC_INFO<<"     start url "<<url;
+//        qDebug()<<Q_FUNC_INFO<<"     start url "<<url;
 
-        if (!url.isValid()) {
-            qDebug()<<Q_FUNC_INFO<<"Invalid url "<<url;
-            m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, QString("No http header"));
-            finish = true;
-            break;
-        }
-        QNetworkRequest req(url);
+//        if (!url.isValid()) {
+    //            qDebug()<<Q_FUNC_INFO<<"Invalid url "<<url;
+//            m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, QString("No http header"));
+//            finish = true;
+//            break;
+//        }
+    {
+        QCNetworkRequest req(url);
         req.setRawHeader("User-Agent", "Mozilla/5.0 (Windows;U;Windows NT 5.1;zh-CN;rv:1.9.2.9) Gecko/20100101 Firefox/43.0");
         req.setRawHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
 
-        QStringList list;
-        foreach (QNetworkCookie c, jar->cookieList()) {
-            list.append(QString("%1=%2").arg(QString(c.name())).arg(QString(c.value())));
-        }
-        req.setRawHeader("Cookie", list.join(";").toUtf8());
+        //        QStringList list;
+        //        foreach (QNetworkCookie c, jar->cookieList()) {
+        //            list.append(QString("%1=%2").arg(QString(c.name())).arg(QString(c.value())));
+        //        }
+        //        req.setRawHeader("Cookie", list.join(";").toUtf8());
 
-        reply = networkMgr.head(req);
-        if (reply) {
-            connect(reply, &QNetworkReply::finished, [&](){
-                STOP_LOOP_BLOCK;
-            });
-        } else {
-            m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, QString("No http header"));
+        //        reply = networkMgr.head(req);
+        //        if (reply) {
+        //            connect(reply, &QNetworkReply::finished, [&](){
+        //                STOP_LOOP_BLOCK;
+        //            });
+        //        } else {
+        //            m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, QString("No http header"));
+        //            finish = true;
+        //            break;
+        //        }
+        //        DO_LOOP_BLOCK;
+
+        //        if (!reply)
+        //            continue;
+
+        //        while(!reply->isFinished()) {
+        //            if (currentThread()->isInterruptionRequested()) {
+        //                requestAborted = true;
+        //                break;
+        //            }
+        //            qApp->processEvents();
+        //        }
+
+        //        if (requestAborted) {
+        //            FREE_REPLY;
+        //            m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_ABORT, QString("Http time out"));
+        //            finish = true;
+        //            break;
+        //        }
+
+        //        QNetworkReply::NetworkError e = reply->error ();
+        //        bool success = (e == QNetworkReply::NoError);
+        //        if (!success) {
+        //            QString str = reply->errorString();
+        //            FREE_REPLY;
+        //            m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, str);
+        //            finish = true;
+        //            break;
+        //        }
+        //        const QVariant code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
+        //        const QUrl newUrl = reply->header(QNetworkRequest::LocationHeader).toUrl();
+
+        //        qDebug()<<Q_FUNC_INFO<<" loop for reply "<<reply->readAll()<<" header code "<<code<<" new url "<<newUrl;
+
+        ////        FREE_REPLY;
+        //        if (code.isNull() || !code.isValid()) {
+        //            m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, QString("Invalid http code."));
+        //            finish = true;
+        //            break;
+        //        }
+        //        bool ok = false;
+        //        const int ret = code.toInt(&ok);
+        //        if (!ok) {
+        //            m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, QString("Invalid http code to int."));
+        //            finish = true;
+        //            break;
+        //        } else if (ret == 200) {
+        ////            m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_SUCCESS, QString());
+        //            break;
+        //        } else if (ret == 302) { //redirect url
+        ////            url = newUrl;
+        //            url = reply->header(QNetworkRequest::LocationHeader).toUrl();
+        //            qDebug()<<Q_FUNC_INFO<<" redirect : "<<url;
+        //            continue;
+        //        } else {
+        //            m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE,
+        //                              QString("Http code [%1] error.").arg(QString::number(ret)));
+        //            finish = true;
+        //            break;
+        //        }
+        QByteArray qba;
+        reply = networkMgr.create(req);
+        if (!reply) {
+            m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, QString("Create reply error"));
             finish = true;
-            break;
+            //            break;
         }
-        DO_LOOP_BLOCK;
-
-        if (!reply)
-            continue;
-
-        while(!reply->isFinished()) {
-            if (currentThread()->isInterruptionRequested()) {
-                requestAborted = true;
-                break;
+        reply->setWriteFunction([&](char *buffer, size_t size) ->size_t {
+            qba.append(buffer, static_cast<int>(size));
+            return size;
+        });
+        reply->setCustomHeaderFunction([&](char *buffer, size_t size)->size_t {
+            //for http 302
+            QString header(QByteArray(buffer, static_cast<int>(size)));
+            qDebug()<<Q_FUNC_INFO<<"header "<<header;
+            if (!qba.isEmpty()) {
+                const int pos = qba.indexOf(header);
+                if (pos >= 0) {
+                    qba.remove(pos, static_cast<int>(size));
+                }
             }
-            qApp->processEvents();
-        }
-
-        if (requestAborted) {
-            FREE_REPLY;
-            m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_ABORT, QString("Http time out"));
-            finish = true;
-            break;
-        }
-
-        QNetworkReply::NetworkError e = reply->error ();
-        bool success = (e == QNetworkReply::NoError);
+            const int pos = header.trimmed().indexOf(":");
+            if (pos > 0) {
+                QString key = header.mid(0, pos).simplified();
+                QString value = header.mid(pos+1, header.length()-pos-1).simplified();
+                qDebug()<<Q_FUNC_INFO<<"key "<<key<<"   value "<<value;
+                if (key == "Location" && !value.isEmpty() && (value != "/")) {
+                    url = value;
+                }
+            }
+            return size;
+        });
+        reply->perform();
+        NetworkError e = reply->error();
+        bool success = (e == NetworkNoError);
         if (!success) {
             QString str = reply->errorString();
             FREE_REPLY;
             m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, str);
             finish = true;
-            break;
         }
-        const QVariant code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
-        const QUrl newUrl = reply->header(QNetworkRequest::LocationHeader).toUrl();
-
-        qDebug()<<Q_FUNC_INFO<<" loop for reply "<<reply->readAll()<<" header code "<<code<<" new url "<<newUrl;
-
-//        FREE_REPLY;
-        if (code.isNull() || !code.isValid()) {
-            m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, QString("Invalid http code."));
-            finish = true;
-            break;
-        }
-        bool ok = false;
-        const int ret = code.toInt(&ok);
-        if (!ok) {
-            m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, QString("Invalid http code to int."));
-            finish = true;
-            break;
-        } else if (ret == 200) {
-//            m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_SUCCESS, QString());
-            break;
-        } else if (ret == 302) { //redirect url
-//            url = newUrl;
-            url = reply->header(QNetworkRequest::LocationHeader).toUrl();
-            qDebug()<<Q_FUNC_INFO<<" redirect : "<<url;
-            continue;
-        } else {
-            m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE,
-                              QString("Http code [%1] error.").arg(QString::number(ret)));
-            finish = true;
-            break;
-        }
-    } while (true);
-
-    FREE_REPLY;
-
+        FREE_REPLY;
+    }
     if (finish) {
-        FREE_COOKIEJ_JAR;
         return;
     }
 
     FREE_REPLY;
 
     qDebug()<<Q_FUNC_INFO<<" url now : "<<url;
+    if (!url.isValid()) {
+        qDebug()<<Q_FUNC_INFO<<"Invalid url "<<url;
+        m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, QString("Invalid url : [%1]").arg(url.toString()));
+        return;
+    }
 
-    QNetworkRequest req(url);
+    QCNetworkRequest req(url);
     req.setRawHeader("User-Agent", "Mozilla/5.0 (Windows;U;Windows NT 5.1;zh-CN;rv:1.9.2.9) Gecko/20100101 Firefox/43.0");
     req.setRawHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
 
-    reply = networkMgr.get(req);
-    if (reply) {
-        connect(reply, &QNetworkReply::finished, [&](){
-            STOP_LOOP_BLOCK;
-        });
-    } else {
-        FREE_COOKIEJ_JAR;
-        m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, QString("No http reply"));
+    reply = networkMgr.create(req);
+//    if (reply) {
+//        connect(reply, &QNetworkReply::finished, [&](){
+//            STOP_LOOP_BLOCK;
+//        });
+//    } else {
+//        FREE_COOKIEJ_JAR;
+//        m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, QString("No http reply"));
+//        return;
+//    }
+//    DO_LOOP_BLOCK;
+
+//    while(!reply->isFinished()) {
+//        if (currentThread()->isInterruptionRequested()) {
+//            requestAborted = true;
+//            break;
+//        }
+//        qApp->processEvents();
+//    }
+
+//    if (requestAborted) {
+//        FREE_REPLY;
+//        FREE_COOKIEJ_JAR;
+//        m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_ABORT, QString("Http time out"));
+//        return;
+//    }
+
+//    QNetworkReply::NetworkError e = reply->error ();
+//    bool success = (e == QNetworkReply::NoError);
+//    if (!success) {
+//        QString str = reply->errorString();
+//        FREE_REPLY;
+//        FREE_COOKIEJ_JAR;
+//        m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, str);
+//        return;
+//    }
+    if (!reply) {
+        m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, QString("Create reply error"));
+        finish = true;
         return;
     }
-    DO_LOOP_BLOCK;
-
-    while(!reply->isFinished()) {
-        if (currentThread()->isInterruptionRequested()) {
-            requestAborted = true;
-            break;
+    QByteArray qba;
+    reply->setWriteFunction([&](char *buffer, size_t size) ->size_t {
+        qba.append(buffer, static_cast<int>(size));
+        return size;
+    });
+    reply->setCustomHeaderFunction([&](char *buffer, size_t size)->size_t {
+        QString header(QByteArray(buffer, static_cast<int>(size)));
+        qDebug()<<Q_FUNC_INFO<<"header "<<header;
+        if (!qba.isEmpty()) {
+            const int pos = qba.indexOf(header);
+            if (pos >= 0) {
+                qba.remove(pos, static_cast<int>(size));
+            }
         }
-        qApp->processEvents();
-    }
-
-    if (requestAborted) {
-        FREE_REPLY;
-        FREE_COOKIEJ_JAR;
-        m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_ABORT, QString("Http time out"));
-        return;
-    }
-
-    QNetworkReply::NetworkError e = reply->error ();
-    bool success = (e == QNetworkReply::NoError);
+//        QStringList list = header.trimmed().split(":");
+//        if (list.size() > 1) {
+//            QString key = list.takeFirst();
+//            QString value = list.join("").simplified();
+//            if (key == "Location" && !value.isEmpty()) {
+//                url = value;
+//            }
+//        }
+        return size;
+    });
+    reply->perform();
+    NetworkError e = reply->error();
+    bool success = (e == NetworkNoError);
     if (!success) {
         QString str = reply->errorString();
         FREE_REPLY;
-        FREE_COOKIEJ_JAR;
         m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, str);
         return;
     }
-    QByteArray qba = reply->readAll();
-    qDebug()<<Q_FUNC_INFO<<" reply data "<<qba;
+
+//    qDebug()<<Q_FUNC_INFO<<" reply data "<<QString(qba);
     FREE_REPLY;
     if (qba.trimmed().isEmpty()) {
-        FREE_COOKIEJ_JAR;
+//        FREE_COOKIEJ_JAR;
         m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_SUCCESS, QString());
         return;
     }
@@ -235,7 +335,7 @@ void BDiskLoginCookie::run()
     QString value = truncateYunData(QString(qba));
     if (value.isEmpty()) {
         qDebug()<<Q_FUNC_INFO<<"Can't get yunData values";
-        FREE_COOKIEJ_JAR;
+//        FREE_COOKIEJ_JAR;
         m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, QString("Can't get yunData values"));
         return;
     }
@@ -243,7 +343,7 @@ void BDiskLoginCookie::run()
     QJsonDocument doc = QJsonDocument::fromJson (value.toLocal8Bit(), &error);
     if (error.error != QJsonParseError::NoError) {
         qDebug()<<Q_FUNC_INFO<<"Parse json error => "<<error.errorString ();
-        FREE_COOKIEJ_JAR;
+//        FREE_COOKIEJ_JAR;
         m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE,
                           QString("Parse json error [%1]").arg(error.errorString()));
         return;
@@ -252,7 +352,7 @@ void BDiskLoginCookie::run()
     QString bdstoken = obj.value("bdstoken").toString();
     if (bdstoken.isEmpty()) {
 //        emit loginByCookieFailure("Can't get bdstoken");
-        FREE_COOKIEJ_JAR;
+//        FREE_COOKIEJ_JAR;
         m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_FAILURE, QString("Can't get bdstoken"));
         return;
     }
@@ -263,7 +363,7 @@ void BDiskLoginCookie::run()
     tokenProvider->setUidStr(uname);
 //                    }
     tokenProvider->flush();
-    FREE_COOKIEJ_JAR;
+//    FREE_COOKIEJ_JAR;
     m_handler->dispatch(InnerEvent::EVENT_COOKIE_LOGIN_SUCCESS, QString());
 }
 

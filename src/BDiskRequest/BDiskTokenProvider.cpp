@@ -14,7 +14,7 @@ BDiskTokenProvider::BDiskTokenProvider(QObject *parent)
     : QObject(parent)
 {
     m_settings = new QSettings(qApp->organizationName(), qApp->applicationName(), parent);
-    m_codeString = m_settings->value(KEY_CODE_STRING).toString();
+    m_codeString = QString();//m_settings->value(KEY_CODE_STRING).toString();
     m_token = m_settings->value(KEY_TOKEN).toString();
     m_pubkey = m_settings->value(KEY_PUBKEY).toString();
     m_bdstoken = m_settings->value(KEY_BDS_TOKEN).toString();
@@ -24,7 +24,7 @@ BDiskTokenProvider::BDiskTokenProvider(QObject *parent)
 BDiskTokenProvider::~BDiskTokenProvider()
 {
     if (m_settings) {
-        m_settings->setValue(KEY_CODE_STRING, m_codeString);
+//        m_settings->setValue(KEY_CODE_STRING, m_codeString);
         m_settings->setValue(KEY_TOKEN, m_token);
         m_settings->setValue(KEY_PUBKEY, m_pubkey);
         m_settings->setValue(KEY_BDS_TOKEN, m_bdstoken);
@@ -107,10 +107,20 @@ void BDiskTokenProvider::clear()
 
 void BDiskTokenProvider::flush()
 {
-    m_settings->setValue(KEY_CODE_STRING, m_codeString);
+//    m_settings->setValue(KEY_CODE_STRING, m_codeString);
     m_settings->setValue(KEY_TOKEN, m_token);
     m_settings->setValue(KEY_PUBKEY, m_pubkey);
     m_settings->setValue(KEY_BDS_TOKEN, m_bdstoken);
     m_settings->setValue(KEY_UID_STR, m_uidStr);
     m_settings->sync();
+}
+
+QString BDiskTokenProvider::vcodeType() const
+{
+    return m_vcodeType;
+}
+
+void BDiskTokenProvider::setVcodeType(const QString &vcodeType)
+{
+    m_vcodeType = vcodeType;
 }

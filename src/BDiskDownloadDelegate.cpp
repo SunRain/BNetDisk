@@ -9,7 +9,10 @@
 #include <QDateTime>
 #include <QStandardPaths>
 
-#include <QNetworkCookie>
+//#include <QNetworkCookie>
+
+#include "QCNetworkRequest.h"
+#include "QCNetworkAccessManager.h"
 
 #include "DLTransmissionDatabase.h"
 #include "DLRequest.h"
@@ -20,6 +23,7 @@
 #include "BDiskEvent.h"
 
 using namespace YADownloader;
+using namespace QCurl;
 
 class BDiskDownloadCompleteTaskDB : public YADownloader::DLTransmissionDatabase
 {
@@ -253,14 +257,15 @@ void BDiskDownloadDelegate::download(const QString &from, const QString &savePat
 //    req.setRawHeader("Accept", "*/*");
     req.setPreferThreadCount(4);
 
-    QList<QNetworkCookie> cookies = BDiskCookieJar::instance()->cookieList();
-    QStringList list;
-    foreach (QNetworkCookie c, cookies) {
-        list.append(QString("%1=%2").arg(QString(c.name())).arg(QString(c.value())));
-    }
-    req.setRawHeader("Cookie", list.join(";").toUtf8());
+//    QList<QNetworkCookie> cookies = BDiskCookieJar::instance()->cookieList();
+//    QStringList list;
+//    foreach (QNetworkCookie c, cookies) {
+//        list.append(QString("%1=%2").arg(QString(c.name())).arg(QString(c.value())));
+//    }
+//    req.setRawHeader("Cookie", list.join(";").toUtf8());
 
     DLTask *task = m_downloadMgr->get(req);
+    task->requestPtr()->setCookieFilePath(getCookieFile(), DLRequest::ReadOnly);
 
     connectTask(&task);
 
@@ -328,14 +333,15 @@ void BDiskDownloadDelegate::resume(const QString &hash)
         DLTaskInfo info = m_nodeHash.value(hash).placeholderTaskInfo();
         lock.unlock();
 
-        QList<QNetworkCookie> cookies = BDiskCookieJar::instance()->cookieList();
-        QStringList list;
-        foreach (QNetworkCookie c, cookies) {
-            list.append(QString("%1=%2").arg(QString(c.name())).arg(QString(c.value())));
-        }
-        m_downloadMgr->setRawHeader("Cookie", list.join(";").toUtf8());
+//        QList<QNetworkCookie> cookies = BDiskCookieJar::instance()->cookieList();
+//        QStringList list;
+//        foreach (QNetworkCookie c, cookies) {
+//            list.append(QString("%1=%2").arg(QString(c.name())).arg(QString(c.value())));
+//        }
+//        m_downloadMgr->setRawHeader("Cookie", list.join(";").toUtf8());
 
         DLTask *task = m_downloadMgr->get(info.identifier());
+        task->requestPtr()->setCookieFilePath(getCookieFile(), DLRequest::ReadOnly);
 
         qDebug()<<Q_FUNC_INFO<<"------ from map, task uuid "<<task->uuid()
                <<" identifier "<<hash;

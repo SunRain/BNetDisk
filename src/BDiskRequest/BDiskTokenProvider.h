@@ -34,6 +34,9 @@ public:
     void clear();
     void flush();
 
+    QString vcodeType() const;
+    void setVcodeType(const QString &vcodeType);
+
 private:
     QSettings *m_settings;
     QString m_codeString;
@@ -42,6 +45,7 @@ private:
     QString m_key;
     QString m_bdstoken;
     QString m_uidStr;
+    QString m_vcodeType;
 
 };
 

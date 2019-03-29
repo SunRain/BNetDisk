@@ -3,24 +3,30 @@
 #include <QTimer>
 #include <QUrl>
 
-#include <QNetworkAccessManager>
-#include <QNetworkRequest>
-#include <QNetworkReply>
-#include <QNetworkCookie>
+//#include <QNetworkAccessManager>
+//#include <QNetworkRequest>
+//#include <QNetworkReply>
+//#include <QNetworkCookie>
 
 #include "BDiskConst.h"
 #include "BDiskOperationRequest.h"
 #include "BDiskTokenProvider.h"
 #include "BDiskCookieJar.h"
 
+#include "QCNetworkAccessManager.h"
+#include "QCNetworkAsyncReply.h"
+#include "QCNetworkRequest.h"
+
+using namespace QCurl;
+
 static QMutex s_lock;
-static QScopedPointer<QNetworkAccessManager> s_networkSP;
+static QScopedPointer<QCNetworkAccessManager> s_networkSP;
 
 BDiskBaseRequest::BDiskBaseRequest(QObject *parent)
     : QObject(parent)
     , m_timeout(new QTimer(this))
     , m_reply(nullptr)
-    , m_cookieJar(new BDiskCookieJar(this))
+//    , m_cookieJar(new BDiskCookieJar(this))
     , m_requestAborted(true)
     , m_operationInitiated(false)
 {
@@ -38,7 +44,8 @@ BDiskBaseRequest::BDiskBaseRequest(QObject *parent)
 //    if (m_networkMgr) {
 //        m_networkMgr->setCookieJar(BDiskCookieJar::instance());
 //    }
-    m_networkMgr->setCookieJar(m_cookieJar);
+//    m_networkMgr->setCookieJar(m_cookieJar);
+    m_networkMgr->setCookieFilePath(getCookieFile());
 }
 
 BDiskBaseRequest::~BDiskBaseRequest()
@@ -80,17 +87,17 @@ void BDiskBaseRequest::request()
 
     qDebug()<<Q_FUNC_INFO<<" url is "<<url;
 
-    QNetworkRequest request(url);
+    QCNetworkRequest request(url);
     request.setRawHeader("User-Agent", "Mozilla/5.0 (Windows;U;Windows NT 5.1;zh-CN;rv:1.9.2.9) Gecko/20100101 Firefox/43.0");
     request.setRawHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
-    m_cookieJar->reload();
-    QList<QNetworkCookie> cookies = m_cookieJar->cookieList();//BDiskCookieJar::instance()->cookieList();
-    QStringList list;
-    foreach (QNetworkCookie c, cookies) {
-        list.append(QString("%1=%2").arg(QString(c.name())).arg(QString(c.value())));
-    }
-//    qDebug()<<Q_FUNC_INFO<<"append cookies "<<list;
-    request.setRawHeader("Cookie", list.join(";").toUtf8());
+//    m_cookieJar->reload();
+//    QList<QNetworkCookie> cookies = m_cookieJar->cookieList();//BDiskCookieJar::instance()->cookieList();
+//    QStringList list;
+//    foreach (QNetworkCookie c, cookies) {
+//        list.append(QString("%1=%2").arg(QString(c.name())).arg(QString(c.value())));
+//    }
+////    qDebug()<<Q_FUNC_INFO<<"append cookies "<<list;
+//    request.setRawHeader("Cookie", list.join(";").toUtf8());
 
     if (m_reply) {
         m_requestAborted = true;
@@ -99,7 +106,7 @@ void BDiskBaseRequest::request()
         m_reply = nullptr;
     }
     if (m_operation.operationType() == BDiskBaseOperationRequest::OperationType::OPERATION_POST) {
-        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+        request.setRawHeader("Content-Type", "application/x-www-form-urlencoded");
         QByteArray data;
         foreach (QString k, m_operation.postDataParameters().keys()) {
             data.append(QString("%1=%2&").arg(k).arg(m_operation.postDataParameter(k)));
@@ -108,7 +115,7 @@ void BDiskBaseRequest::request()
             data = data.left(data.length() - 1);
         if (data.isEmpty())
             data = url.query(QUrl::FullyEncoded).toUtf8();
-        request.setHeader(QNetworkRequest::ContentLengthHeader, QByteArray::number(data.length()));
+        request.setRawHeader("Content-Length", QByteArray::number(data.length()));
 
         qDebug()<<Q_FUNC_INFO<<" post data ["<<data<<"] to ["<<url<<"]";
 
@@ -124,7 +131,7 @@ void BDiskBaseRequest::request()
         m_reply = nullptr;
     }
     if (m_reply) {
-        connect(m_reply, &QNetworkReply::finished,
+        connect(m_reply, &QCNetworkAsyncReply::finished,
                 [&](){
             if (m_timeout->isActive ())
                 m_timeout->stop ();
@@ -141,8 +148,9 @@ void BDiskBaseRequest::request()
 //                qDebug()<<Q_FUNC_INFO<<p.first<<"||"<<p.second;
 //            }
 
-            QNetworkReply::NetworkError e = m_reply->error ();
-            bool success = (e == QNetworkReply::NoError);
+//            QNetworkReply::NetworkError e = m_reply->error ();
+            NetworkError e = m_reply->error();
+            bool success = (e == NetworkNoError);
             if (!success) {
                 QString str = m_reply->errorString ();
                 m_reply->deleteLater ();
@@ -154,11 +162,21 @@ void BDiskBaseRequest::request()
                 return;
             }
             QByteArray qba = m_reply->readAll ();
+            QByteArray hd = m_reply->rawHeaderData();
+
+            if (!hd.isEmpty()) {
+                const int pos = qba.indexOf(hd);
+                qba = qba.remove(pos, hd.length());
+            }
+
+//            qDebug()<<Q_FUNC_INFO<<"==== "<<qba;
+
             m_reply->deleteLater ();
             m_reply = nullptr;
             emit requestSuccess (QString(qba));
             emit requestResult (BDiskBaseRequest::RET_SUCCESS, QString(qba));
         });
+        m_reply->perform();
         emit requestStarted();
     }
 }
@@ -179,7 +197,7 @@ BDiskBaseOperationRequest *BDiskBaseRequest::operationPtr()
 
 bool BDiskBaseRequest::isFinished()
 {
-    return m_reply && m_reply->isFinished();
+    return m_reply && !m_reply->isRunning();
 }
 
 void BDiskBaseRequest::abort()
@@ -194,11 +212,11 @@ BDiskBaseOperationRequest BDiskBaseRequest::operation()
     return BDiskBaseOperationRequest();
 }
 
-QNetworkAccessManager *BDiskBaseRequest::networkMgr() {
+QCNetworkAccessManager *BDiskBaseRequest::networkMgr() {
     if (Q_UNLIKELY(s_networkSP.isNull())) {
         s_lock.lock();
         if (Q_UNLIKELY(s_networkSP.isNull())) {
-            s_networkSP.reset(new QNetworkAccessManager);
+            s_networkSP.reset(new QCNetworkAccessManager);
 //            s_networkSP.data()->setCookieJar(BDiskCookieJar::instance());
         }
         s_lock.unlock();

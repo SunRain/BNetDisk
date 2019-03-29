@@ -5,13 +5,18 @@
 #include <QMutex>
 #include <QScopedPointer>
 
-#include <QNetworkAccessManager>
+//#include <QNetworkAccessManager>
 
 #include "BDiskOperationRequest.h"
 
 class QTimer;
-class QNetworkReply;
-class BDiskCookieJar;
+//class QNetworkReply;
+//class BDiskCookieJar;
+
+namespace QCurl {
+    class QCNetworkAccessManager;
+    class QCNetworkAsyncReply;
+}
 class BDiskBaseRequest : public QObject
 {
     Q_OBJECT
@@ -23,7 +28,7 @@ public:
     };
     Q_ENUM(RequestRet)
 
-    explicit BDiskBaseRequest(QObject *parent = 0);
+    explicit BDiskBaseRequest(QObject *parent = Q_NULLPTR);
     virtual ~BDiskBaseRequest();
 
     Q_INVOKABLE void request();
@@ -58,13 +63,13 @@ private:
     /// 以便节省资源占用
     /// \return
     ///
-   static QNetworkAccessManager *networkMgr();
+   static QCurl::QCNetworkAccessManager *networkMgr();
 
 private:
     QTimer *m_timeout;
-    QNetworkReply *m_reply;
-    QNetworkAccessManager *m_networkMgr;
-    BDiskCookieJar *m_cookieJar;
+    QCurl::QCNetworkAsyncReply *m_reply;
+    QCurl::QCNetworkAccessManager *m_networkMgr;
+//    BDiskCookieJar *m_cookieJar;
     BDiskBaseOperationRequest m_operation;
 //    QHash<QString, QString> m_parameters;
 
